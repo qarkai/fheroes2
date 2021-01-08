@@ -148,12 +148,16 @@ public:
     Army & GetArmy( void );
     const Army & GetActualArmy( void ) const;
     Army & GetActualArmy( void );
-    u32 GetDwellingLivedCount( u32 ) const;
+    u32 getMonstersInDwelling( u32 ) const;
     u32 GetActualDwelling( u32 ) const;
 
-    bool RecruitMonsterFromDwelling( u32 dw, u32 count );
-    bool RecruitMonster( const Troop & );
-    void RecruitAllMonsters( void );
+    bool RecruitMonsterFromDwelling( uint32_t dw, uint32_t count, bool force = false );
+    bool RecruitMonster( const Troop & troop, bool showDialog = true );
+    void recruitBestAvailable( Funds budget );
+    uint32_t getRecruitLimit( const Monster & monster, const Funds & budget ) const;
+
+    int getBuildingValue() const;
+    double getVisitValue( const Heroes & hero ) const;
 
     void ChangeColor( int );
 
@@ -163,9 +167,9 @@ public:
     void ActionPreBattle( void );
     void ActionAfterBattle( bool attacker_wins );
 
-    void DrawImageCastle( const Point & pt );
+    void DrawImageCastle( const Point & pt ) const;
 
-    int OpenDialog( bool readonly = false, bool fade = false );
+    int OpenDialog( bool readonly = false );
 
     int GetAttackModificator( std::string * ) const;
     int GetDefenseModificator( std::string * ) const;
@@ -193,15 +197,14 @@ public:
     static const char * GetStringBuilding( u32, int race );
     static const char * GetDescriptionBuilding( u32, int race );
 
-    static bool isBuildingCycling( uint32_t building, int race );
     static int GetICNBuilding( u32, int race );
     static int GetICNBoat( int race );
     u32 GetUpgradeBuilding( u32 ) const;
 
     static bool PredicateIsCastle( const Castle * );
     static bool PredicateIsTown( const Castle * );
-    static bool PredicateIsBuildMarketplace( const Castle * );
     static bool PredicateIsCapital( const Castle * );
+    static bool PredicateIsBuildBuilding( const Castle * castle, const uint32_t building );
 
     static u32 GetGrownWell( void );
     static u32 GetGrownWel2( void );
@@ -218,7 +221,7 @@ public:
 private:
     u32 * GetDwelling( u32 dw );
     void EducateHeroes( void );
-    Rect RedrawResourcePanel( const Point & );
+    Rect RedrawResourcePanel( const Point & ) const;
     u32 OpenTown( void );
     void OpenTavern( void );
     void OpenWell( void );
@@ -268,9 +271,15 @@ namespace CastleDialog
         const Rect & GetRect( building_t ) const;
     };
 
-    void RedrawAllBuilding( const Castle &, const Point &, const CacheBuildings &, u32 flash = BUILD_NOTHING );
+    void RedrawAllBuilding( const Castle &, const Point &, const CacheBuildings & );
     void RedrawAnimationBuilding( const Castle &, const Point &, const CacheBuildings &, u32 build );
     void RedrawBuildingSpriteToArea( const fheroes2::Sprite &, s32, s32, const Rect &, uint8_t alpha = 255 );
+
+    void CastleRedrawBuilding( const Castle &, const Point &, u32 build, u32 frame, uint8_t alpha = 255 );
+    void CastleRedrawBuildingExtended( const Castle &, const Point &, u32 build, u32 frame, uint8_t alpha = 255 );
+
+    bool RoadConnectionNeeded( const Castle & castle, const uint32_t buildId, const bool constructionInProgress );
+    void RedrawRoadConnection( const Castle & castle, const Point & position, const uint32_t buildId, const uint8_t alpha = 255 );
 }
 
 struct VecCastles : public std::vector<Castle *>
@@ -279,6 +288,7 @@ struct VecCastles : public std::vector<Castle *>
     Castle * GetFirstCastle( void ) const;
 
     void ChangeColors( int, int );
+    void SortByBuildingValue();
 };
 
 struct AllCastles : public VecCastles

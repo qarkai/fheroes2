@@ -86,10 +86,10 @@ namespace Interface
         void SetRedraw( int );
         void Redraw( int f = 0 );
 
-        const Rect & GetScrollLeft( void ) const;
-        const Rect & GetScrollRight( void ) const;
-        const Rect & GetScrollTop( void ) const;
-        const Rect & GetScrollBottom( void ) const;
+        const fheroes2::Rect & GetScrollLeft( void ) const;
+        const fheroes2::Rect & GetScrollRight( void ) const;
+        const fheroes2::Rect & GetScrollTop( void ) const;
+        const fheroes2::Rect & GetScrollBottom( void ) const;
 
         s32 GetDimensionDoorDestination( s32, u32, bool ) const;
 
@@ -124,8 +124,6 @@ namespace Interface
         void EventSwitchShowButtons( void );
         void EventSwitchShowIcons( void );
         void EventSwitchShowControlPanel( void );
-        void EventDebug1( void );
-        void EventDebug2( void );
 
         int EventNewGame( void );
         int EventLoadGame( void );
@@ -138,7 +136,7 @@ namespace Interface
 
         int StartGame( void );
 
-        void MouseCursorAreaClickLeft( s32 );
+        void MouseCursorAreaClickLeft( const int32_t index_maps );
         void MouseCursorAreaPressRight( s32 );
 
         static int GetCursorTileIndex( s32 );
@@ -151,7 +149,6 @@ namespace Interface
 
     private:
         Basic();
-        void RedrawSystemInfo( s32, s32, u32 );
         void ShowPathOrStartMoveHero( Heroes *, s32 );
         void MoveHeroFromArrowKeys( Heroes & hero, int direct );
         int HumanTurn( bool );
@@ -165,12 +162,10 @@ namespace Interface
 
         int redraw;
 
-        Rect scrollLeft;
-        Rect scrollRight;
-        Rect scrollBottom;
-        Rect scrollTop;
-
-        Text system_info;
+        fheroes2::Rect scrollLeft;
+        fheroes2::Rect scrollRight;
+        fheroes2::Rect scrollBottom;
+        fheroes2::Rect scrollTop;
     };
 }
 

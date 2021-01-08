@@ -26,10 +26,10 @@
 
 #include "gamedefs.h"
 #include "interface_itemsbar.h"
+#include "ui_tool.h"
 
 class Spell;
 class Heroes;
-class StreamBase;
 class StreamBase;
 
 class Artifact
@@ -177,6 +177,7 @@ public:
     int Level( void ) const;
     int LoyaltyLevel( void ) const;
     int Type( void ) const;
+    int getArtifactValue() const;
 
     /* objnarti.icn */
     u32 IndexSprite( void ) const;
@@ -222,7 +223,9 @@ public:
 
     void RemoveArtifact( const Artifact & );
     void RemoveScroll( const Artifact & );
+    void exchangeArtifacts( BagArtifacts & giftBag );
 
+    int getArtifactValue() const;
     u32 CountArtifacts( void ) const;
     u32 Count( const Artifact & ) const;
 
@@ -234,22 +237,22 @@ class ArtifactsBar : public Interface::ItemsActionBar<Artifact>
 public:
     ArtifactsBar( const Heroes *, bool mini, bool ro, bool change = false );
 
-    void RedrawBackground( const Rect &, fheroes2::Image & );
-    void RedrawItem( Artifact &, const Rect &, bool, fheroes2::Image & );
+    virtual void RedrawBackground( const Rect &, fheroes2::Image & ) override;
+    virtual void RedrawItem( Artifact &, const Rect &, bool, fheroes2::Image & ) override;
 
     void ResetSelected( void );
     void Redraw( fheroes2::Image & dstsf = fheroes2::Display::instance() );
 
-    bool ActionBarSingleClick( const Point &, Artifact &, const Rect & );
-    bool ActionBarSingleClick( const Point &, Artifact &, const Rect &, Artifact &, const Rect & );
-    bool ActionBarDoubleClick( const Point &, Artifact &, const Rect & );
-    bool ActionBarPressRight( const Point &, Artifact &, const Rect & );
+    virtual bool ActionBarLeftMouseSingleClick( Artifact & artifact ) override;
+    virtual bool ActionBarLeftMouseSingleClick( Artifact & artifact1, Artifact & artifact2 ) override;
+    virtual bool ActionBarLeftMouseDoubleClick( Artifact & artifact ) override;
+    virtual bool ActionBarRightMouseHold( Artifact & artifact ) override;
 
     bool QueueEventProcessing( std::string * = NULL );
     bool QueueEventProcessing( ArtifactsBar &, std::string * = NULL );
 
-    bool ActionBarCursor( const Point &, Artifact &, const Rect & );
-    bool ActionBarCursor( const Point &, Artifact &, const Rect &, Artifact &, const Rect & );
+    virtual bool ActionBarCursor( Artifact & ) override;
+    virtual bool ActionBarCursor( Artifact &, Artifact & ) override;
 
 protected:
     const Heroes * hero;

@@ -148,7 +148,7 @@ namespace
     };
 
     Monster::monstersprite_t monsters_info[] = {
-        {ICN::UNKNOWN, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},       {0, 0},       {0, 0},       {0, 0},
+        {ICN::UNKNOWN, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},       {0, 0},       {0, 0},       {0, 0},      {0, 0},
          {0, 0},       {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, M82::UNKNOWN, M82::UNKNOWN, M82::UNKNOWN, M82::UNKNOWN},
 
         // icn_file    static  idle     move     fly1     fly2     fly3     shot0          shot1          shot2          shot3
@@ -315,17 +315,6 @@ namespace
         {ICN::UNKNOWN, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},       {0, 0},       {0, 0},       {0, 0},      {0, 0},
          {0, 0},       {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, M82::UNKNOWN, M82::UNKNOWN, M82::UNKNOWN, M82::UNKNOWN},
     };
-
-    bool isValidAnimationFrame( const Monster::animframe_t & frameInfo )
-    {
-        return ( frameInfo.count > 0 ) && ( frameInfo.start > 0 );
-    }
-
-    void verifyValidAnimationFrame( const Monster::animframe_t & frameInfo )
-    {
-        if ( !isValidAnimationFrame( frameInfo ) )
-            Error::Except( __FUNCTION__, "animframe_t should not be empty" );
-    }
 }
 
 StreamBase & operator<<( StreamBase & msg, const monstats_t & obj )
@@ -338,7 +327,7 @@ StreamBase & operator>>( StreamBase & msg, monstats_t & obj )
     return msg >> obj.attack >> obj.defense >> obj.damageMin >> obj.damageMax >> obj.hp >> obj.speed >> obj.grown >> obj.shots >> obj.cost;
 }
 
-StreamBase & operator<<( StreamBase & msg, const MonsterStaticData & obj )
+StreamBase & operator<<( StreamBase & msg, const MonsterStaticData & /*obj*/ )
 {
     u32 monsters_size = ARRAY_COUNT( monsters );
     msg << monsters_size;
@@ -347,7 +336,7 @@ StreamBase & operator<<( StreamBase & msg, const MonsterStaticData & obj )
     return msg;
 }
 
-StreamBase & operator>>( StreamBase & msg, MonsterStaticData & obj )
+StreamBase & operator>>( StreamBase & msg, MonsterStaticData & /*obj*/ )
 {
     u32 monsters_size;
     msg >> monsters_size;
@@ -383,7 +372,7 @@ uint32_t Monster::GetMissileICN( uint32_t monsterID )
     case Monster::TROLL:
         return ICN::TROLLMSL;
     case Monster::WAR_TROLL:
-        return ICN::TROLLMSL;
+        return ICN::TROLL2MSL;
     case Monster::ELF:
         return ICN::ELF__MSL;
     case Monster::GRAND_ELF:
@@ -470,6 +459,8 @@ void Monster::UpdateStats( const std::string & spec )
     }
     else
         VERBOSE( spec << ": " << doc.ErrorDesc() );
+#else
+    (void)spec;
 #endif
 }
 
@@ -547,16 +538,6 @@ bool Monster::operator==( const Monster & m ) const
 bool Monster::operator!=( const Monster & m ) const
 {
     return id != m.id;
-}
-
-int Monster::operator()( void ) const
-{
-    return id;
-}
-
-int Monster::GetID( void ) const
-{
-    return id;
 }
 
 void Monster::Upgrade( void )
@@ -641,10 +622,17 @@ u32 Monster::GetGrown( void ) const
 
 // Get universal heuristic of Monster type regardless of context; both combat and strategic value
 // Doesn't account for situational special bonuses such as spell immunity
-double Monster::GetMonsterStrength() const
+double Monster::GetMonsterStrength( int attack, int defense ) const
 {
+    // If no modified values were provided then re-calculate
     // GetAttack and GetDefense will call overloaded versions accounting for Hero bonuses
-    const double attackDefense = 1.0 + GetAttack() * 0.1 + GetDefense() * 0.05;
+    if ( attack == -1 )
+        attack = GetAttack();
+
+    if ( defense == -1 )
+        attack = GetDefense();
+
+    const double attackDefense = 1.0 + attack * 0.1 + defense * 0.05;
     const double effectiveHP = GetHitPoints() * ( ignoreRetaliation() ? 1.4 : 1 );
 
     double damagePotential = ( static_cast<double>( GetDamageMin() ) + GetDamageMax() ) / 2;
@@ -700,11 +688,60 @@ double Monster::GetMonsterStrength() const
 
 u32 Monster::GetRNDSize( bool skip_factor ) const
 {
-    const u32 hps = ( GetGrown() ? GetGrown() : 1 ) * GetHitPoints();
-    u32 res = Rand::Get( hps, hps + hps / 2 );
+    if ( !isValid() )
+        return 0;
 
-    if ( !skip_factor ) {
-        u32 factor = 100;
+    const uint32_t defaultArmySizePerLevel[7] = {0, 50, 30, 25, 25, 12, 8};
+    uint32_t result = 0;
+
+    // Check for outliers
+    switch ( id ) {
+    case PEASANT:
+        result = 80;
+        break;
+    case ROGUE:
+        result = 40;
+        break;
+    case PIKEMAN:
+    case VETERAN_PIKEMAN:
+    case WOLF:
+    case ELF:
+    case GRAND_ELF:
+        result = 30;
+        break;
+    case GARGOYLE:
+        result = 25;
+        break;
+    case GHOST:
+    case MEDUSA:
+        result = 20;
+        break;
+    case MINOTAUR:
+    case MINOTAUR_KING:
+    case ROC:
+    case VAMPIRE:
+    case VAMPIRE_LORD:
+    case UNICORN:
+        result = 16;
+        break;
+    case CAVALRY:
+    case CHAMPION:
+        result = 18;
+        break;
+    case PALADIN:
+    case CRUSADER:
+    case CYCLOPS:
+    case PHOENIX:
+        result = 12;
+        break;
+    default:
+        // for most units default range is okay
+        result = defaultArmySizePerLevel[GetMonsterLevel()];
+        break;
+    }
+
+    if ( !skip_factor && Settings::Get().ExtWorldNeutralArmyDifficultyScaling() ) {
+        uint32_t factor = 100;
 
         switch ( Settings::Get().GameDifficulty() ) {
         case Difficulty::EASY:
@@ -726,13 +763,13 @@ u32 Monster::GetRNDSize( bool skip_factor ) const
             break;
         }
 
-        res = ( res * factor / 100 );
+        result = ( result * factor / 100 );
         // force minimal
-        if ( res == 0 )
-            res = 1;
+        if ( result == 0 )
+            result = 1;
     }
 
-    return isValid() ? GetCountFromHitPoints( id, res ) : 0;
+    return ( result > 1 ) ? Rand::Get( result / 2, result ) : 1;
 }
 
 bool Monster::hasMeleePenalty() const
@@ -952,26 +989,6 @@ bool Monster::isAlwaysRetaliating( void ) const
 bool Monster::isAffectedByMorale( void ) const
 {
     return !( isUndead() || isElemental() );
-}
-
-bool Monster::hasColorCycling() const
-{
-    switch ( id ) {
-    case PHOENIX:
-    case MAGE:
-    case ARCHMAGE:
-    case GIANT:
-    case TITAN:
-    case GENIE:
-    case WATER_ELEMENT:
-    case FIRE_ELEMENT:
-        return true;
-
-    default:
-        break;
-    }
-
-    return false;
 }
 
 Monster Monster::GetDowngrade( void ) const
@@ -1324,15 +1341,15 @@ Monster Monster::Rand( level_t level )
         return Monster( UNKNOWN );
     if ( level == LEVEL0 )
         return Monster( Rand::Get( PEASANT, WATER_ELEMENT ) );
-    static std::vector<Monster> monsters[LEVEL4 - LEVEL0];
-    if ( monsters[0].empty() ) {
+    static std::vector<Monster> monstersVec[LEVEL4 - LEVEL0];
+    if ( monstersVec[0].empty() ) {
         for ( u32 i = PEASANT; i <= WATER_ELEMENT; ++i ) {
             const Monster monster( i );
-            if ( monster.GetLevel() > LEVEL0 )
-                monsters[monster.GetLevel() - LEVEL0 - 1].push_back( monster );
+            if ( monster.GetRandomUnitLevel() > LEVEL0 )
+                monstersVec[monster.GetRandomUnitLevel() - LEVEL0 - 1].push_back( monster );
         }
     }
-    return *Rand::Get( monsters[level - LEVEL0 - 1] );
+    return *Rand::Get( monstersVec[level - LEVEL0 - 1] );
 }
 
 u32 Monster::Rand4WeekOf( void )
@@ -1507,7 +1524,95 @@ u32 Monster::Rand4MonthOf( void )
     return UNKNOWN;
 }
 
-int Monster::GetLevel( void ) const
+int Monster::GetMonsterLevel() const
+{
+    switch ( id ) {
+    case PEASANT:
+    case GOBLIN:
+    case SPRITE:
+    case CENTAUR:
+    case HALFLING:
+    case SKELETON:
+    case ROGUE:
+        return 1;
+
+    case ARCHER:
+    case RANGER:
+    case ORC:
+    case ORC_CHIEF:
+    case DWARF:
+    case BATTLE_DWARF:
+    case GARGOYLE:
+    case BOAR:
+    case ZOMBIE:
+    case MUTANT_ZOMBIE:
+        return 2;
+
+    case PIKEMAN:
+    case VETERAN_PIKEMAN:
+    case WOLF:
+    case ELF:
+    case GRAND_ELF:
+    case GRIFFIN:
+    case IRON_GOLEM:
+    case STEEL_GOLEM:
+    case MUMMY:
+    case ROYAL_MUMMY:
+    case NOMAD:
+        return 3;
+
+    case SWORDSMAN:
+    case MASTER_SWORDSMAN:
+    case OGRE:
+    case OGRE_LORD:
+    case DRUID:
+    case GREATER_DRUID:
+    case MINOTAUR:
+    case MINOTAUR_KING:
+    case ROC:
+    case VAMPIRE:
+    case VAMPIRE_LORD:
+    case GHOST:
+    case MEDUSA:
+    case EARTH_ELEMENT:
+    case AIR_ELEMENT:
+    case FIRE_ELEMENT:
+    case WATER_ELEMENT:
+        return 4;
+
+    case CAVALRY:
+    case CHAMPION:
+    case TROLL:
+    case WAR_TROLL:
+    case UNICORN:
+    case HYDRA:
+    case MAGE:
+    case ARCHMAGE:
+    case LICH:
+    case POWER_LICH:
+        return 5;
+
+    case PALADIN:
+    case CRUSADER:
+    case CYCLOPS:
+    case PHOENIX:
+    case GREEN_DRAGON:
+    case RED_DRAGON:
+    case BLACK_DRAGON:
+    case GIANT:
+    case TITAN:
+    case BONE_DRAGON:
+    case GENIE:
+        return 6;
+
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+int Monster::GetRandomUnitLevel( void ) const
 {
     switch ( id ) {
     case PEASANT:
@@ -2058,12 +2163,12 @@ MonsterStaticData & MonsterStaticData::Get( void )
     return mgds;
 }
 
-StreamBase & operator<<( StreamBase & msg, const Monster & obj )
+StreamBase & operator<<( StreamBase & msg, const Monster & /*obj*/ )
 {
     return msg;
 }
 
-StreamBase & operator>>( StreamBase & msg, Monster & obj )
+StreamBase & operator>>( StreamBase & msg, Monster & /*obj*/ )
 {
     return msg;
 }

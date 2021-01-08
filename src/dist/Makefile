@@ -14,8 +14,10 @@ LIBENGINE := $(LIBENGINE) ../thirdparty/libsmacker/libsmacker.a
 CFLAGS := $(CFLAGS) -I../thirdparty/libsmacker
 
 ifndef WITHOUT_XML
-LIBENGINE := $(LIBENGINE) ../xmlccwrap/libxmlccwrap.a
-CFLAGS := $(CFLAGS) -I../xmlccwrap
+ifndef WITHOUT_BUNDLED_LIBS
+LIBENGINE := $(LIBENGINE) ../thirdparty/tinyxml/libtinyxml.a
+CFLAGS := $(CFLAGS) -I../thirdparty/tinyxml
+endif
 endif
 
 ifdef PREFIX
@@ -34,8 +36,6 @@ SOURCEDIR  := $(shell ls $(SOURCEROOT))
 POT        := $(TARGET).pot
 SRCDIRLIST := $(addprefix $(SOURCEROOT)/, $(SOURCEDIR))
 
-SRCDIRLIST := $(SRCDIRLIST) $(SOURCEROOT)/ai/empty
-SRCDIRLIST := $(SRCDIRLIST) $(SOURCEROOT)/ai/simple
 SRCDIRLIST := $(SRCDIRLIST) $(SOURCEROOT)/ai/normal
 
 SEARCH     := $(addsuffix /*.cpp, $(SRCDIRLIST))

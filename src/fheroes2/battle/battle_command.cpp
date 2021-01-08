@@ -24,19 +24,18 @@
 
 #include "battle_arena.h"
 #include "battle_command.h"
-#include "settings.h"
 #include "spell.h"
 
 bool Battle::Actions::HaveCommand( u32 cmd ) const
 {
-    return end() != std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &Command::isType ), cmd ) );
+    return end() != std::find_if( begin(), end(), [cmd]( const Battle::Command & v ) { return v.isType( cmd ); } );
 }
 
 Battle::Command::Command( int cmd )
     : type( cmd )
 {}
 
-Battle::Command & Battle::Command::operator<<( const int & val )
+Battle::Command & Battle::Command::operator<<( const int val )
 {
     push_back( val );
     return *this;

@@ -38,7 +38,6 @@
 #include "player_info.h"
 #include "race.h"
 #include "settings.h"
-#include "splitter.h"
 #include "text.h"
 #include "ui_button.h"
 #include "ui_tool.h"
@@ -53,6 +52,41 @@ int Game::SelectScenario( void )
     return SCENARIOINFO;
 }
 
+void updatePlayers( Players & players, const int humanPlayerCount )
+{
+    if ( humanPlayerCount < 2 )
+        return;
+
+    int foundHumans = 0;
+
+    for ( size_t i = 0; i < players.size(); ++i ) {
+        if ( players[i]->isControlHuman() ) {
+            ++foundHumans;
+            if ( players[i]->isControlAI() )
+                players[i]->SetControl( CONTROL_HUMAN );
+        }
+
+        if ( foundHumans == humanPlayerCount )
+            break;
+    }
+}
+
+size_t GetSelectedMapId( MapsFileInfoList & lists )
+{
+    const Settings & conf = Settings::Get();
+
+    const std::string & mapName = conf.CurrentFileInfo().name;
+    const std::string & mapFileName = System::GetBasename( conf.CurrentFileInfo().file );
+    size_t mapId = 0;
+    for ( MapsFileInfoList::const_iterator mapIter = lists.begin(); mapIter != lists.end(); ++mapIter, ++mapId ) {
+        if ( ( mapIter->name == mapName ) && ( System::GetBasename( mapIter->file ) == mapFileName ) ) {
+            return mapId;
+        }
+    }
+
+    return 0;
+}
+
 int Game::ScenarioInfo( void )
 {
     Settings & conf = Settings::Get();
@@ -60,7 +94,7 @@ int Game::ScenarioInfo( void )
     AGG::PlayMusic( MUS::MAINMENU );
 
     MapsFileInfoList lists;
-    if ( !PrepareMapsFileInfoList( lists, ( conf.GameType( Game::TYPE_MULTI ) ) ) ) {
+    if ( !PrepareMapsFileInfoList( lists, ( conf.IsGameType( Game::TYPE_MULTI ) ) ) ) {
         Dialog::Message( _( "Warning" ), _( "No maps available!" ), Font::BIG, Dialog::OK );
         return MAINMENU;
     }
@@ -106,30 +140,34 @@ int Game::ScenarioInfo( void )
     fheroes2::Copy( back, display );
 
     bool resetStartingSettings = conf.MapsFile().empty();
-    size_t mapId = 0;
     Players & players = conf.GetPlayers();
-    Interface::PlayersInfo playersInfo( true, !conf.QVGA(), !conf.QVGA() );
+    Interface::PlayersInfo playersInfo( true, true, true );
+
+    const int humanPlayerCount = Settings::Get().PreferablyCountPlayers();
 
     if ( !resetStartingSettings ) { // verify that current map really exists in map's list
         resetStartingSettings = true;
         const std::string & mapName = conf.CurrentFileInfo().name;
         const std::string & mapFileName = System::GetBasename( conf.CurrentFileInfo().file );
-        size_t tempId = 0;
-        for ( MapsFileInfoList::const_iterator mapIter = lists.begin(); mapIter != lists.end(); ++mapIter, ++tempId ) {
+        for ( MapsFileInfoList::const_iterator mapIter = lists.begin(); mapIter != lists.end(); ++mapIter ) {
             if ( ( mapIter->name == mapName ) && ( System::GetBasename( mapIter->file ) == mapFileName ) ) {
-                if ( mapIter->file != conf.CurrentFileInfo().file )
+                if ( mapIter->file == conf.CurrentFileInfo().file ) {
                     conf.SetCurrentFileInfo( *mapIter );
-
-                mapId = tempId;
-                resetStartingSettings = false;
-                break;
+                    updatePlayers( players, humanPlayerCount );
+                    LoadPlayers( mapIter->file, players );
+                    resetStartingSettings = false;
+                    break;
+                }
             }
         }
     }
 
     // set first map's settings
-    if ( resetStartingSettings )
+    if ( resetStartingSettings ) {
         conf.SetCurrentFileInfo( lists.front() );
+        updatePlayers( players, humanPlayerCount );
+        LoadPlayers( lists.front().file, players );
+    }
 
     playersInfo.UpdateInfo( players, pointOpponentInfo, pointClassInfo );
 
@@ -187,14 +225,19 @@ int Game::ScenarioInfo( void )
 
         // click select
         if ( HotKeyPressEvent( Game::EVENT_BUTTON_SELECT ) || le.MouseClickLeft( buttonSelectMaps.area() ) ) {
-            const Maps::FileInfo * fi = Dialog::SelectScenario( lists, mapId );
+            const Maps::FileInfo * fi = Dialog::SelectScenario( lists, GetSelectedMapId( lists ) );
             if ( fi ) {
+                SavePlayers( conf.CurrentFileInfo().file, conf.GetPlayers() );
                 conf.SetCurrentFileInfo( *fi );
+                LoadPlayers( fi->file, players );
+
+                updatePlayers( players, humanPlayerCount );
                 playersInfo.UpdateInfo( players, pointOpponentInfo, pointClassInfo );
 
                 cursor.Hide();
                 RedrawScenarioStaticInfo( rectPanel );
                 RedrawDifficultyInfo( pointDifficultyInfo );
+                playersInfo.resetSelection();
                 playersInfo.RedrawInfo();
                 RedrawRatingInfo( rating );
                 levelCursor.setPosition( coordDifficulty[1].x, coordDifficulty[1].y );
@@ -269,13 +312,15 @@ int Game::ScenarioInfo( void )
         }
     }
 
+    SavePlayers( conf.CurrentFileInfo().file, conf.GetPlayers() );
+
     cursor.Hide();
 
     if ( result == STARTGAME ) {
         players.SetStartGame();
         if ( conf.ExtGameUseFade() )
             fheroes2::FadeDisplay();
-        Game::ShowLoadMapsText();
+        Game::ShowMapLoadingText();
         // Load maps
         std::string lower = StringLower( conf.MapsFile() );
 
@@ -313,7 +358,7 @@ u32 Game::GetStep4Player( u32 current, u32 width, u32 count )
 
 void RedrawScenarioStaticInfo( const Rect & rt, bool firstDraw )
 {
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
     fheroes2::Display & display = fheroes2::Display::instance();
 
     if ( firstDraw ) {
@@ -324,9 +369,12 @@ void RedrawScenarioStaticInfo( const Rect & rt, bool firstDraw )
     const fheroes2::Sprite & panel = fheroes2::AGG::GetICN( ICN::NGHSBKG, 0 );
     fheroes2::Blit( panel, display, rt.x, rt.y );
 
+    // Redraw select button as the original image has a wrong position of it
+    fheroes2::Blit( fheroes2::AGG::GetICN( ICN::NGEXTRA, 64 ), display, rt.x + 309, rt.y + 45 );
+
     // text scenario
     Text text( _( "Scenario:" ), Font::BIG );
-    text.Blit( rt.x + ( rt.w - text.w() ) / 2, rt.y + 20 );
+    text.Blit( rt.x + ( rt.w - text.w() ) / 2, rt.y + 23 );
 
     // maps name
     text.Set( conf.MapsName() );
@@ -347,16 +395,13 @@ void RedrawScenarioStaticInfo( const Rect & rt, bool firstDraw )
 
 void RedrawDifficultyInfo( const Point & dst )
 {
-    fheroes2::Display & display = fheroes2::Display::instance();
-    for ( u32 current = Difficulty::EASY; current <= Difficulty::IMPOSSIBLE; ++current ) {
-        const fheroes2::Sprite & sprite = fheroes2::AGG::GetICN( ICN::NGHSBKG, 0 );
-        Rect src_rt( 24, 94, 65, 65 );
-        u32 offset = current * ( src_rt.w + 12 );
-        src_rt.x = src_rt.x + offset;
-        fheroes2::Blit( sprite, src_rt.x, src_rt.y, display, dst.x + offset, dst.y, src_rt.w, src_rt.h );
+    const uint32_t width = 65;
+    const uint32_t height = 69;
 
+    for ( u32 current = Difficulty::EASY; current <= Difficulty::IMPOSSIBLE; ++current ) {
+        const uint32_t offset = current * ( width + 12 );
         Text text( Difficulty::String( current ), Font::SMALL );
-        text.Blit( dst.x + offset + ( src_rt.w - text.w() ) / 2, dst.y + src_rt.h + 5 );
+        text.Blit( dst.x + offset + ( width - text.w() ) / 2, dst.y + height );
     }
 }
 

@@ -50,10 +50,12 @@ namespace Interface
         Player * GetFromClassClick( const Point & pt );
 
         void RedrawInfo( bool show_play_info = false ) const;
+        void resetSelection();
         bool QueueEventProcessing( void );
 
         bool show_name;
         bool show_race;
         bool show_swap;
+        Player * currentSelectedPlayer;
     };
 }

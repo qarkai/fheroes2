@@ -53,7 +53,7 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     if ( fade && Settings::Get().ExtGameUseFade() )
         fheroes2::FadeDisplay();
 
-    Dialog::FrameBorder background( Display::GetDefaultSize() );
+    Dialog::FrameBorder background( Size( fheroes2::Display::DEFAULT_WIDTH, fheroes2::Display::DEFAULT_HEIGHT ) );
     const Point & cur_pt = background.GetArea();
     Point dst_pt( cur_pt );
 
@@ -69,7 +69,7 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     PortraitRedraw( dst_pt.x, dst_pt.y, PORT_BIG, display );
 
     // name
-    message = _( "%{name} the %{race} ( Level %{level} )" );
+    message = _( "%{name} the %{race} (Level %{level})" );
     StringReplace( message, "%{name}", name );
     StringReplace( message, "%{race}", Race::String( race ) );
     StringReplace( message, "%{level}", GetLevel() );
@@ -86,7 +86,7 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     dst_pt.x = cur_pt.x + 514;
     dst_pt.y = cur_pt.y + 35;
 
-    MoraleIndicator moraleIndicator( *this );
+    MoraleIndicator moraleIndicator( this );
     moraleIndicator.SetPos( dst_pt );
     moraleIndicator.Redraw();
 
@@ -94,12 +94,12 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     dst_pt.x = cur_pt.x + 552;
     dst_pt.y = cur_pt.y + 35;
 
-    LuckIndicator luckIndicator( *this );
+    LuckIndicator luckIndicator( this );
     luckIndicator.SetPos( dst_pt );
     luckIndicator.Redraw();
 
     // army format spread
-    dst_pt.x = cur_pt.x + 515;
+    dst_pt.x = cur_pt.x + 516;
     dst_pt.y = cur_pt.y + 63;
     const fheroes2::Sprite & sprite1 = fheroes2::AGG::GetICN( ICN::HSICONS, 9 );
     fheroes2::Blit( sprite1, display, dst_pt.x, dst_pt.y );
@@ -125,13 +125,13 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     cursorFormat.setPosition( cursorFormatPos.x, cursorFormatPos.y );
 
     // experience
-    ExperienceIndicator experienceInfo( *this );
-    experienceInfo.SetPos( Point( cur_pt.x + 514, cur_pt.y + 85 ) );
+    ExperienceIndicator experienceInfo( this );
+    experienceInfo.SetPos( Point( cur_pt.x + 512, cur_pt.y + 86 ) );
     experienceInfo.Redraw();
 
     // spell points
-    SpellPointsIndicator spellPointsInfo( *this );
-    spellPointsInfo.SetPos( Point( cur_pt.x + 549, cur_pt.y + 87 ) );
+    SpellPointsIndicator spellPointsInfo( this );
+    spellPointsInfo.SetPos( Point( cur_pt.x + 550, cur_pt.y + 88 ) );
     spellPointsInfo.Redraw();
 
     // crest
@@ -178,7 +178,7 @@ int Heroes::OpenDialog( bool readonly, bool fade )
     fheroes2::Blit( bar, display, dst_pt.x, dst_pt.y );
 
     StatusBar statusBar;
-    statusBar.SetCenter( dst_pt.x + bar.width() / 2, dst_pt.y + 12 );
+    statusBar.SetCenter( dst_pt.x + bar.width() / 2, dst_pt.y + 13 );
 
     // button prev
     dst_pt.x = cur_pt.x;
@@ -262,6 +262,7 @@ int Heroes::OpenDialog( bool readonly, bool fade )
             if ( selectArmy.isSelected() )
                 selectArmy.ResetSelected();
             selectArtifacts.Redraw();
+            spellPointsInfo.Redraw();
             redrawMorale = true;
             redrawLuck = true;
         }
@@ -335,10 +336,14 @@ int Heroes::OpenDialog( bool readonly, bool fade )
         // status message
         if ( le.MouseCursor( portPos ) )
             message = _( "View Stats" );
-        else if ( le.MouseCursor( moraleIndicator.GetArea() ) )
-            message = _( "View Morale Info" );
-        else if ( le.MouseCursor( luckIndicator.GetArea() ) )
-            message = _( "View Luck Info" );
+        else if ( le.MouseCursor( moraleIndicator.GetArea() ) ) {
+            message = _( "View %{morale} Info" );
+            StringReplace( message, "%{morale}", fheroes2::MoraleString( army.GetMorale() ) );
+        }
+        else if ( le.MouseCursor( luckIndicator.GetArea() ) ) {
+            message = _( "View %{luck} Info" );
+            StringReplace( message, "%{luck}", fheroes2::LuckString( army.GetLuck() ) );
+        }
         else if ( le.MouseCursor( experienceInfo.GetArea() ) )
             message = _( "View Experience Info" );
         else if ( le.MouseCursor( spellPointsInfo.GetArea() ) )
@@ -348,13 +353,17 @@ int Heroes::OpenDialog( bool readonly, bool fade )
         else if ( le.MouseCursor( rectGroupedArmyFormat ) )
             message = _( "Set army combat formation to 'Grouped'" );
         else if ( le.MouseCursor( buttonExit.area() ) )
-            message = _( "Exit hero" );
+            message = _( "Exit Hero Screen" );
         else if ( le.MouseCursor( buttonDismiss.area() ) ) {
             if ( buttonDismiss.isVisible() ) {
-                if ( Modes( NOTDISMISS ) )
+                if ( Modes( NOTDISMISS ) ) {
                     message = "Dismiss disabled, see game info";
-                else
-                    message = _( "Dismiss hero" );
+                }
+                else {
+                    message = _( "Dismiss %{name} the %{race}" );
+                    StringReplace( message, "%{name}", name );
+                    StringReplace( message, "%{race}", Race::String( race ) );
+                }
             }
         }
         else if ( buttonPrevHero.isEnabled() && le.MouseCursor( buttonPrevHero.area() ) )

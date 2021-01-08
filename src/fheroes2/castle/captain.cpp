@@ -23,10 +23,12 @@
 #include "captain.h"
 #include "agg.h"
 #include "castle.h"
+#include "interface_icons.h"
 #include "luck.h"
 #include "morale.h"
 #include "race.h"
-#include "settings.h"
+
+#include <cassert>
 
 namespace
 {
@@ -50,23 +52,23 @@ namespace
         }
     }
 
-    Point GetFlagOffset( int race )
+    fheroes2::Point GetFlagOffset( int race )
     {
         switch ( race ) {
         case Race::KNGT:
-            return Point( 43, 9 );
+            return fheroes2::Point( 43, 9 );
         case Race::BARB:
-            return Point( 42, 8 );
+            return fheroes2::Point( 42, 8 );
         case Race::SORC:
-            return Point( 43, 9 );
+            return fheroes2::Point( 43, 9 );
         case Race::WRLK:
-            return Point( 41, 9 );
+            return fheroes2::Point( 41, 9 );
         case Race::WZRD:
-            return Point( 42, 10 );
+            return fheroes2::Point( 42, 10 );
         case Race::NECR:
-            return Point( 42, 9 );
+            return fheroes2::Point( 42, 9 );
         default:
-            return Point();
+            return fheroes2::Point();
         }
     }
 }
@@ -172,16 +174,6 @@ int Captain::GetType( void ) const
     return HeroBase::CAPTAIN;
 }
 
-int Captain::GetLevelSkill( int ) const
-{
-    return 0;
-}
-
-u32 Captain::GetSecondaryValues( int ) const
-{
-    return 0;
-}
-
 const Army & Captain::GetArmy( void ) const
 {
     return home.GetArmy();
@@ -190,11 +182,6 @@ const Army & Captain::GetArmy( void ) const
 Army & Captain::GetArmy( void )
 {
     return home.GetArmy();
-}
-
-u32 Captain::GetMaxSpellPoints( void ) const
-{
-    return knowledge * 10;
 }
 
 int Captain::GetControl( void ) const
@@ -222,7 +209,7 @@ const Castle * Captain::inCastle( void ) const
     return &home;
 }
 
-fheroes2::Image Captain::GetPortrait( int type ) const
+fheroes2::Sprite Captain::GetPortrait( const PortraitType type ) const
 {
     switch ( type ) {
     case PORT_BIG: {
@@ -230,10 +217,10 @@ fheroes2::Image Captain::GetPortrait( int type ) const
         if ( portraitIcnId < 0 )
             return fheroes2::Image();
 
-        fheroes2::Image portait = fheroes2::AGG::GetICN( portraitIcnId, 0 );
+        fheroes2::Sprite portait = fheroes2::AGG::GetICN( portraitIcnId, 0 );
         const fheroes2::Image & flag = fheroes2::AGG::GetICN( ICN::GetFlagIcnId( GetColor() ), 0 );
 
-        const Point & offset = GetFlagOffset( GetRace() );
+        const fheroes2::Point & offset = GetFlagOffset( GetRace() );
         fheroes2::Blit( flag, portait, offset.x, offset.y );
         return portait;
     }
@@ -258,10 +245,38 @@ fheroes2::Image Captain::GetPortrait( int type ) const
         break;
     }
 
-    return fheroes2::Image();
+    // We shouldn't even reach this code!
+    assert( 0 );
+    return fheroes2::AGG::GetICN( -1, 0 );
 }
 
-void Captain::PortraitRedraw( s32 px, s32 py, int type, fheroes2::Image & dstsf ) const
+void Captain::PortraitRedraw( s32 px, s32 py, PortraitType type, fheroes2::Image & dstsf ) const
 {
-    fheroes2::Blit( GetPortrait( type ), dstsf, px, py );
+    if ( !isValid() )
+        return;
+
+    const fheroes2::Sprite & port = GetPortrait( type );
+    if ( PORT_SMALL != type ) { // a normal portrait in a castle or in battle
+        fheroes2::Blit( port, dstsf, px, py );
+        return;
+    }
+
+    const int iconWidth = Interface::IconsBar::GetItemWidth();
+    const int iconHeight = Interface::IconsBar::GetItemHeight();
+    const int barWidth = 7;
+
+    // background
+    fheroes2::Fill( dstsf, px, py, iconWidth, iconHeight, 0 );
+
+    // mobility is always 0
+    const uint8_t blueColor = fheroes2::GetColorId( 15, 30, 120 );
+    fheroes2::Fill( dstsf, px, py, barWidth, iconHeight, blueColor );
+
+    // portrait
+    fheroes2::Blit( port, dstsf, px + barWidth + 1, py );
+
+    // spell points
+    fheroes2::Fill( dstsf, px + barWidth + port.width() + 2, py, barWidth, iconHeight, blueColor );
+    const fheroes2::Sprite & mana = fheroes2::AGG::GetICN( ICN::MANA, GetMaxSpellPoints() );
+    fheroes2::Blit( mana, dstsf, px + barWidth + port.width() + 2, py + mana.y() );
 }

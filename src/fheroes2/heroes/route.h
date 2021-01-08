@@ -35,13 +35,10 @@ namespace Route
     class Step
     {
     public:
-        Step()
-            : from( -1 )
-            , direction( Direction::CENTER )
-            , penalty( 0 )
-        {}
-        Step( s32 index, int dir, u32 cost )
-            : from( index )
+        Step() {}
+        Step( int index, s32 fromIndex, int dir, u32 cost )
+            : currentIndex( index )
+            , from( fromIndex )
             , direction( dir )
             , penalty( cost )
         {}
@@ -56,9 +53,10 @@ namespace Route
         friend StreamBase & operator<<( StreamBase &, const Step & );
         friend StreamBase & operator>>( StreamBase &, Step & );
 
-        s32 from;
-        int direction;
-        u32 penalty;
+        int currentIndex = -1;
+        int32_t from = -1;
+        int direction = Direction::CENTER;
+        uint32_t penalty = 0;
     };
 
     class Path : public std::list<Step>
@@ -75,7 +73,8 @@ namespace Route
         int GetFrontDirection( void ) const;
         u32 GetFrontPenalty( void ) const;
         u32 GetTotalPenalty( void ) const;
-        uint32_t Calculate( const s32 &, int limit = -1 );
+        uint32_t getLastMovePenalty() const;
+        void setPath( const std::list<Step> & path, int32_t destIndex );
 
         void Show( void )
         {
@@ -101,11 +100,10 @@ namespace Route
 
         std::string String( void ) const;
 
-        s32 GetAllowStep( void ) const;
+        int GetAllowedSteps( void ) const;
         static int GetIndexSprite( int from, int to, int mod );
 
     private:
-        uint32_t Find( int32_t from, int32_t to, bool fromWater = false, int limit = -1, int pathfinding = Skill::Level::NONE );
 
         friend StreamBase & operator<<( StreamBase &, const Path & );
         friend StreamBase & operator>>( StreamBase &, Path & );

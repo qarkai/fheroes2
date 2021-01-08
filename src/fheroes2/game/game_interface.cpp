@@ -20,7 +20,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <ctime>
 #include <sstream>
 
 #include "agg.h"
@@ -30,7 +29,6 @@
 #include "game_interface.h"
 #include "maps.h"
 #include "mp2.h"
-#include "players.h"
 #include "settings.h"
 #include "ui_tool.h"
 #include "world.h"
@@ -50,16 +48,14 @@ Interface::Basic::Basic()
 void Interface::Basic::Reset()
 {
     const fheroes2::Display & display = fheroes2::Display::instance();
-    Settings & conf = Settings::Get().Get();
+    const Settings & conf = Settings::Get();
 
     SetHideInterface( conf.ExtGameHideInterface() );
 
-    scrollLeft = Rect( 0, 0, BORDERWIDTH, display.height() );
-    scrollRight = Rect( display.width() - BORDERWIDTH, 0, BORDERWIDTH, display.height() );
-    scrollTop = Rect( 0, 0, display.width(), BORDERWIDTH );
-    scrollBottom = Rect( 0, display.height() - BORDERWIDTH, display.width(), BORDERWIDTH );
-
-    system_info.Set( Font::YELLOW_SMALL );
+    scrollLeft = fheroes2::Rect( 0, 0, BORDERWIDTH, display.height() );
+    scrollRight = fheroes2::Rect( display.width() - BORDERWIDTH, 0, BORDERWIDTH, display.height() );
+    scrollTop = fheroes2::Rect( 0, 0, display.width(), BORDERWIDTH );
+    scrollBottom = fheroes2::Rect( 0, display.height() - BORDERWIDTH, display.width(), BORDERWIDTH );
 }
 
 Interface::GameArea & Interface::Basic::GetGameArea( void )
@@ -95,7 +91,7 @@ Interface::ControlPanel & Interface::Basic::GetControlPanel( void )
 void Interface::Basic::SetHideInterface( bool f )
 {
     const fheroes2::Display & display = fheroes2::Display::instance();
-    Settings & conf = Settings::Get().Get();
+    Settings & conf = Settings::Get();
     const u32 px = display.width() - BORDERWIDTH - RADARWIDTH;
 
     conf.SetHideInterface( f );
@@ -109,15 +105,15 @@ void Interface::Basic::SetHideInterface( bool f )
         Point pos_stat = conf.PosStatus();
 
         if ( 0 == pos_radr.x && 0 == pos_radr.y )
-            pos_radr = Point( BORDERWIDTH, conf.QVGA() ? TILEWIDTH : BORDERWIDTH );
+            pos_radr = Point( BORDERWIDTH, BORDERWIDTH );
         if ( 0 == pos_icon.x && 0 == pos_icon.y )
-            pos_icon = Point( conf.QVGA() ? BORDERWIDTH : px - BORDERWIDTH, conf.QVGA() ? TILEWIDTH : radar.GetArea().y + radar.GetArea().h );
+            pos_icon = Point( px - BORDERWIDTH, radar.GetArea().y + radar.GetArea().h );
         if ( 0 == pos_bttn.x && 0 == pos_bttn.y )
-            pos_bttn = Point( conf.QVGA() ? BORDERWIDTH : px - BORDERWIDTH, conf.QVGA() ? TILEWIDTH : iconsPanel.GetArea().y + iconsPanel.GetArea().h );
+            pos_bttn = Point( px - BORDERWIDTH, iconsPanel.GetArea().y + iconsPanel.GetArea().h );
         if ( 0 == pos_stat.x && 0 == pos_stat.y )
-            pos_stat = Point( conf.QVGA() ? BORDERWIDTH : px - BORDERWIDTH, conf.QVGA() ? TILEWIDTH : buttonsArea.GetArea().y + buttonsArea.GetArea().h );
+            pos_stat = Point( px - BORDERWIDTH, buttonsArea.GetArea().y + buttonsArea.GetArea().h );
 
-        controlPanel.SetPos( display.width() - controlPanel.GetArea().w - BORDERWIDTH, 0 );
+        controlPanel.SetPos( display.width() - controlPanel.GetArea().width - BORDERWIDTH, 0 );
         radar.SetPos( pos_radr.x, pos_radr.y );
         iconsPanel.SetPos( pos_icon.x, pos_icon.y );
         buttonsArea.SetPos( pos_bttn.x, pos_bttn.y );
@@ -140,29 +136,29 @@ Interface::Basic & Interface::Basic::Get( void )
     return basic;
 }
 
-const Rect & Interface::Basic::GetScrollLeft( void ) const
+const fheroes2::Rect & Interface::Basic::GetScrollLeft( void ) const
 {
     return scrollLeft;
 }
 
-const Rect & Interface::Basic::GetScrollRight( void ) const
+const fheroes2::Rect & Interface::Basic::GetScrollRight( void ) const
 {
     return scrollRight;
 }
 
-const Rect & Interface::Basic::GetScrollTop( void ) const
+const fheroes2::Rect & Interface::Basic::GetScrollTop( void ) const
 {
     return scrollTop;
 }
 
-const Rect & Interface::Basic::GetScrollBottom( void ) const
+const fheroes2::Rect & Interface::Basic::GetScrollBottom( void ) const
 {
     return scrollBottom;
 }
 
 bool Interface::Basic::NeedRedraw( void ) const
 {
-    return redraw;
+    return redraw != 0;
 }
 
 void Interface::Basic::SetRedraw( int f )
@@ -173,66 +169,45 @@ void Interface::Basic::SetRedraw( int f )
 void Interface::Basic::Redraw( int force )
 {
     fheroes2::Display & display = fheroes2::Display::instance();
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
-    if ( ( redraw | force ) & REDRAW_GAMEAREA )
+    const int combinedRedraw = redraw | force;
+    const bool hideInterface = conf.ExtGameHideInterface();
+
+    if ( combinedRedraw & REDRAW_GAMEAREA )
         gameArea.Redraw( display, LEVEL_ALL );
 
-    if ( ( conf.ExtGameHideInterface() && conf.ShowRadar() ) || ( ( redraw | force ) & REDRAW_RADAR ) )
+    if ( ( hideInterface && conf.ShowRadar() ) || ( combinedRedraw & REDRAW_RADAR ) )
         radar.Redraw();
 
-    if ( ( conf.ExtGameHideInterface() && conf.ShowIcons() ) || ( ( redraw | force ) & REDRAW_ICONS ) )
+    if ( ( hideInterface && conf.ShowIcons() ) || ( combinedRedraw & REDRAW_ICONS ) )
         iconsPanel.Redraw();
-    else if ( ( redraw | force ) & REDRAW_HEROES )
+    else if ( combinedRedraw & REDRAW_HEROES )
         iconsPanel.RedrawIcons( ICON_HEROES );
-    else if ( ( redraw | force ) & REDRAW_CASTLES )
+    else if ( combinedRedraw & REDRAW_CASTLES )
         iconsPanel.RedrawIcons( ICON_CASTLES );
 
-    if ( ( conf.ExtGameHideInterface() && conf.ShowButtons() ) || ( ( redraw | force ) & REDRAW_BUTTONS ) )
+    if ( ( hideInterface && conf.ShowButtons() ) || ( combinedRedraw & REDRAW_BUTTONS ) )
         buttonsArea.Redraw();
 
-    if ( ( conf.ExtGameHideInterface() && conf.ShowStatus() ) || ( ( redraw | force ) & REDRAW_STATUS ) )
+    if ( ( hideInterface && conf.ShowStatus() ) || ( combinedRedraw & REDRAW_STATUS ) )
         statusWindow.Redraw();
 
-    if ( conf.ExtGameHideInterface() && conf.ShowControlPanel() && ( redraw & REDRAW_GAMEAREA ) )
+    if ( hideInterface && conf.ShowControlPanel() && ( redraw & REDRAW_GAMEAREA ) )
         controlPanel.Redraw();
 
-    // show system info
-    if ( conf.ExtGameShowSystemInfo() )
-        RedrawSystemInfo( ( conf.ExtGameHideInterface() ? 10 : 26 ), display.height() - ( conf.ExtGameHideInterface() ? 14 : 30 ), System::GetMemoryUsage() );
-
-    if ( ( redraw | force ) & REDRAW_BORDER )
+    if ( combinedRedraw & REDRAW_BORDER )
         GameBorderRedraw();
 
     redraw = 0;
-}
-
-void Interface::Basic::RedrawSystemInfo( s32 cx, s32 cy, u32 usage )
-{
-    std::ostringstream os;
-
-    os << "mem. usage: " << usage / 1024 << "Kb"
-       << ", cur. time: ";
-
-    time_t rawtime;
-    std::time( &rawtime );
-    // strtime format: Www Mmm dd hh:mm:ss yyyy
-    const char * strtime = std::ctime( &rawtime );
-
-    // draw info
-    os << std::string( &strtime[11], 8 );
-
-    system_info.Set( os.str() );
-    system_info.Blit( cx, cy );
 }
 
 s32 Interface::Basic::GetDimensionDoorDestination( s32 from, u32 distance, bool water ) const
 {
     fheroes2::Display & display = fheroes2::Display::instance();
 
-    Interface::Radar & radar = Interface::Basic::Get().GetRadar();
-    const Rect & radarArea = radar.GetArea();
-    Settings & conf = Settings::Get();
+    const Rect & radarArea = Interface::Basic::Get().GetRadar().GetArea();
+    const Settings & conf = Settings::Get();
     const fheroes2::Sprite & viewDoor = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::EVIWDDOR : ICN::VIEWDDOR ), 0 );
     fheroes2::ImageRestorer back( display, radarArea.x, radarArea.y, radarArea.w, radarArea.h );
 
@@ -282,8 +257,7 @@ s32 Interface::Basic::GetDimensionDoorDestination( s32 from, u32 distance, bool 
             if ( valid ) {
                 const Maps::Tiles & tile = world.GetTiles( dst );
 
-                valid = ( ( spellROI & mp ) && ( !tile.isFog( conf.CurrentColor() ) ) && MP2::isClearGroundObject( tile.GetObject() )
-                          && water == world.GetTiles( dst ).isWater() );
+                valid = ( ( spellROI & mp ) && MP2::isClearGroundObject( tile.GetObject() ) && water == world.GetTiles( dst ).isWater() );
             }
 
             cursor.SetThemes( valid ? ( water ? Cursor::BOAT : Cursor::MOVE ) : Cursor::WAR_NONE );

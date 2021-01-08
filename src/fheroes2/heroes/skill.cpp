@@ -201,7 +201,7 @@ std::string Skill::Primary::StringDescription( int skill, const Heroes * hero )
 
     case KNOWLEDGE:
         res = _(
-            "Your knowledge determines how many spell points your hero may have. Under normal cirumstances, a hero is limited to 10 spell points per level of knowledge." );
+            "Your knowledge determines how many spell points your hero may have. Under normal circumstances, a hero is limited to 10 spell points per level of knowledge." );
         if ( hero )
             hero->GetKnowledge( &ext );
         break;
@@ -218,13 +218,6 @@ std::string Skill::Primary::StringDescription( int skill, const Heroes * hero )
     }
 
     return res;
-}
-
-std::string Skill::Primary::StringSkills( const std::string & sep ) const
-{
-    std::ostringstream os;
-    os << GetString( attack ) << sep << GetString( defense ) << sep << GetString( knowledge ) << sep << GetString( power );
-    return os.str();
 }
 
 const char * Skill::Level::String( int level )
@@ -452,90 +445,117 @@ std::string Skill::Secondary::GetDescription( void ) const
             break;
         }
         break;
-    case ARCHERY:
-        str = _n( "Increases the damage done by range attacking creatures by %{count} percent.",
-                  "Increases the damage done by range attacking creatures by %{count} percent.", count );
+    case ARCHERY: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases the damage done by range attacking creatures by %{count} percent." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
-    case LOGISTICS:
-        str = _n( "Increases your hero's movement points by %{count} percent.", "Increases your hero's movement points by %{count} percent.", count );
+    }
+    case LOGISTICS: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases your hero's movement points by %{count} percent." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
-    case SCOUTING:
-        str = _n( "Increases your hero's viewable area by %{count} square.", "Increases your hero's viewable area by %{count} squares.", count );
+    }
+    case SCOUTING: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases your hero's viewable area by %{count} square." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
+    }
     case DIPLOMACY:
-        str = _( "Allows you to negotiate with monsters who are weaker than your group." );
+        str = std::string( GetName() ) + _( " allows you to negotiate with monsters who are weaker than your group." );
         str.append( " " );
-        str.append( _n( "Approximately %{count} percent of the creatures may offer to join you.",
-                        "Approximately %{count} percent of the creatures may offer to join you.", count ) );
-        break;
-    case NAVIGATION:
-        str = _n( "Increases your hero's movement points over water by %{count} percent.", "Increases your hero's movement points over water by %{count} percent.",
-                  count );
-        break;
-    case LEADERSHIP:
-        str = _n( "Increases your hero's troops morale by %{count}.", "Increases your hero's troops morale by %{count}.", count );
-        break;
-    case WISDOM: {
         switch ( Level() ) {
         case Level::BASIC:
-            str = _( "Allows your hero to learn third level spells." );
+        case Level::ADVANCED: {
+            str.append( _n( "Approximately %{count} percent of the creatures may offer to join you.",
+                            "Approximately %{count} percent of the creatures may offer to join you.", count ) );
+        } break;
+        case Level::EXPERT:
+            str.append( _( "All of the creatures may offer to join you." ) );
+            break;
+        default:
+            break;
+        }
+        break;
+    case NAVIGATION: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases your hero's movement points over water by %{count} percent." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
+        break;
+    }
+    case LEADERSHIP: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases your hero's troops morale by %{count}." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
+        break;
+    }
+    case WISDOM: {
+        str = GetName();
+        switch ( Level() ) {
+        case Level::BASIC:
+            str += _( " allows your hero to learn third level spells." );
             break;
         case Level::ADVANCED:
-            str = _( "Allows your hero to learn fourth level spells." );
+            str += _( " allows your hero to learn fourth level spells." );
             break;
         case Level::EXPERT:
-            str = _( "Allows your hero to learn fifth level spells." );
+            str += _( " allows your hero to learn fifth level spells." );
             break;
         default:
             break;
         }
         break;
     }
-    case MYSTICISM:
-        str = _n( "Regenerates %{count} of your hero's spell point per day.", "Regenerates %{count} of your hero's spell points per day.", count );
+    case MYSTICISM: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " regenerates %{count} of your hero's spell point per day." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
-    case LUCK:
-        str = _n( "Increases your hero's luck by %{count}.", "Increases your hero's luck by %{count}.", count );
+    }
+    case LUCK: {
+        const std::string tmpDescription( std::string( GetName() ) + std::string( " increases your hero's luck by %{count}." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
+    }
     case BALLISTICS:
+        str = GetName();
         switch ( Level() ) {
         case Level::BASIC:
-            str = _( "Gives your hero's catapult shots a greater chance to hit and do damage to castle walls." );
+            str += _( " gives your hero's catapult shots a greater chance to hit and do damage to castle walls." );
             break;
         case Level::ADVANCED:
-            str = _( "Gives your hero's catapult an extra shot, and each shot has a greater chance to hit and do damage to castle walls." );
+            str += _( " gives your hero's catapult an extra shot, and each shot has a greater chance to hit and do damage to castle walls." );
             break;
         case Level::EXPERT:
-            str = _( "Gives your hero's catapult an extra shot, and each shot automatically destroys any wall, except a fortified wall in a Knight town." );
+            str += _( " gives your hero's catapult an extra shot, and each shot automatically destroys any wall, except a fortified wall in a Knight town." );
             break;
         default:
             break;
         }
         break;
     case EAGLEEYE:
+        str = GetName();
         switch ( Level() ) {
         case Level::BASIC:
-            str = _n( "Gives your hero a %{count} percent chance to learn any given 1st or 2nd level enemy spell used against him in a combat.",
-                      "Gives your hero a %{count} percent chance to learn any given 1st or 2nd level enemy spell used against him in a combat.", count );
+            str += _n( " gives your hero a %{count} percent chance to learn any given 1st or 2nd level enemy spell used against him in a combat.",
+                       " gives your hero a %{count} percent chance to learn any given 1st or 2nd level enemy spell used against him in a combat.", count );
             break;
         case Level::ADVANCED:
-            str = _n( "Gives your hero a %{count} percent chance to learn any given 3rd level spell (or below) used against him in combat.",
-                      "Gives your hero a %{count} percent chance to learn any given 3rd level spell (or below) used against him in combat.", count );
+            str += _n( " gives your hero a %{count} percent chance to learn any given 3rd level spell (or below) used against him in combat.",
+                       " gives your hero a %{count} percent chance to learn any given 3rd level spell (or below) used against him in combat.", count );
             break;
         case Level::EXPERT:
-            str = _n( "Gives your hero a %{count} percent chance to learn any given 4th level spell (or below) used against him in combat.",
-                      "Gives your hero a %{count} percent chance to learn any given 4th level spell (or below) used against him in combat.", count );
+            str += _n( " gives your hero a %{count} percent chance to learn any given 4th level spell (or below) used against him in combat.",
+                       " gives your hero a %{count} percent chance to learn any given 4th level spell (or below) used against him in combat.", count );
             break;
         default:
             break;
         }
         break;
-    case NECROMANCY:
-        str = _n( "Allows %{count} percent of the creatures killed in combat to be brought back from the dead as Skeletons.",
-                  "Allows %{count} percent of the creatures killed in combat to be brought back from the dead as Skeletons.", count );
+    case NECROMANCY: {
+        const std::string tmpDescription( std::string( GetName() )
+                                          + std::string( " allows %{count} percent of the creatures killed in combat to be brought back from the dead as Skeletons." ) );
+        str = _n( tmpDescription.c_str(), tmpDescription.c_str(), count );
         break;
+    }
     case ESTATES:
-        str = _n( "Your hero produce %{count} gold pieces per turn as tax revenue from estates.",
+        str = _n( "Your hero produces %{count} gold pieces per turn as tax revenue from estates.",
                   "Your hero produces %{count} gold pieces per turn as tax revenue from estates.", count );
         break;
     default:
@@ -594,31 +614,43 @@ Skill::SecSkills::SecSkills( int race )
 
 int Skill::SecSkills::GetLevel( int skill ) const
 {
-    const_iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &Secondary::isSkill ), skill ) );
+    const_iterator it = std::find_if( begin(), end(), [skill]( const Secondary & v ) { return v.isSkill( skill ); } );
 
     return it == end() ? Level::NONE : ( *it ).Level();
 }
 
 u32 Skill::SecSkills::GetValues( int skill ) const
 {
-    const_iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &Secondary::isSkill ), skill ) );
+    const_iterator it = std::find_if( begin(), end(), [skill]( const Secondary & v ) { return v.isSkill( skill ); } );
 
     return it == end() ? 0 : ( *it ).GetValues();
 }
 
 int Skill::SecSkills::Count( void ) const
 {
-    return std::count_if( begin(), end(), std::mem_fun_ref( &Secondary::isValid ) );
+    return std::count_if( begin(), end(), []( const Secondary & v ) { return v.isValid(); } );
+}
+
+int Skill::SecSkills::GetTotalLevel() const
+{
+    int result = 0;
+    for ( const Skill::Secondary & skill : *this ) {
+        if ( skill.isValid() ) {
+            result += skill.Level();
+        }
+    }
+    return result;
 }
 
 void Skill::SecSkills::AddSkill( const Skill::Secondary & skill )
 {
     if ( skill.isValid() ) {
-        iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &Secondary::isSkill ), skill.Skill() ) );
+        const int skillValue = skill.Skill();
+        iterator it = std::find_if( begin(), end(), [skillValue]( const Secondary & v ) { return v.isSkill( skillValue ); } );
         if ( it != end() )
             ( *it ).SetLevel( skill.Level() );
         else {
-            it = std::find_if( begin(), end(), std::not1( std::mem_fun_ref( &Secondary::isValid ) ) );
+            it = std::find_if( begin(), end(), []( const Secondary & v ) { return !v.isValid(); } );
             if ( it != end() )
                 ( *it ).Set( skill );
             else if ( size() < HEROESMAXSKILL )
@@ -629,7 +661,7 @@ void Skill::SecSkills::AddSkill( const Skill::Secondary & skill )
 
 Skill::Secondary * Skill::SecSkills::FindSkill( int skill )
 {
-    iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &Secondary::isSkill ), skill ) );
+    iterator it = std::find_if( begin(), end(), [skill]( const Secondary & v ) { return v.isSkill( skill ); } );
     return it != end() ? &( *it ) : NULL;
 }
 
@@ -693,17 +725,6 @@ int Skill::SecondaryGetWeightSkillFromRace( int race, int skill )
     return 0;
 }
 
-/*
-std::vector<int> Skill::SecondarySkills(void)
-{
-    const int vals[] = { Secondary::PATHFINDING, Secondary::ARCHERY, Secondary::LOGISTICS, Secondary::SCOUTING,
-            Secondary::DIPLOMACY, Secondary::NAVIGATION, Secondary::LEADERSHIP, Secondary::WISDOM, Secondary::MYSTICISM,
-            Secondary::LUCK, Secondary::BALLISTICS, Secondary::EAGLEEYE, Secondary::NECROMANCY, Secondary::ESTATES };
-
-    return std::vector<int>(vals, ARRAY_COUNT_END(vals));
-}
-*/
-
 int Skill::SecondaryPriorityFromRace( int race, const std::vector<int> & exclude )
 {
     Rand::Queue parts( MAXSECONDARYSKILL );
@@ -746,7 +767,7 @@ void Skill::SecSkills::FindSkillsForLevelUp( int race, Secondary & sec1, Seconda
         sec2.NextLevel();
     }
     else if ( Settings::Get().ExtHeroAllowBannedSecSkillsUpgrade() ) {
-        const_iterator it = std::find_if( begin(), end(), std::not1( std::bind2nd( std::mem_fun_ref( &Secondary::isLevel ), static_cast<int>( Level::EXPERT ) ) ) );
+        const_iterator it = std::find_if( begin(), end(), []( const Secondary & v ) { return !v.isLevel( static_cast<int>( Level::EXPERT ) ); } );
         if ( it != end() ) {
             sec1.SetSkill( ( *it ).Skill() );
             sec1.SetLevel( GetLevel( sec1.Skill() ) );
@@ -817,9 +838,7 @@ StreamBase & Skill::operator>>( StreamBase & sb, SecSkills & ss )
     std::vector<Secondary> & v = ss;
     sb >> v;
 
-    if ( FORMAT_VERSION_3255 > Game::GetLoadVersion() ) {
-        if ( v.size() > HEROESMAXSKILL )
-            v.resize( HEROESMAXSKILL );
-    }
+    if ( v.size() > HEROESMAXSKILL )
+        v.resize( HEROESMAXSKILL );
     return sb;
 }

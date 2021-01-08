@@ -29,7 +29,6 @@
 
 class HeroBase;
 class StreamBase;
-class StreamBase;
 
 class Spell
 {
@@ -140,6 +139,7 @@ public:
     bool isCombat( void ) const;
     bool isAdventure( void ) const;
     bool isDamage( void ) const;
+    bool isSingleTarget() const;
     bool isRestore( void ) const;
     bool isResurrect( void ) const;
     bool isMindInfluence( void ) const;
@@ -152,6 +152,7 @@ public:
     bool isApplyToEnemies( void ) const;
     bool isMassActions( void ) const;
     bool isRaceCompatible( int race ) const;
+    bool isEnabled() const;
 
     /* return index sprite spells.icn */
     u32 IndexSprite( void ) const;

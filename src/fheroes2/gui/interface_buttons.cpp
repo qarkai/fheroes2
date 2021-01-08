@@ -114,9 +114,25 @@ void Interface::ButtonsArea::Redraw( void )
     }
 }
 
+void Interface::ButtonsArea::ResetButtons( void )
+{
+    if ( buttonNextHero.isEnabled() )
+        buttonNextHero.drawOnRelease();
+    buttonMovement.drawOnRelease();
+    buttonKingdom.drawOnRelease();
+    if ( buttonSpell.isEnabled() )
+        buttonSpell.drawOnRelease();
+    buttonEndTurn.drawOnRelease();
+    buttonAdventure.drawOnRelease();
+    buttonFile.drawOnRelease();
+    buttonSystem.drawOnRelease();
+    LocalEvent & le = LocalEvent::Get();
+    le.ResetPressLeft();
+}
+
 int Interface::ButtonsArea::QueueEventProcessing( void )
 {
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
     LocalEvent & le = LocalEvent::Get();
     int res = Game::CANCEL;
 
@@ -193,8 +209,21 @@ void Interface::ButtonsArea::SetButtonStatus()
     else
         buttonSpell.enable();
 
-    if ( World::Get().GetKingdom( Settings::Get().CurrentColor() ).GetHeroes().empty() )
-        buttonNextHero.disable();
-    else
+    const Kingdom & kingdom = world.GetKingdom( Settings::Get().CurrentColor() );
+    const KingdomHeroes & heroes = kingdom.GetHeroes();
+
+    bool isMovableHeroPresent = false;
+    for ( size_t i = 0; i < heroes.size(); ++i ) {
+        if ( heroes[i]->MayStillMove() ) {
+            isMovableHeroPresent = true;
+            break;
+        }
+    }
+
+    if ( isMovableHeroPresent ) {
         buttonNextHero.enable();
+    }
+    else {
+        buttonNextHero.disable();
+    }
 }

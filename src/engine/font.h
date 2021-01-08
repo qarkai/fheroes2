@@ -26,13 +26,13 @@
 #include <string>
 #include <vector>
 
-#include "surface.h"
+#include "image.h"
 #include "types.h"
-
-class RGBA;
 
 #ifdef WITH_TTF
 #include <SDL_ttf.h>
+
+class RGBA;
 
 class FontTTF
 {
@@ -57,10 +57,10 @@ public:
     int Descent( void ) const;
     int LineSkip( void ) const;
 
-    Surface RenderText( const std::string &, const RGBA &, bool solid /* or blended */ );
-    Surface RenderChar( char, const RGBA &, bool solid /* or blended */ );
-    Surface RenderUnicodeText( const std::vector<u16> &, const RGBA &, bool solid /* or blended */ );
-    Surface RenderUnicodeChar( u16, const RGBA &, bool solid /* or blended */ );
+    // Surface RenderText( const std::string &, const RGBA &, bool solid /* or blended */ );
+    // Surface RenderChar( char, const RGBA &, bool solid /* or blended */ );
+    // Surface RenderUnicodeText( const std::vector<u16> &, const RGBA &, bool solid /* or blended */ );
+    // Surface RenderUnicodeChar( u16, const RGBA &, bool solid /* or blended */ );
 
 protected:
     TTF_Font * ptr;
@@ -78,12 +78,12 @@ private:
 class FontPSF
 {
 public:
-    FontPSF( const std::string &, const Size & );
+    FontPSF( const std::string & filePath, const fheroes2::Size & size );
 
-    Surface RenderText( const std::string &, const RGBA & ) const;
+    fheroes2::Image RenderText( const std::string & text, const uint8_t color ) const;
 
 private:
-    std::vector<u8> buf;
-    Size size;
+    const std::vector<uint8_t> _data;
+    const fheroes2::Size _size;
 };
 #endif

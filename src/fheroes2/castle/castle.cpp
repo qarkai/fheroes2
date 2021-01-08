@@ -305,13 +305,16 @@ void Castle::PostLoad( void )
         captain.LoadDefaults( HeroBase::CAPTAIN, race );
 
     // MageGuild
-    mageguild.Builds( race, HaveLibraryCapability() );
+    mageguild.initialize( race, HaveLibraryCapability() );
     // educate heroes and captain
     EducateHeroes();
 
     // AI troops auto pack for gray towns
-    if ( Color::NONE == GetColor() && !Modes( CUSTOMARMY ) )
-        JoinRNDArmy();
+    if ( Color::NONE == GetColor() && !Modes( CUSTOMARMY ) ) {
+        // towns get 4 reinforcements at the start of the game
+        for ( int i = 0; i < 4; ++i )
+            JoinRNDArmy();
+    }
 
     // fix shipyard
     if ( !HaveNearlySea() )
@@ -343,7 +346,7 @@ const Captain & Castle::GetCaptain( void ) const
 
 bool Castle::isCastle( void ) const
 {
-    return building & BUILD_CASTLE;
+    return ( building & BUILD_CASTLE ) != 0;
 }
 
 bool Castle::isCapital( void ) const
@@ -353,7 +356,7 @@ bool Castle::isCapital( void ) const
 
 u32 Castle::CountBuildings( void ) const
 {
-    const u32 tavern = ( race == Race::NECR ? ( Settings::Get().PriceLoyaltyVersion() ? BUILD_SHRINE : 0 ) : BUILD_TAVERN );
+    const u32 tavern = ( race == Race::NECR ? ( Settings::Get().PriceLoyaltyVersion() ? BUILD_SHRINE : BUILD_NOTHING ) : BUILD_TAVERN );
 
     return CountBits( building
                       & ( BUILD_THIEVESGUILD | tavern | BUILD_SHIPYARD | BUILD_WELL | BUILD_STATUE | BUILD_LEFTTURRET | BUILD_RIGHTTURRET | BUILD_MARKETPLACE | BUILD_WEL2
@@ -394,6 +397,67 @@ void Castle::EducateHeroes( void )
     }
 }
 
+int Castle::getBuildingValue() const
+{
+    int value = CountBuildings();
+
+    // Additional value for the most important buildings
+    if ( isBuild( BUILD_CASTLE ) )
+        value += 5;
+
+    if ( isBuild( DWELLING_MONSTER6 ) )
+        value += 6;
+
+    if ( race == Race::WRLK && isBuild( DWELLING_UPGRADE7 ) )
+        value += 2;
+
+    // DWELLING_UPGRADE7 resolves to a negative, can't use <= operator
+    for ( uint32_t upgrade = DWELLING_UPGRADE2; upgrade <= DWELLING_UPGRADE6; upgrade <<= 1 ) {
+        if ( isBuild( upgrade ) )
+            ++value;
+    }
+
+    int increase = 1;
+    for ( uint32_t guild = BUILD_MAGEGUILD2; guild <= BUILD_MAGEGUILD5; guild <<= 1 ) {
+        if ( isBuild( guild ) )
+            value += increase;
+        ++increase;
+    }
+
+    return value;
+}
+
+double Castle::getVisitValue( const Heroes & hero ) const
+{
+    double spellValue = 0;
+    const SpellStorage & guildSpells = mageguild.GetSpells( GetLevelMageGuild(), isLibraryBuild() );
+    for ( const Spell & spell : guildSpells ) {
+        if ( hero.CanLearnSpell( spell ) && !hero.HaveSpell( spell, true ) ) {
+            spellValue += spell.Level() * 250.0;
+        }
+    }
+
+    // we don't spend actual funds, so make a copy here
+    Funds potentialFunds = GetKingdom().GetFunds();
+    Troops reinforcement;
+    for ( uint32_t dw = DWELLING_MONSTER6; dw >= DWELLING_MONSTER1; dw >>= 1 ) {
+        if ( isBuild( dw ) ) {
+            const Monster monster( race, GetActualDwelling( dw ) );
+            const uint32_t available = getMonstersInDwelling( dw );
+
+            uint32_t couldRecruit = potentialFunds.getLowestQuotient( monster.GetCost() );
+            if ( available < couldRecruit )
+                couldRecruit = available;
+
+            potentialFunds -= ( monster.GetCost() * couldRecruit );
+
+            reinforcement.PushBack( monster, couldRecruit );
+        }
+    }
+
+    return spellValue + hero.GetArmy().getReinforcementValue( reinforcement );
+}
+
 void Castle::ActionNewDay( void )
 {
     EducateHeroes();
@@ -432,6 +496,7 @@ u32 * Castle::GetDwelling( u32 dw )
 void Castle::ActionNewWeek( void )
 {
     ResetModes( DISABLEHIRES );
+    const bool isNeutral = GetColor() == Color::NONE;
 
     // increase population
     if ( world.GetWeekType().GetType() != Week::PLAGUE ) {
@@ -451,8 +516,11 @@ void Castle::ActionNewWeek( void )
                 if ( ( dwellings1[ii] == DWELLING_MONSTER1 ) && ( building & BUILD_WEL2 ) )
                     growth += GetGrownWel2();
 
+                if ( isControlAI() )
+                    growth *= Difficulty::GetUnitGrowthBonus( Settings::Get().GameDifficulty() );
+
                 // neutral town: half population (normal for begin month)
-                if ( GetColor() == Color::NONE && !world.BeginMonth() )
+                if ( isNeutral && !world.BeginMonth() )
                     growth /= 2;
 
                 *dw += growth;
@@ -466,16 +534,20 @@ void Castle::ActionNewWeek( void )
             for ( u32 ii = 0; dwellings2[ii]; ++ii )
                 if ( NULL != ( dw = GetDwelling( dwellings2[ii] ) ) ) {
                     const Monster mons( race, dwellings2[ii] );
-                    if ( mons.isValid() && mons() == world.GetWeekType().GetMonster() ) {
+                    if ( mons.isValid() && mons.GetID() == world.GetWeekType().GetMonster() ) {
                         *dw += GetGrownWeekOf( mons );
                         break;
                     }
                 }
         }
 
-        // neutral town: small increase garrisons (random)
-        if ( Color::NONE == GetColor() && !Modes( CUSTOMARMY ) )
+        // neutral town: increase garrisons
+        if ( isNeutral && !Modes( CUSTOMARMY ) ) {
             JoinRNDArmy();
+            // if it's a town there's 40% chance (or it's a castle) to get extra troops
+            if ( isCastle() || Rand::Get( 1, 100 ) <= 40 )
+                JoinRNDArmy();
+        }
     }
 }
 
@@ -497,7 +569,7 @@ void Castle::ActionNewMonth( void )
         for ( u32 ii = 0; dwellings[ii]; ++ii )
             if ( NULL != ( dw = GetDwelling( dwellings[ii] ) ) ) {
                 const Monster mons( race, dwellings[ii] );
-                if ( mons.isValid() && mons() == world.GetWeekType().GetMonster() ) {
+                if ( mons.isValid() && mons.GetID() == world.GetWeekType().GetMonster() ) {
                     *dw += *dw * GetGrownMonthOf() / 100;
                     break;
                 }
@@ -546,7 +618,7 @@ bool Castle::isLibraryBuild( void ) const
 
 void Castle::MageGuildEducateHero( HeroBase & hero ) const
 {
-    mageguild.EducateHero( hero, GetLevelMageGuild(), isLibraryBuild() );
+    mageguild.educateHero( hero, GetLevelMageGuild(), isLibraryBuild() );
 }
 
 const char * Castle::GetStringBuilding( u32 build, int race )
@@ -724,7 +796,7 @@ const char * Castle::GetStringBuilding( u32 build, int race )
 const char * Castle::GetDescriptionBuilding( u32 build, int race )
 {
     const char * desc_build[] = {
-        _( "The Thieves' Guild provides information on enemy players. Thieves' Guilds can also provide scouting information on enemy towns. Additional Guilds provide more information" ),
+        _( "The Thieves' Guild provides information on enemy players. Thieves' Guilds can also provide scouting information on enemy towns. Additional Guilds provide more information." ),
         _( "The Tavern increases morale for troops defending the castle." ),
         _( "The Shipyard allows ships to be built." ),
         _( "The Well increases the growth rate of all dwellings by %{count} creatures per week." ),
@@ -892,6 +964,9 @@ Heroes * Castle::RecruitHero( Heroes * hero )
     if ( kingdom.GetLastLostHero() == hero )
         kingdom.ResetLastLostHero();
 
+    // actually update available heroes to recruit
+    kingdom.GetRecruits();
+
     kingdom.OddFundsResource( PaymentConditions::RecruitHero( hero->GetLevel() ) );
 
     // update spell book
@@ -910,133 +985,128 @@ Heroes * Castle::RecruitHero( Heroes * hero )
 }
 
 /* recruit monster from building to castle army */
-bool Castle::RecruitMonster( const Troop & troop )
+bool Castle::RecruitMonster( const Troop & troop, bool showDialog )
 {
     if ( !troop.isValid() )
         return false;
 
-    int dw_index = 0;
+    int dwellingIndex = 0;
 
     switch ( troop.GetDwelling() ) {
     case DWELLING_MONSTER1:
-        dw_index = 0;
+        dwellingIndex = 0;
         break;
     case DWELLING_UPGRADE2:
     case DWELLING_MONSTER2:
-        dw_index = 1;
+        dwellingIndex = 1;
         break;
     case DWELLING_UPGRADE3:
     case DWELLING_MONSTER3:
-        dw_index = 2;
+        dwellingIndex = 2;
         break;
     case DWELLING_UPGRADE4:
     case DWELLING_MONSTER4:
-        dw_index = 3;
+        dwellingIndex = 3;
         break;
     case DWELLING_UPGRADE5:
     case DWELLING_MONSTER5:
-        dw_index = 4;
+        dwellingIndex = 4;
         break;
     case DWELLING_UPGRADE7:
     case DWELLING_UPGRADE6:
     case DWELLING_MONSTER6:
-        dw_index = 5;
+        dwellingIndex = 5;
         break;
     default:
         return false;
     }
 
-    Monster ms = troop;
-    u32 count = troop.GetCount();
+    uint32_t count = troop.GetCount();
 
     // fix count
-    if ( dwelling[dw_index] < count )
-        count = dwelling[dw_index];
+    if ( dwelling[dwellingIndex] < count )
+        count = dwelling[dwellingIndex];
 
     // buy
-    const payment_t paymentCosts = ms.GetCost() * count;
+    const payment_t paymentCosts = troop.GetCost();
     Kingdom & kingdom = GetKingdom();
 
     if ( !kingdom.AllowPayment( paymentCosts ) )
         return false;
 
     // first: guard army join
-    if ( !GetArmy().JoinTroop( ms, count ) ) {
+    if ( !GetArmy().JoinTroop( troop ) ) {
         CastleHeroes heroes = world.GetHeroes( *this );
 
-        if ( !heroes.Guest() || !heroes.Guest()->GetArmy().JoinTroop( ms, count ) ) {
-            Dialog::Message( "", _( "There is no room in the garrison for this army." ), Font::BIG, Dialog::OK );
+        if ( !heroes.Guest() || !heroes.Guest()->GetArmy().JoinTroop( troop ) ) {
+            if ( showDialog ) {
+                Dialog::Message( "", _( "There is no room in the garrison for this army." ), Font::BIG, Dialog::OK );
+            }
             return false;
         }
     }
 
     kingdom.OddFundsResource( paymentCosts );
-    dwelling[dw_index] -= count;
+    dwelling[dwellingIndex] -= count;
 
-    DEBUG( DBG_GAME, DBG_INFO, name << " recruit: " << ms.GetMultiName() << "(" << count << ")" );
+    DEBUG( DBG_GAME, DBG_TRACE, name << " recruit: " << troop.GetMultiName() << "(" << count << ")" );
 
     return true;
 }
 
-bool Castle::RecruitMonsterFromDwelling( u32 dw, u32 count )
+bool Castle::RecruitMonsterFromDwelling( uint32_t dw, uint32_t count, bool force )
 {
-    int dw_index = 0;
+    Monster monster( race, GetActualDwelling( dw ) );
+    Troop troop( monster, std::min( count, getRecruitLimit( monster, GetKingdom().GetFunds() ) ) );
 
-    switch ( dw ) {
-    case DWELLING_MONSTER1:
-        dw_index = 0;
-        break;
-    case DWELLING_UPGRADE2:
-    case DWELLING_MONSTER2:
-        dw_index = 1;
-        break;
-    case DWELLING_UPGRADE3:
-    case DWELLING_MONSTER3:
-        dw_index = 2;
-        break;
-    case DWELLING_UPGRADE4:
-    case DWELLING_MONSTER4:
-        dw_index = 3;
-        break;
-    case DWELLING_UPGRADE5:
-    case DWELLING_MONSTER5:
-        dw_index = 4;
-        break;
-    case DWELLING_UPGRADE7:
-    case DWELLING_UPGRADE6:
-    case DWELLING_MONSTER6:
-        dw_index = 5;
-        break;
-    default:
+    if ( !RecruitMonster( troop, false ) ) {
+        if ( force ) {
+            Troop * weak = GetArmy().GetWeakestTroop();
+            if ( weak && weak->GetStrength() < troop.GetStrength() ) {
+                DEBUG( DBG_GAME, DBG_INFO,
+                       name << ": " << troop.GetCount() << " " << troop.GetMultiName() << " replace " << weak->GetCount() << " " << weak->GetMultiName() );
+                weak->Set( troop );
+                return true;
+            }
+        }
+
         return false;
     }
-
-    const Monster ms( race, GetActualDwelling( dw ) );
-
-    // fix count
-    if ( dwelling[dw_index] < count )
-        count = dwelling[dw_index];
-
-    // buy
-    const payment_t paymentCosts = ms.GetCost() * count;
-    Kingdom & kingdom = GetKingdom();
-
-    // may be guardian present
-    Army & army2 = GetArmy();
-
-    if ( !kingdom.AllowPayment( paymentCosts ) || !army2.JoinTroop( ms, count ) )
-        return false;
-
-    kingdom.OddFundsResource( paymentCosts );
-    dwelling[dw_index] -= count;
-
-    DEBUG( DBG_GAME, DBG_INFO, name << " recruit: " << ms.GetMultiName() << "(" << count << ")" );
-
     return true;
+}
+
+void Castle::recruitBestAvailable( Funds budget )
+{
+    for ( uint32_t dw = DWELLING_MONSTER6; dw >= DWELLING_MONSTER1; dw >>= 1 ) {
+        if ( isBuild( dw ) ) {
+            const Monster monster( race, GetActualDwelling( dw ) );
+            const uint32_t willRecruit = getRecruitLimit( monster, budget );
+
+            if ( RecruitMonsterFromDwelling( dw, willRecruit, true ) ) {
+                // success, reduce the budget
+                budget -= ( monster.GetCost() * willRecruit );
+            }
+        }
+    }
+}
+
+uint32_t Castle::getRecruitLimit( const Monster & monster, const Funds & budget ) const
+{
+    // validate that monster is from the current castle
+    if ( monster.GetRace() != race )
+        return 0;
+
+    const uint32_t available = getMonstersInDwelling( monster.GetDwelling() );
+
+    uint32_t willRecruit = budget.getLowestQuotient( monster.GetCost() );
+    if ( available < willRecruit )
+        return available;
+
+    return willRecruit;
 }
 
 /* return current count monster in dwelling */
-u32 Castle::GetDwellingLivedCount( u32 dw ) const
+u32 Castle::getMonstersInDwelling( u32 dw ) const
 {
     switch ( dw ) {
     case DWELLING_MONSTER1:
@@ -1522,13 +1592,13 @@ bool Castle::BuyBuilding( u32 build )
 }
 
 /* draw image castle to position */
-void Castle::DrawImageCastle( const Point & pt )
+void Castle::DrawImageCastle( const Point & pt ) const
 {
     fheroes2::Display & display = fheroes2::Display::instance();
     const Maps::Tiles & tile = world.GetTiles( GetIndex() );
 
     u32 index = 0;
-    Point dst_pt;
+    fheroes2::Point dst_pt;
 
     // draw ground
     switch ( tile.GetGround() ) {
@@ -2013,27 +2083,6 @@ int Castle::GetICNBuilding( u32 build, int race )
     return ICN::UNKNOWN;
 }
 
-bool Castle::isBuildingCycling( uint32_t building, int race )
-{
-    switch ( building ) {
-    case BUILD_MOAT:
-        return true;
-    case BUILD_CAPTAIN:
-        if ( race == Race::WRLK || race == Race::KNGT )
-            return true;
-        break;
-    case DWELLING_MONSTER2:
-    case BUILD_WEL2:
-    case BUILD_TAVERN:
-        if ( race == Race::WRLK )
-            return true;
-        break;
-    default:
-        break;
-    }
-    return false;
-}
-
 CastleHeroes Castle::GetHeroes( void ) const
 {
     return world.GetHeroes( *this );
@@ -2218,9 +2267,9 @@ bool Castle::PredicateIsTown( const Castle * castle )
     return castle && !castle->isCastle();
 }
 
-bool Castle::PredicateIsBuildMarketplace( const Castle * castle )
+bool Castle::PredicateIsBuildBuilding( const Castle * castle, const uint32_t building )
 {
-    return castle && castle->isBuild( BUILD_MARKETPLACE );
+    return castle && castle->isBuild( building );
 }
 
 std::string Castle::String( void ) const
@@ -2229,14 +2278,25 @@ std::string Castle::String( void ) const
     const CastleHeroes heroes = GetHeroes();
     const Heroes * hero = NULL;
 
-    os << "name            : " << name << std::endl
-       << "race            : " << Race::String( race ) << std::endl
+    os << "name and type   : " << name << " (" << Race::String( race ) << ")" << std::endl
        << "color           : " << Color::String( GetColor() ) << std::endl
-       << "build           : "
-       << "0x" << std::hex << building << std::dec << std::endl
-       << "present boat    : " << ( PresentBoat() ? "yes" : "no" ) << std::endl
-       << "nearly sea      : " << ( HaveNearlySea() ? "yes" : "no" ) << std::endl
-       << "is castle       : " << ( isCastle() ? "yes" : "no" ) << std::endl
+       << "dwellings       : ";
+
+    for ( uint32_t level = 0; level < 7; ++level ) {
+        // there is no dwelling 7
+        if ( level != 6 && isBuild( DWELLING_MONSTER1 << level ) )
+            os << level + 1;
+
+        if ( level > 0 && isBuild( DWELLING_UPGRADE2 << ( level - 1 ) ) )
+            os << "U, ";
+        else
+            os << ", ";
+    }
+    os << std::endl;
+
+    os << "buildings       : " << CountBuildings() << " (mage guild: " << GetLevelMageGuild() << ")" << std::endl
+       << "coast/has boat  : " << ( HaveNearlySea() ? "yes" : "no" ) << " / " << ( PresentBoat() ? "yes" : "no" ) << std::endl
+       << "is castle       : " << ( isCastle() ? "yes" : "no" ) << " (" << getBuildingValue() << ")" << std::endl
        << "army            : " << army.String() << std::endl;
 
     if ( NULL != ( hero = heroes.Guard() ) ) {
@@ -2250,12 +2310,12 @@ std::string Castle::String( void ) const
     return os.str();
 }
 
-int Castle::GetAttackModificator( std::string * strs ) const
+int Castle::GetAttackModificator( std::string * ) const
 {
     return 0;
 }
 
-int Castle::GetDefenseModificator( std::string * strs ) const
+int Castle::GetDefenseModificator( std::string * ) const
 {
     return 0;
 }
@@ -2276,7 +2336,7 @@ int Castle::GetPowerModificator( std::string * strs ) const
     return result;
 }
 
-int Castle::GetKnowledgeModificator( std::string * strs ) const
+int Castle::GetKnowledgeModificator( std::string * ) const
 {
     return 0;
 }
@@ -2327,20 +2387,6 @@ int Castle::GetLuckModificator( std::string * strs ) const
     return result;
 }
 
-void Castle::RecruitAllMonsters( void )
-{
-    bool skip_recruit = false;
-
-    // skip recruit: AI with customization of empty army
-    if ( Modes( CUSTOMARMY ) && isControlAI() && !army.isValid() && !army.HasMonster( Monster( Monster::UNKNOWN ) ) )
-        skip_recruit = true;
-
-    if ( !skip_recruit )
-        for ( u32 dw = DWELLING_MONSTER6; dw >= DWELLING_MONSTER1; dw >>= 1 )
-            if ( isBuild( dw ) )
-                RecruitMonsterFromDwelling( dw, GetDwellingLivedCount( dw ) );
-}
-
 const Army & Castle::GetArmy( void ) const
 {
     const CastleHeroes heroes = world.GetHeroes( *this );
@@ -2370,7 +2416,7 @@ Army & Castle::GetActualArmy( void )
 bool Castle::AllowBuyBoat( void ) const
 {
     // check payment and present other boat
-    return ( HaveNearlySea() && GetKingdom().AllowPayment( PaymentConditions::BuyBoat() ) && !PresentBoat() );
+    return ( HaveNearlySea() && isBuild( BUILD_SHIPYARD ) && GetKingdom().AllowPayment( PaymentConditions::BuyBoat() ) && !PresentBoat() );
 }
 
 bool Castle::BuyBoat( void )
@@ -2392,17 +2438,17 @@ bool Castle::BuyBoat( void )
     if ( MP2::OBJ_ZERO == left.GetObject() && left.isWater() ) {
         kingdom.OddFundsResource( PaymentConditions::BuyBoat() );
 
-        left.SetObject( MP2::OBJ_BOAT );
+        left.setBoat( Direction::RIGHT );
     }
     else if ( MP2::OBJ_ZERO == right.GetObject() && right.isWater() ) {
         kingdom.OddFundsResource( PaymentConditions::BuyBoat() );
 
-        right.SetObject( MP2::OBJ_BOAT );
+        right.setBoat( Direction::RIGHT );
     }
     else if ( MP2::OBJ_ZERO == middle.GetObject() && middle.isWater() ) {
         kingdom.OddFundsResource( PaymentConditions::BuyBoat() );
 
-        middle.SetObject( MP2::OBJ_BOAT );
+        middle.setBoat( Direction::RIGHT );
     }
 
     return true;
@@ -2431,7 +2477,7 @@ bool Castle::AllowBuild( void ) const
 
 bool Castle::isBuild( u32 bd ) const
 {
-    return building & bd;
+    return ( building & bd ) != 0;
 }
 
 bool Castle::isNecromancyShrineBuild( void ) const
@@ -2466,45 +2512,44 @@ void Castle::Scoute( void ) const
 
 void Castle::JoinRNDArmy( void )
 {
-    const Monster mon1( race, DWELLING_MONSTER1 );
-    const Monster mon2( race, DWELLING_MONSTER2 );
-    const Monster mon3( race, DWELLING_MONSTER3 );
+    const uint32_t timeModifier = world.CountDay() / 10;
+    const uint32_t reinforcementQuality = Rand::Get( 1, 15 ) + timeModifier;
 
-    switch ( Rand::Get( 1, 4 ) ) {
-    case 1:
-        army.JoinTroop( mon1, mon1.GetRNDSize( false ) * 3 );
-        army.JoinTroop( mon2, mon2.GetRNDSize( false ) );
-        break;
+    uint32_t count = timeModifier / 2;
+    uint32_t dwellingType = DWELLING_MONSTER1;
 
-    case 2:
-        army.JoinTroop( mon1, mon1.GetRNDSize( false ) * 2 );
-        army.JoinTroop( mon2, mon2.GetRNDSize( false ) * 2 );
-        break;
-
-    case 3:
-
-        army.JoinTroop( mon1, mon1.GetRNDSize( false ) * 2 );
-        army.JoinTroop( mon2, mon2.GetRNDSize( false ) );
-        army.JoinTroop( mon3, mon3.GetRNDSize( false ) * 2 / 3 );
-        break;
-
-    default:
-        army.JoinTroop( mon1, mon1.GetRNDSize( false ) );
-        army.JoinTroop( mon3, mon3.GetRNDSize( false ) );
-        break;
+    if ( reinforcementQuality > 15 ) {
+        dwellingType = DWELLING_MONSTER5;
+        count += 1;
     }
+    else if ( reinforcementQuality > 13 ) {
+        dwellingType = DWELLING_MONSTER4;
+        count += Rand::Get( 1, 3 );
+    }
+    else if ( reinforcementQuality > 10 ) {
+        dwellingType = DWELLING_MONSTER3;
+        count += Rand::Get( 3, 5 );
+    }
+    else if ( reinforcementQuality > 5 ) {
+        dwellingType = DWELLING_MONSTER2;
+        count += Rand::Get( 5, 7 );
+    }
+    else {
+        count += Rand::Get( 8, 15 );
+    }
+
+    army.JoinTroop( Monster( race, dwellingType ), count );
 }
 
 void Castle::ActionPreBattle( void )
 {
+    CastleHeroes heroes = world.GetHeroes( *this );
+    Heroes * hero = heroes.GuardFirst();
+    if ( hero && army.isValid() )
+        hero->GetArmy().JoinStrongestFromArmy( army );
+
     if ( isControlAI() )
         AI::Get().CastlePreBattle( *this );
-    else if ( Settings::Get().ExtBattleMergeArmies() ) {
-        CastleHeroes heroes = world.GetHeroes( *this );
-        Heroes * hero = heroes.GuardFirst();
-        if ( hero && army.isValid() )
-            hero->GetArmy().JoinStrongestFromArmy( army );
-    }
 }
 
 void Castle::ActionAfterBattle( bool attacker_wins )
@@ -2518,17 +2563,9 @@ void Castle::ActionAfterBattle( bool attacker_wins )
         AI::Get().CastleAfterBattle( *this, attacker_wins );
 }
 
-struct CastleHavePoint : public std::binary_function<const Castle *, const Point *, bool>
-{
-    bool operator()( const Castle * castle, const Point * pt ) const
-    {
-        return castle->isPosition( *pt );
-    }
-};
-
 Castle * VecCastles::Get( const Point & position ) const
 {
-    const_iterator it = std::find_if( begin(), end(), std::bind2nd( CastleHavePoint(), &position ) );
+    const_iterator it = std::find_if( begin(), end(), [&position]( const Castle * castle ) { return castle->isPosition( position ); } );
     return end() != it ? *it : NULL;
 }
 
@@ -2536,6 +2573,15 @@ Castle * VecCastles::GetFirstCastle( void ) const
 {
     const_iterator it = std::find_if( begin(), end(), []( const Castle * castle ) { return castle->isCastle(); } );
     return end() != it ? *it : NULL;
+}
+
+void VecCastles::SortByBuildingValue()
+{
+    std::sort( begin(), end(), []( const Castle * left, const Castle * right ) {
+        if ( left && right )
+            return left->getBuildingValue() > right->getBuildingValue();
+        return right == NULL;
+    } );
 }
 
 void VecCastles::ChangeColors( int col1, int col2 )

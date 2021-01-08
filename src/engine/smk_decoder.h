@@ -23,15 +23,20 @@
 #include <string>
 #include <vector>
 
-#include "image.h"
-
 struct smk_t;
+
+namespace fheroes2
+{
+    class Image;
+}
 
 class SMKVideoSequence
 {
 public:
     explicit SMKVideoSequence( const std::string & filePath );
     ~SMKVideoSequence();
+
+    SMKVideoSequence( const SMKVideoSequence & ) = delete;
 
     void resetFrame();
     void getNextFrame( fheroes2::Image & image, std::vector<uint8_t> & palette );

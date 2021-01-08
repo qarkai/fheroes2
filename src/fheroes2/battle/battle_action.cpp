@@ -35,6 +35,29 @@
 #include "spell.h"
 #include "world.h"
 
+namespace
+{
+    std::pair<int, int> getEarthquakeDamageRange( const HeroBase * commander )
+    {
+        const int spellPower = commander->GetPower();
+        if ( ( spellPower > 0 ) && ( spellPower < 3 ) ) {
+            return std::make_pair( 0, 1 );
+        }
+        else if ( ( spellPower >= 3 ) && ( spellPower < 6 ) ) {
+            return std::make_pair( 0, 2 );
+        }
+        else if ( ( spellPower >= 6 ) && ( spellPower < 10 ) ) {
+            return std::make_pair( 0, 3 );
+        }
+        else if ( spellPower >= 10 ) {
+            return std::make_pair( 1, 3 );
+        }
+
+        DEBUG( DBG_BATTLE, DBG_TRACE, "damage_range: unexpected spellPower value: " << spellPower << " for commander " << commander );
+        return std::make_pair( 0, 0 );
+    }
+}
+
 void Battle::Arena::BattleProcess( Unit & attacker, Unit & defender, s32 dst, int dir )
 {
     if ( 0 > dst )
@@ -53,8 +76,9 @@ void Battle::Arena::BattleProcess( Unit & attacker, Unit & defender, s32 dst, in
                 defender.UpdateDirection( board[attacker.GetHeadIndex()].GetPos() );
         }
     }
-    else
+    else {
         attacker.UpdateDirection( board[dst].GetPos() );
+    }
 
     // check luck right before the attack
     attacker.SetRandomLuck();
@@ -200,10 +224,10 @@ void Battle::Arena::ApplyActionSpellCast( Command & cmd )
 
 void Battle::Arena::ApplyActionAttack( Command & cmd )
 {
-    u32 uid1 = cmd.GetValue();
-    u32 uid2 = cmd.GetValue();
-    s32 dst = cmd.GetValue();
-    int dir = cmd.GetValue();
+    const uint32_t uid1 = cmd.GetValue();
+    const uint32_t uid2 = cmd.GetValue();
+    const int32_t dst = cmd.GetValue();
+    const int32_t dir = cmd.GetValue();
 
     Battle::Unit * b1 = GetTroopUID( uid1 );
     Battle::Unit * b2 = GetTroopUID( uid2 );
@@ -229,7 +253,7 @@ void Battle::Arena::ApplyActionAttack( Command & cmd )
                 }
 
                 // twice attack
-                if ( b1->isValid() && b1->isTwiceAttack() && !b1->Modes( IS_PARALYZE_MAGIC ) ) {
+                if ( b1->isValid() && b1->isTwiceAttack() && !b1->Modes( SP_BLIND | IS_PARALYZE_MAGIC ) ) {
                     DEBUG( DBG_BATTLE, DBG_TRACE, "twice attack" );
                     BattleProcess( *b1, *b2 );
                 }
@@ -244,7 +268,7 @@ void Battle::Arena::ApplyActionAttack( Command & cmd )
                        << ": " << b1->String( true ) << " and " << b2->String( true ) );
         }
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN,
                "incorrect param"
                    << ": "
@@ -252,16 +276,17 @@ void Battle::Arena::ApplyActionAttack( Command & cmd )
                    << "0x" << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid1 << ", "
                    << "uid: "
                    << "0x" << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid2 );
+    }
 }
 
 void Battle::Arena::ApplyActionMove( Command & cmd )
 {
-    u32 uid = cmd.GetValue();
-    s32 dst = cmd.GetValue();
-    int path_size = cmd.GetValue();
+    const uint32_t uid = cmd.GetValue();
+    const int32_t dst = cmd.GetValue();
+    const int32_t path_size = cmd.GetValue();
 
     Battle::Unit * b = GetTroopUID( uid );
-    Cell * cell = Board::GetCell( dst );
+    const Cell * cell = Board::GetCell( dst );
 
     if ( b && b->isValid() && cell && cell->isPassable3( *b, false ) ) {
         Position pos1, pos2;
@@ -271,8 +296,7 @@ void Battle::Arena::ApplyActionMove( Command & cmd )
         DEBUG( DBG_BATTLE, DBG_TRACE,
                b->String() << ", dst: " << dst << ", (head: " << pos1.GetHead()->GetIndex() << ", tail: " << ( b->isWide() ? pos1.GetTail()->GetIndex() : -1 ) << ")" );
 
-        // force check fly
-        if ( static_cast<ArmyTroop *>( b )->isFlying() ) {
+        if ( b->isFlying() ) {
             b->UpdateDirection( pos1.GetRect() );
             if ( b->isReflect() != pos1.isReflect() )
                 pos1.Swap();
@@ -302,14 +326,14 @@ void Battle::Arena::ApplyActionMove( Command & cmd )
             if ( interface )
                 interface->RedrawActionMove( *b, path );
             else if ( bridge ) {
-                for ( Indexes::const_iterator dst = path.begin(); dst != path.end(); ++dst ) {
+                for ( Indexes::const_iterator pathIt = path.begin(); pathIt != path.end(); ++pathIt ) {
                     bool doMovement = false;
 
-                    if ( bridge && bridge->NeedDown( *b, *dst ) )
-                        bridge->Action( *b, *dst );
+                    if ( bridge && bridge->NeedDown( *b, *pathIt ) )
+                        bridge->Action( *b, *pathIt );
 
                     if ( b->isWide() ) {
-                        if ( b->GetTailIndex() == *dst )
+                        if ( b->GetTailIndex() == *pathIt )
                             b->SetReflection( !b->isReflect() );
                         else
                             doMovement = true;
@@ -319,11 +343,11 @@ void Battle::Arena::ApplyActionMove( Command & cmd )
                     }
 
                     if ( doMovement )
-                        b->SetPosition( *dst );
+                        b->SetPosition( *pathIt );
 
                     // check for possible bridge close action, after unit's end of movement
                     if ( bridge && bridge->AllowUp() )
-                        bridge->Action( *b, *dst );
+                        bridge->Action( *b, *pathIt );
                 }
             }
 
@@ -344,16 +368,14 @@ void Battle::Arena::ApplyActionMove( Command & cmd )
         DEBUG( DBG_BATTLE, DBG_WARN,
                "incorrect param"
                    << ": "
-                   << "uid: "
-                      "0x"
-                   << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid << ", dst: " << dst );
+                   << "uid: " << uid << ", dst: " << dst );
     }
 }
 
 void Battle::Arena::ApplyActionSkip( Command & cmd )
 {
-    u32 uid = cmd.GetValue();
-    int hard = cmd.GetValue();
+    const uint32_t uid = cmd.GetValue();
+    const int32_t hard = cmd.GetValue();
 
     Battle::Unit * battle = GetTroopUID( uid );
     if ( battle && battle->isValid() ) {
@@ -377,16 +399,17 @@ void Battle::Arena::ApplyActionSkip( Command & cmd )
             DEBUG( DBG_BATTLE, DBG_WARN, "uid: " << uid << " moved" );
         }
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN,
                "incorrect param"
                    << ": "
                    << "uid: " << uid );
+    }
 }
 
 void Battle::Arena::ApplyActionEnd( Command & cmd )
 {
-    u32 uid = cmd.GetValue();
+    const uint32_t uid = cmd.GetValue();
 
     Battle::Unit * battle = GetTroopUID( uid );
 
@@ -403,18 +426,19 @@ void Battle::Arena::ApplyActionEnd( Command & cmd )
             DEBUG( DBG_BATTLE, DBG_INFO, "uid: " << uid << " moved" );
         }
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_INFO,
                "incorrect param"
                    << ": "
                    << "uid: "
                    << "0x" << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid );
+    }
 }
 
 void Battle::Arena::ApplyActionMorale( Command & cmd )
 {
-    u32 uid = cmd.GetValue();
-    int morale = cmd.GetValue();
+    const uint32_t uid = cmd.GetValue();
+    const int32_t morale = cmd.GetValue();
 
     Battle::Unit * b = GetTroopUID( uid );
 
@@ -437,15 +461,16 @@ void Battle::Arena::ApplyActionMorale( Command & cmd )
 
         DEBUG( DBG_BATTLE, DBG_TRACE, ( morale ? "good" : "bad" ) << " to " << b->String() );
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN,
                "incorrect param"
                    << ": "
                    << "uid: "
                    << "0x" << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid );
+    }
 }
 
-void Battle::Arena::ApplyActionRetreat( Command & cmd )
+void Battle::Arena::ApplyActionRetreat( Command & /*cmd*/ )
 {
     if ( CanRetreatOpponent( current_color ) ) {
         if ( army1->GetColor() == current_color ) {
@@ -456,11 +481,12 @@ void Battle::Arena::ApplyActionRetreat( Command & cmd )
         }
         DEBUG( DBG_BATTLE, DBG_TRACE, "color: " << Color::String( current_color ) );
     }
-    else
-        DEBUG( DBG_BATTLE, DBG_WARN, "incorrect param" );
+    else {
+        DEBUG( DBG_BATTLE, DBG_WARN, "CanRetreatOpponent check failed" );
+    }
 }
 
-void Battle::Arena::ApplyActionSurrender( Command & cmd )
+void Battle::Arena::ApplyActionSurrender( Command & /*cmd*/ )
 {
     if ( CanSurrenderOpponent( current_color ) ) {
         Funds cost;
@@ -484,15 +510,14 @@ void Battle::Arena::ApplyActionSurrender( Command & cmd )
             DEBUG( DBG_BATTLE, DBG_TRACE, "color: " << Color::String( current_color ) );
         }
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN, "incorrect param" );
+    }
 }
 
-void Battle::Arena::TargetsApplyDamage( Unit & attacker, Unit & defender, TargetsInfo & targets )
+void Battle::Arena::TargetsApplyDamage( Unit & attacker, Unit & /*defender*/, TargetsInfo & targets )
 {
-    TargetsInfo::iterator it = targets.begin();
-
-    for ( ; it != targets.end(); ++it ) {
+    for ( TargetsInfo::iterator it = targets.begin(); it != targets.end(); ++it ) {
         TargetInfo & target = *it;
         if ( target.defender )
             target.killed = target.defender->ApplyDamage( attacker, target.damage );
@@ -621,24 +646,47 @@ Battle::TargetsInfo Battle::Arena::GetTargetsForSpells( const HeroBase * hero, c
         // check other spells
         switch ( spell() ) {
         case Spell::CHAINLIGHTNING: {
+            uint32_t currentMonsterPos = dst;
+
             Indexes trgts;
             trgts.reserve( 12 );
-            trgts.push_back( dst );
+            trgts.push_back( currentMonsterPos );
+
+            Indexes ignoredMonster;
+            ignoredMonster.push_back( currentMonsterPos );
 
             // find targets
-            for ( u32 ii = 0; ii < 3; ++ii ) {
-                const Indexes reslt = board.GetNearestTroopIndexes( dst, &trgts );
-                if ( reslt.empty() )
+            while ( trgts.size() < 4 ) {
+                const Indexes nearestPosIds = board.GetNearestTroopIndexes( currentMonsterPos, &ignoredMonster );
+                if ( nearestPosIds.empty() )
                     break;
-                trgts.push_back( reslt.size() > 1 ? *Rand::Get( reslt ) : reslt.front() );
+
+                Indexes sortedIds;
+
+                for ( size_t monsterId = 0; monsterId < nearestPosIds.size(); ++monsterId ) {
+                    const Unit * targetUnit = GetTroopBoard( nearestPosIds[monsterId] );
+                    if ( targetUnit != NULL && ( targetUnit->GetMagicResist( spell, hero ? hero->GetPower() : 0 ) < 100 ) ) {
+                        sortedIds.push_back( nearestPosIds[monsterId] );
+                    }
+                    ignoredMonster.push_back( nearestPosIds[monsterId] );
+                }
+
+                if ( sortedIds.empty() ) {
+                    continue;
+                }
+
+                const int32_t * monsterPos = Rand::Get( sortedIds );
+                const uint32_t chosenMonsterPos = monsterPos ? *monsterPos : sortedIds.front();
+                trgts.push_back( chosenMonsterPos );
+                currentMonsterPos = chosenMonsterPos;
             }
 
             // save targets
             for ( Indexes::iterator it = trgts.begin(); it != trgts.end(); ++it ) {
-                Unit * target = GetTroopBoard( *it );
+                Unit * targetDefender = GetTroopBoard( *it );
 
-                if ( target ) {
-                    res.defender = target;
+                if ( targetDefender ) {
+                    res.defender = targetDefender;
                     // store temp priority for calculate damage
                     res.damage = std::distance( trgts.begin(), it );
                     targets.push_back( res );
@@ -654,9 +702,9 @@ Battle::TargetsInfo Battle::Arena::GetTargetsForSpells( const HeroBase * hero, c
             const Indexes positions = Board::GetDistanceIndexes( dst, ( spell == Spell::FIREBLAST ? 2 : 1 ) );
 
             for ( Indexes::const_iterator it = positions.begin(); it != positions.end(); ++it ) {
-                Unit * target = GetTroopBoard( *it );
-                if ( target && target->AllowApplySpell( spell, hero ) ) {
-                    res.defender = target;
+                Unit * targetUnit = GetTroopBoard( *it );
+                if ( targetUnit && targetUnit->AllowApplySpell( spell, hero ) ) {
+                    res.defender = targetUnit;
                     targets.push_back( res );
                 }
             }
@@ -715,8 +763,8 @@ Battle::TargetsInfo Battle::Arena::GetTargetsForSpells( const HeroBase * hero, c
 
 void Battle::Arena::ApplyActionTower( Command & cmd )
 {
-    u32 type = cmd.GetValue();
-    u32 uid = cmd.GetValue();
+    const uint32_t type = cmd.GetValue();
+    const uint32_t uid = cmd.GetValue();
 
     Tower * tower = GetTower( type );
     Battle::Unit * b2 = GetTroopUID( uid );
@@ -732,17 +780,18 @@ void Battle::Arena::ApplyActionTower( Command & cmd )
             interface->RedrawActionTowerPart1( *tower, *b2 );
         target.killed = b2->ApplyDamage( *tower, target.damage );
         if ( interface )
-            interface->RedrawActionTowerPart2( *tower, target );
+            interface->RedrawActionTowerPart2( target );
 
         if ( b2->Modes( SP_BLIND ) )
             b2->ResetBlind();
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN,
                "incorrect param"
                    << ": "
                    << "tower: " << type << ", uid: "
                    << "0x" << std::setw( 8 ) << std::setfill( '0' ) << std::hex << uid );
+    }
 }
 
 void Battle::Arena::ApplyActionCatapult( Command & cmd )
@@ -762,31 +811,32 @@ void Battle::Arena::ApplyActionCatapult( Command & cmd )
             }
         }
     }
-    else
+    else {
         DEBUG( DBG_BATTLE, DBG_WARN, "incorrect param" );
+    }
 }
 
 void Battle::Arena::ApplyActionAutoBattle( Command & cmd )
 {
-    int color = cmd.GetValue();
-
-    if ( current_color == color ) {
-        if ( auto_battle & color ) {
-            if ( interface )
-                interface->SetStatus( _( "Set auto battle off" ), true );
-            auto_battle &= ~color;
-        }
-        else {
-            if ( interface )
-                interface->SetStatus( _( "Set auto battle on" ), true );
-            auto_battle |= color;
-        }
-    }
-    else
+    const int color = cmd.GetValue();
+    if ( current_color != color ) {
         DEBUG( DBG_BATTLE, DBG_WARN, "incorrect param" );
+        return;
+    }
+
+    if ( auto_battle & color ) {
+        if ( interface )
+            interface->SetStatus( _( "Set auto battle off" ), true );
+        auto_battle &= ~color;
+    }
+    else {
+        if ( interface )
+            interface->SetStatus( _( "Set auto battle on" ), true );
+        auto_battle |= color;
+    }
 }
 
-void Battle::Arena::ApplyActionSpellSummonElemental( Command & cmd, const Spell & spell )
+void Battle::Arena::ApplyActionSpellSummonElemental( Command & /*cmd*/, const Spell & spell )
 {
     Unit * elem = CreateElemental( spell );
     if ( interface )
@@ -799,7 +849,7 @@ void Battle::Arena::ApplyActionSpellDefaults( Command & cmd, const Spell & spell
     if ( !current_commander )
         return;
 
-    s32 dst = cmd.GetValue();
+    const int32_t dst = cmd.GetValue();
 
     TargetsInfo targets = GetTargetsForSpells( current_commander, spell, dst );
     if ( interface )
@@ -812,8 +862,8 @@ void Battle::Arena::ApplyActionSpellDefaults( Command & cmd, const Spell & spell
 
 void Battle::Arena::ApplyActionSpellTeleport( Command & cmd )
 {
-    s32 src = cmd.GetValue();
-    s32 dst = cmd.GetValue();
+    const int32_t src = cmd.GetValue();
+    const int32_t dst = cmd.GetValue();
 
     Unit * b = GetTroopBoard( src );
     const Spell spell( Spell::TELEPORT );
@@ -836,24 +886,21 @@ void Battle::Arena::ApplyActionSpellTeleport( Command & cmd )
     }
 }
 
-void Battle::Arena::ApplyActionSpellEarthQuake( Command & cmd )
+void Battle::Arena::ApplyActionSpellEarthQuake( Command & /*cmd*/ )
 {
     std::vector<int> targets = GetCastleTargets();
-
-    if ( interface )
+    if ( interface ) {
         interface->RedrawActionEarthQuakeSpell( targets );
+    }
 
-    // FIXME: Arena::ApplyActionSpellEarthQuake: check hero spell power
-
-    // apply random damage
-    if ( 0 != board[8].GetObject() )
-        board[8].SetObject( Rand::Get( board[8].GetObject() ) );
-    if ( 0 != board[29].GetObject() )
-        board[29].SetObject( Rand::Get( board[29].GetObject() ) );
-    if ( 0 != board[73].GetObject() )
-        board[73].SetObject( Rand::Get( board[73].GetObject() ) );
-    if ( 0 != board[96].GetObject() )
-        board[96].SetObject( Rand::Get( board[96].GetObject() ) );
+    const HeroBase * commander = GetCurrentCommander();
+    const std::pair<int, int> range = commander ? getEarthquakeDamageRange( commander ) : std::make_pair( 0 , 0 );
+    const std::vector<int> wallHexPositions = {FIRST_WALL_HEX_POSITION, SECOND_WALL_HEX_POSITION, THIRD_WALL_HEX_POSITION, FORTH_WALL_HEX_POSITION};
+    for ( int position : wallHexPositions ) {
+        if ( 0 != board[position].GetObject() ) {
+            board[position].SetObject( Rand::Get( range.first, range.second ) );
+        }
+    }
 
     if ( towers[0] && towers[0]->isValid() && Rand::Get( 1 ) )
         towers[0]->SetDestroy();
@@ -863,18 +910,23 @@ void Battle::Arena::ApplyActionSpellEarthQuake( Command & cmd )
     DEBUG( DBG_BATTLE, DBG_TRACE, "spell: " << Spell( Spell::EARTHQUAKE ).GetName() << ", targets: " << targets.size() );
 }
 
+
+
 void Battle::Arena::ApplyActionSpellMirrorImage( Command & cmd )
 {
-    const s32 who = cmd.GetValue();
+    const int32_t who = cmd.GetValue();
     Unit * troop = GetTroopBoard( who );
 
     if ( troop != NULL ) {
         Indexes distances = Board::GetDistanceIndexes( troop->GetHeadIndex(), 4 );
 
-        ShortestDistance SortingDistance( troop->GetHeadIndex() );
-        std::sort( distances.begin(), distances.end(), SortingDistance );
+        const int32_t centerIndex = troop->GetHeadIndex();
+        std::sort( distances.begin(), distances.end(), [centerIndex]( const int32_t index1, const int32_t index2 ) {
+            return Battle::Board::GetDistance( centerIndex, index1 ) < Battle::Board::GetDistance( centerIndex, index2 );
+        } );
 
-        Indexes::const_iterator it = std::find_if( distances.begin(), distances.end(), std::bind2nd( std::ptr_fun( &Board::isValidMirrorImageIndex ), troop ) );
+        Indexes::const_iterator it
+            = std::find_if( distances.begin(), distances.end(), [troop]( const int32_t v ) { return Battle::Board::isValidMirrorImageIndex( v, troop ); } );
         if ( it != distances.end() ) {
             const Position pos = Position::GetCorrect( *troop, *it );
             const s32 dst = pos.GetHead()->GetIndex();

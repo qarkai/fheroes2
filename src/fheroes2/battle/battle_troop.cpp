@@ -40,20 +40,6 @@
 #include "speed.h"
 #include "world.h"
 
-void Battle::UpdateMonsterAttributes( const std::string & spec )
-{
-#ifdef WITH_XML
-    // parse battle.xml
-    TiXmlDocument doc;
-
-    if ( doc.LoadFile( spec.c_str() ) ) {
-        const TiXmlElement * xml_battle = doc.FirstChildElement( "battle" );
-    }
-    else
-        VERBOSE( spec << ": " << doc.ErrorDesc() );
-#endif
-}
-
 Battle::ModeDuration::ModeDuration()
     : std::pair<u32, u32>( 0, 0 )
 {}
@@ -64,7 +50,7 @@ Battle::ModeDuration::ModeDuration( u32 mode, u32 duration )
 
 bool Battle::ModeDuration::isMode( u32 mode ) const
 {
-    return ( first & mode );
+    return ( first & mode ) != 0;
 }
 
 bool Battle::ModeDuration::isZeroDuration( void ) const
@@ -85,13 +71,13 @@ Battle::ModesAffected::ModesAffected()
 
 u32 Battle::ModesAffected::GetMode( u32 mode ) const
 {
-    const_iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &ModeDuration::isMode ), mode ) );
+    const_iterator it = std::find_if( begin(), end(), [mode]( const Battle::ModeDuration & v ) { return v.isMode( mode ); } );
     return it == end() ? 0 : ( *it ).second;
 }
 
 void Battle::ModesAffected::AddMode( u32 mode, u32 duration )
 {
-    iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &ModeDuration::isMode ), mode ) );
+    iterator it = std::find_if( begin(), end(), [mode]( const Battle::ModeDuration & v ) { return v.isMode( mode ); } );
     if ( it == end() )
         push_back( ModeDuration( mode, duration ) );
     else
@@ -100,9 +86,8 @@ void Battle::ModesAffected::AddMode( u32 mode, u32 duration )
 
 void Battle::ModesAffected::RemoveMode( u32 mode )
 {
-    iterator it = std::find_if( begin(), end(), std::bind2nd( std::mem_fun_ref( &ModeDuration::isMode ), mode ) );
+    iterator it = std::find_if( begin(), end(), [mode]( const Battle::ModeDuration & v ) { return v.isMode( mode ); } );
     if ( it != end() ) {
-        // erase(it)
         if ( it + 1 != end() )
             std::swap( *it, back() );
         pop_back();
@@ -111,17 +96,18 @@ void Battle::ModesAffected::RemoveMode( u32 mode )
 
 void Battle::ModesAffected::DecreaseDuration( void )
 {
-    std::for_each( begin(), end(), std::mem_fun_ref( &ModeDuration::DecreaseDuration ) );
+    std::for_each( begin(), end(), []( Battle::ModeDuration & v ) { v.DecreaseDuration(); } );
 }
 
 u32 Battle::ModesAffected::FindZeroDuration( void ) const
 {
-    const_iterator it = std::find_if( begin(), end(), std::mem_fun_ref( &ModeDuration::isZeroDuration ) );
+    const_iterator it = std::find_if( begin(), end(), []( const Battle::ModeDuration & v ) { return v.isZeroDuration(); } );
     return it == end() ? 0 : ( *it ).first;
 }
 
 Battle::Unit::Unit( const Troop & t, s32 pos, bool ref )
     : ArmyTroop( NULL, t )
+    , animation( id )
     , uid( World::GetUniq() )
     , hp( t.GetHitPoints() )
     , count0( t.GetCount() )
@@ -130,9 +116,8 @@ Battle::Unit::Unit( const Troop & t, s32 pos, bool ref )
     , disruptingray( 0 )
     , reflect( ref )
     , mirror( NULL )
-    , blindanswer( false )
-    , animation( id )
     , idleTimer( animation.getIdleDelay() )
+    , blindanswer( false )
     , customAlphaMask( 255 )
 {
     // set position
@@ -230,10 +215,11 @@ std::string Battle::Unit::GetShotString( void ) const
     return os.str();
 }
 
-std::string Battle::Unit::GetSpeedString( void ) const
+std::string Battle::Unit::GetSpeedString() const
 {
     std::ostringstream os;
-    os << Speed::String( GetSpeed() ) << " (" << GetSpeed() << ")";
+    const uint32_t speedValue = GetSpeed( true );
+    os << Speed::String( speedValue ) << " (" << speedValue << ")";
     return os.str();
 }
 
@@ -305,10 +291,10 @@ void Battle::Unit::SetRandomMorale( void )
     if ( GetArena()->GetForce( GetArmyColor(), true ).HasMonster( Monster::BONE_DRAGON ) && morale > Morale::TREASON )
         --morale;
 
-    if ( morale > 0 && Rand::Get( 1, 24 ) <= morale ) {
+    if ( morale > 0 && static_cast<int32_t>( Rand::Get( 1, 24 ) ) <= morale ) {
         SetModes( MORALE_GOOD );
     }
-    else if ( morale < 0 && Rand::Get( 1, 12 ) <= -morale ) {
+    else if ( morale < 0 && static_cast<int32_t>( Rand::Get( 1, 12 ) ) <= -morale ) {
         if ( isControlHuman() ) {
             SetModes( MORALE_BAD );
         }
@@ -321,8 +307,8 @@ void Battle::Unit::SetRandomMorale( void )
 
 void Battle::Unit::SetRandomLuck( void )
 {
-    s32 luck = GetLuck();
-    u32 chance = Rand::Get( 1, 24 );
+    const int32_t luck = GetLuck();
+    const int32_t chance = static_cast<int32_t>( Rand::Get( 1, 24 ) );
 
     if ( luck > 0 && chance <= luck ) {
         SetModes( LUCK_GOOD );
@@ -364,7 +350,7 @@ bool Battle::Unit::canReach( int index ) const
 
     const bool isIndirectAttack = isReflect() == Board::isNegativeDistance( GetHeadIndex(), index );
     const int from = ( isWide() && isIndirectAttack ) ? GetTailIndex() : GetHeadIndex();
-    return Board::GetDistance( from, index ) <= GetSpeed( true );
+    return static_cast<uint32_t>( Board::GetDistance( from, index ) ) <= GetSpeed( true );
 }
 
 bool Battle::Unit::canReach( const Unit & unit ) const
@@ -459,7 +445,7 @@ u32 Battle::Unit::GetSpeed( bool skip_standing_check ) const
     if ( !skip_standing_check && ( !GetCount() || Modes( TR_MOVED | SP_BLIND | IS_PARALYZE_MAGIC ) ) )
         return Speed::STANDING;
 
-    int speed = Monster::GetSpeed();
+    uint32_t speed = Monster::GetSpeed();
     Spell spell;
 
     if ( Modes( SP_HASTE ) ) {
@@ -472,6 +458,25 @@ u32 Battle::Unit::GetSpeed( bool skip_standing_check ) const
     }
 
     return speed;
+}
+
+uint32_t Battle::Unit::CalculateRetaliationDamage( uint32_t damageTaken ) const
+{
+    // Check if there will be retaliation in the first place
+    if ( damageTaken > hp || Modes( CAP_MIRRORIMAGE ) || !AllowResponse() )
+        return 0;
+
+    const uint32_t unitsLeft = ( hp - damageTaken ) / Monster::GetHitPoints();
+
+    uint32_t damagePerUnit = 0;
+    if ( Modes( SP_CURSE ) )
+        damagePerUnit = Monster::GetDamageMin();
+    else if ( Modes( SP_BLESS ) )
+        damagePerUnit = Monster::GetDamageMax();
+    else
+        damagePerUnit = ( Monster::GetDamageMin() + Monster::GetDamageMax() ) / 2;
+
+    return unitsLeft * damagePerUnit;
 }
 
 u32 Battle::Unit::CalculateMinDamage( const Unit & enemy ) const
@@ -621,7 +626,7 @@ void Battle::Unit::PostKilledAction( void )
         ResetModes( CAP_MIRROROWNER );
     }
     // kill mirror image (slave)
-    if ( Modes( CAP_MIRRORIMAGE ) ) {
+    if ( Modes( CAP_MIRRORIMAGE ) && mirror != NULL ) {
         mirror->ResetModes( CAP_MIRROROWNER );
         mirror = NULL;
     }
@@ -686,7 +691,7 @@ u32 Battle::Unit::ApplyDamage( Unit & enemy, u32 dmg )
     if ( killed )
         switch ( enemy.GetID() ) {
         case Monster::GHOST:
-            resurrect = killed * static_cast<Monster>( enemy ).GetHitPoints();
+            resurrect = killed * static_cast<Monster &>( enemy ).GetHitPoints();
             DEBUG( DBG_BATTLE, DBG_TRACE, String() << ", enemy: " << enemy.String() << " resurrect: " << resurrect );
             // grow troop
             enemy.Resurrect( resurrect, true, false );
@@ -989,7 +994,7 @@ s32 Battle::Unit::GetScoreQuality( const Unit & defender ) const
     const Unit & attacker = *this;
 
     const double defendersDamage = CalculateDamageUnit( attacker, ( static_cast<double>( defender.GetDamageMin() ) + defender.GetDamageMax() ) / 2.0 );
-    const double attackerPowerLost = ( defendersDamage >= hp ) ? 1.0 : defendersDamage / hp;
+    const double attackerPowerLost = ( attacker.Modes( CAP_MIRRORIMAGE ) || defendersDamage >= hp ) ? 1.0 : defendersDamage / hp;
     const bool attackerIsArchers = isArchers();
 
     double attackerThreat = CalculateDamageUnit( defender, ( static_cast<double>( GetDamageMin() ) + GetDamageMax() ) / 2.0 );
@@ -1034,6 +1039,9 @@ s32 Battle::Unit::GetScoreQuality( const Unit & defender ) const
         break;
     }
 
+    // force big priority on mirror images as they get destroyed in 1 hit
+    if ( attacker.Modes( CAP_MIRRORIMAGE ) )
+        attackerThreat *= 10;
     // Ignore disabled units
     if ( attacker.Modes( SP_BLIND ) || attacker.Modes( IS_PARALYZE_MAGIC ) )
         attackerThreat = 0;
@@ -1271,71 +1279,65 @@ void Battle::Unit::SpellApplyDamage( const Spell & spell, u32 spoint, const Hero
 
     // check artifact
     if ( hero ) {
-        const HeroBase * myhero = GetCommander();
-        u32 acount = 0;
+        const HeroBase * defendingHero = GetCommander();
 
         switch ( spell() ) {
         case Spell::COLDRAY:
         case Spell::COLDRING:
             // +50%
-            acount = hero->HasArtifact( Artifact::EVERCOLD_ICICLE );
-            if ( acount )
-                dmg += dmg * acount * Artifact( Artifact::EVERCOLD_ICICLE ).ExtraValue() / 100;
-            acount = hero->HasArtifact( Artifact::EVERCOLD_ICICLE );
-            if ( acount )
-                dmg += dmg * acount * Artifact( Artifact::EVERCOLD_ICICLE ).ExtraValue() / 100;
-            // -50%
-            acount = myhero ? myhero->HasArtifact( Artifact::ICE_CLOAK ) : 0;
-            if ( acount )
-                dmg /= acount * 2;
-            acount = myhero ? myhero->HasArtifact( Artifact::HEART_ICE ) : 0;
-            if ( acount )
-                dmg -= dmg * acount * Artifact( Artifact::HEART_ICE ).ExtraValue() / 100;
-            // 100%
-            acount = myhero ? myhero->HasArtifact( Artifact::HEART_FIRE ) : 0;
-            if ( acount )
-                dmg *= acount * 2;
+            if ( hero->HasArtifact( Artifact::EVERCOLD_ICICLE ) )
+                dmg += dmg * Artifact( Artifact::EVERCOLD_ICICLE ).ExtraValue() / 100;
+
+            if ( defendingHero ) {
+                // -50%
+                if ( defendingHero->HasArtifact( Artifact::ICE_CLOAK ) )
+                    dmg -= dmg * Artifact( Artifact::ICE_CLOAK ).ExtraValue() / 100;
+
+                if ( defendingHero->HasArtifact( Artifact::HEART_ICE ) )
+                    dmg -= dmg * Artifact( Artifact::HEART_ICE ).ExtraValue() / 100;
+
+                // 100%
+                if ( defendingHero->HasArtifact( Artifact::HEART_FIRE ) )
+                    dmg *= 2;
+            }
             break;
 
         case Spell::FIREBALL:
         case Spell::FIREBLAST:
             // +50%
-            acount = hero->HasArtifact( Artifact::EVERHOT_LAVA_ROCK );
-            if ( acount )
-                dmg += dmg * acount * Artifact( Artifact::EVERHOT_LAVA_ROCK ).ExtraValue() / 100;
-            // -50%
-            acount = myhero ? myhero->HasArtifact( Artifact::FIRE_CLOAK ) : 0;
-            if ( acount )
-                dmg /= acount * 2;
-            acount = myhero ? myhero->HasArtifact( Artifact::HEART_FIRE ) : 0;
-            if ( acount )
-                dmg -= dmg * acount * Artifact( Artifact::HEART_FIRE ).ExtraValue() / 100;
-            // 100%
-            acount = myhero ? myhero->HasArtifact( Artifact::HEART_ICE ) : 0;
-            if ( acount )
-                dmg *= acount * 2;
+            if ( hero->HasArtifact( Artifact::EVERHOT_LAVA_ROCK ) )
+                dmg += dmg * Artifact( Artifact::EVERHOT_LAVA_ROCK ).ExtraValue() / 100;
+
+            if ( defendingHero ) {
+                // -50%
+                if ( defendingHero->HasArtifact( Artifact::FIRE_CLOAK ) )
+                    dmg -= dmg * Artifact( Artifact::FIRE_CLOAK ).ExtraValue() / 100;
+
+                if ( defendingHero->HasArtifact( Artifact::HEART_FIRE ) )
+                    dmg -= dmg * Artifact( Artifact::HEART_FIRE ).ExtraValue() / 100;
+
+                // 100%
+                if ( defendingHero->HasArtifact( Artifact::HEART_ICE ) )
+                    dmg *= 2;
+            }
             break;
 
         case Spell::LIGHTNINGBOLT:
             // +50%
-            acount = hero->HasArtifact( Artifact::LIGHTNING_ROD );
-            if ( acount )
-                dmg += dmg * acount * Artifact( Artifact::LIGHTNING_ROD ).ExtraValue() / 100;
+            if ( hero->HasArtifact( Artifact::LIGHTNING_ROD ) )
+                dmg += dmg * Artifact( Artifact::LIGHTNING_ROD ).ExtraValue() / 100;
             // -50%
-            acount = myhero ? myhero->HasArtifact( Artifact::LIGHTNING_HELM ) : 0;
-            if ( acount )
-                dmg /= acount * 2;
+            if ( defendingHero && defendingHero->HasArtifact( Artifact::LIGHTNING_HELM ) )
+                dmg -= dmg * Artifact( Artifact::LIGHTNING_HELM ).ExtraValue() / 100;
             break;
 
         case Spell::CHAINLIGHTNING:
             // +50%
-            acount = hero->HasArtifact( Artifact::LIGHTNING_ROD );
-            if ( acount )
-                dmg += acount * dmg / 2;
+            if ( hero->HasArtifact( Artifact::LIGHTNING_ROD ) )
+                dmg += dmg * Artifact( Artifact::LIGHTNING_ROD ).ExtraValue() / 100;
             // -50%
-            acount = myhero ? myhero->HasArtifact( Artifact::LIGHTNING_HELM ) : 0;
-            if ( acount )
-                dmg /= acount * 2;
+            if ( defendingHero && defendingHero->HasArtifact( Artifact::LIGHTNING_HELM ) )
+                dmg -= dmg * Artifact( Artifact::LIGHTNING_HELM ).ExtraValue() / 100;
             // update orders damage
             switch ( target.damage ) {
             case 0:
@@ -1357,9 +1359,8 @@ void Battle::Unit::SpellApplyDamage( const Spell & spell, u32 spoint, const Hero
         case Spell::ELEMENTALSTORM:
         case Spell::ARMAGEDDON:
             // -50%
-            acount = myhero ? myhero->HasArtifact( Artifact::BROACH_SHIELDING ) : 0;
-            if ( acount )
-                dmg /= acount * 2;
+            if ( defendingHero && defendingHero->HasArtifact( Artifact::BROACH_SHIELDING ) )
+                dmg /= 2;
             break;
 
         default:
@@ -1400,7 +1401,6 @@ void Battle::Unit::SpellRestoreAction( const Spell & spell, u32 spoint, const He
         if ( !isValid() ) {
             // TODO: buggy behaviour
             Arena::GetGraveyard()->RemoveTroop( *this );
-            SwitchAnimation( Monster_Info::KILL, true );
         }
         // restore hp
         u32 acount = hero ? hero->HasArtifact( Artifact::ANKH ) : 0;
@@ -1564,11 +1564,6 @@ u32 Battle::Unit::GetMagicResist( const Spell & spell, u32 spower ) const
     }
 
     return 0;
-}
-
-bool Battle::Unit::isMagicAttack( void ) const
-{
-    return GetSpellMagic( true ) != Spell::NONE;
 }
 
 int Battle::Unit::GetSpellMagic( bool force ) const

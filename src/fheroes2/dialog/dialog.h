@@ -31,11 +31,10 @@
 #include "image.h"
 
 #define SHADOWWIDTH 16
-#define BOXAREA_WIDTH 245
+#define BOXAREA_WIDTH 244
 
 class Castle;
 class Heroes;
-class Surface;
 class Artifact;
 class Spell;
 class Monster;
@@ -85,7 +84,7 @@ namespace Dialog
     std::string SelectFileLoad( void );
     std::string SelectFileSave( void );
     // show info cell maps
-    void QuickInfo( const Maps::Tiles & );
+    void QuickInfo( const Maps::Tiles & tile );
     void QuickInfo( const Castle & );
     void QuickInfo( const Heroes & hero );
     int Message( const std::string &, const std::string &, int ft, int buttons = 0 /* buttons: OK : CANCEL : OK|CANCEL : YES|NO */ );
@@ -123,14 +122,14 @@ namespace Dialog
         explicit NonFixedFrameBox( int height = 0, int startYPos = -1, bool showButtons = false );
         virtual ~NonFixedFrameBox();
 
-        const Rect & GetArea( void )
+        const fheroes2::Rect & GetArea( void )
         {
             return area;
         }
 
     protected:
         std::unique_ptr<fheroes2::ImageRestorer> _restorer;
-        Rect area;
+        fheroes2::Rect area;
     };
 
     class FrameBox : public NonFixedFrameBox
@@ -160,7 +159,7 @@ namespace Dialog
         const Rect & GetTop( void ) const;
 
         static void RenderRegular( const Rect & );
-        static void RenderOther( const fheroes2::Image &, const Rect & );
+        static void RenderOther( const fheroes2::Image &, const fheroes2::Rect & );
 
     protected:
         fheroes2::ImageRestorer restorer;

@@ -162,14 +162,14 @@ void HeroBase::LoadDefaults( int type, int race )
 
             Spell spell = Skill::Primary::GetInitialSpell( race );
             if ( spell.isValid() )
-                AppendSpellToBook( spell, true );
+                spell_book.Append( spell );
         } break;
 
         case HeroBase::HEROES: {
             Spell spell = Skill::Primary::GetInitialSpell( race );
             if ( spell.isValid() ) {
                 SpellBookActivate();
-                AppendSpellToBook( spell, true );
+                spell_book.Append( spell );
             }
         } break;
 
@@ -222,7 +222,12 @@ Spell HeroBase::OpenSpellBook( int filter, bool canselect ) const
 
 bool HeroBase::HaveSpellBook( void ) const
 {
-    return HasArtifact( Artifact::MAGIC_BOOK );
+    return HasArtifact( Artifact::MAGIC_BOOK ) != 0;
+}
+
+std::vector<Spell> HeroBase::GetSpells( int lvl ) const
+{
+    return spell_book.GetSpells( lvl );
 }
 
 bool HeroBase::HaveSpell( const Spell & spell, bool skip_bag ) const

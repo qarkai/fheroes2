@@ -57,7 +57,7 @@ PrimarySkillsBar::PrimarySkillsBar( const Heroes * hr, bool mini )
 
 void PrimarySkillsBar::SetTextOff( s32 ox, s32 oy )
 {
-    toff = Point( ox, oy );
+    toff = fheroes2::Point( ox, oy );
 }
 
 void PrimarySkillsBar::RedrawBackground( const Rect & pos, fheroes2::Image & dstsf )
@@ -112,7 +112,7 @@ void PrimarySkillsBar::RedrawItem( int & skill, const Rect & pos, fheroes2::Imag
             fheroes2::Blit( sprite, dstsf, pos.x + ( pos.w - sprite.width() ) / 2, pos.y + ( pos.h - sprite.height() ) / 2 );
 
             Text text( Skill::Primary::String( skill ), Font::SMALL );
-            text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + 3, dstsf );
+            text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + 4, dstsf );
 
             if ( hero ) {
                 switch ( skill ) {
@@ -136,13 +136,13 @@ void PrimarySkillsBar::RedrawItem( int & skill, const Rect & pos, fheroes2::Imag
                     break;
                 }
 
-                text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + pos.h - text.h() - 3, dstsf );
+                text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + pos.h - text.h() - 2, dstsf );
             }
         }
     }
 }
 
-bool PrimarySkillsBar::ActionBarSingleClick( const Point & cursor, int & skill, const Rect & pos )
+bool PrimarySkillsBar::ActionBarLeftMouseSingleClick( int & skill )
 {
     if ( Skill::Primary::UNKNOWN != skill ) {
         Dialog::Message( Skill::Primary::String( skill ), Skill::Primary::StringDescription( skill, hero ), Font::BIG, Dialog::OK );
@@ -152,7 +152,7 @@ bool PrimarySkillsBar::ActionBarSingleClick( const Point & cursor, int & skill, 
     return false;
 }
 
-bool PrimarySkillsBar::ActionBarPressRight( const Point & cursor, int & skill, const Rect & pos )
+bool PrimarySkillsBar::ActionBarRightMouseHold( int & skill )
 {
     if ( Skill::Primary::UNKNOWN != skill ) {
         Dialog::Message( Skill::Primary::String( skill ), Skill::Primary::StringDescription( skill, hero ), Font::BIG );
@@ -162,7 +162,7 @@ bool PrimarySkillsBar::ActionBarPressRight( const Point & cursor, int & skill, c
     return false;
 }
 
-bool PrimarySkillsBar::ActionBarCursor( const Point & cursor, int & skill, const Rect & pos )
+bool PrimarySkillsBar::ActionBarCursor( int & skill )
 {
     if ( Skill::Primary::UNKNOWN != skill ) {
         msg = _( "View %{skill} Info" );
@@ -219,12 +219,12 @@ void SecondarySkillsBar::RedrawItem( Skill::Secondary & skill, const Rect & pos,
             text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + 3, dstsf );
 
             text.Set( Skill::Level::String( skill.Level() ) );
-            text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + 50, dstsf );
+            text.Blit( pos.x + ( pos.w - text.w() ) / 2, pos.y + 51, dstsf );
         }
     }
 }
 
-bool SecondarySkillsBar::ActionBarSingleClick( const Point & cursor, Skill::Secondary & skill, const Rect & pos )
+bool SecondarySkillsBar::ActionBarLeftMouseSingleClick( Skill::Secondary & skill )
 {
     if ( skill.isValid() ) {
         Dialog::SecondarySkillInfo( skill, true );
@@ -242,7 +242,7 @@ bool SecondarySkillsBar::ActionBarSingleClick( const Point & cursor, Skill::Seco
     return false;
 }
 
-bool SecondarySkillsBar::ActionBarPressRight( const Point & cursor, Skill::Secondary & skill, const Rect & pos )
+bool SecondarySkillsBar::ActionBarRightMouseHold( Skill::Secondary & skill )
 {
     if ( skill.isValid() ) {
         if ( can_change )
@@ -255,7 +255,7 @@ bool SecondarySkillsBar::ActionBarPressRight( const Point & cursor, Skill::Secon
     return false;
 }
 
-bool SecondarySkillsBar::ActionBarCursor( const Point & cursor, Skill::Secondary & skill, const Rect & pos )
+bool SecondarySkillsBar::ActionBarCursor( Skill::Secondary & skill )
 {
     if ( skill.isValid() ) {
         msg = _( "View %{skill} Info" );

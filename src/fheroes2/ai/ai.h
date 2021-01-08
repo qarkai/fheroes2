@@ -25,10 +25,15 @@
 
 #include "gamedefs.h"
 
+class Funds;
 class Castle;
 class HeroBase;
 class Heroes;
 class Kingdom;
+namespace Maps
+{
+    class Tiles;
+}
 namespace Battle
 {
     class Arena;
@@ -40,8 +45,6 @@ namespace AI
 {
     enum AI_TYPE
     {
-        EMPTY,
-        SIMPLE,
         NORMAL
     };
     enum AI_PERSONALITY
@@ -54,7 +57,6 @@ namespace AI
 
     enum modes_t
     {
-        HERO_PATROL = 0x01000000,
         HERO_SKIP_TURN = 0x02000000,
         HERO_WAITING = 0x04000000,
         HERO_MOVED = 0x08000000,
@@ -64,6 +66,10 @@ namespace AI
         HERO_CHAMPION = 0x80000000
     };
 
+    const double ARMY_STRENGTH_ADVANTAGE_SMALL = 1.3;
+    const double ARMY_STRENGTH_ADVANTAGE_MEDUIM = 1.5;
+    const double ARMY_STRENGTH_ADVANTAGE_LARGE = 1.8;
+
     class Base
     {
     public:
@@ -72,6 +78,8 @@ namespace AI
         virtual void BattleTurn( Battle::Arena & arena, const Battle::Unit & unit, Battle::Actions & actions );
         virtual void HeroTurn( Heroes & hero );
 
+        virtual void revealFog( const Maps::Tiles & tile );
+
         virtual void HeroesAdd( const Heroes & hero );
         virtual void HeroesRemove( const Heroes & hero );
         virtual void HeroesPreBattle( HeroBase & hero );
@@ -79,7 +87,7 @@ namespace AI
         virtual void HeroesPostLoad( Heroes & hero );
         virtual bool HeroesCanMove( const Heroes & hero );
         virtual bool HeroesGetTask( Heroes & hero );
-        virtual void HeroesActionComplete( Heroes & hero, int index );
+        virtual void HeroesActionComplete( Heroes & hero );
         virtual void HeroesActionNewPosition( Heroes & hero );
         virtual void HeroesClearTask( const Heroes & hero );
         virtual void HeroesLevelUp( Heroes & hero );
@@ -97,6 +105,9 @@ namespace AI
         virtual std::string GetPersonalityString() const;
 
         virtual void Reset();
+        virtual void resetPathfinder() = 0;
+
+        virtual ~Base() {}
 
     protected:
         int _personality = NONE;
@@ -104,7 +115,7 @@ namespace AI
         Base() {}
     };
 
-    Base & Get( AI_TYPE type = SIMPLE );
+    Base & Get( AI_TYPE type = NORMAL );
 
     // functionality in ai_hero_action.cpp
     void HeroesAction( Heroes & hero, s32 dst_index );
@@ -115,6 +126,7 @@ namespace AI
     bool BuildIfAvailable( Castle & castle, int building );
     bool BuildIfEnoughResources( Castle & castle, int building, uint32_t minimumMultiplicator );
     uint32_t GetResourceMultiplier( const Castle & castle, uint32_t min, uint32_t max );
+    void ReinforceHeroInCastle( Heroes & hero, Castle & castle, const Funds & budget );
 }
 
 #endif

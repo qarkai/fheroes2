@@ -41,13 +41,28 @@
 
 namespace Battle
 {
-    void PickupArtifactsAction( HeroBase &, HeroBase &, bool );
+    void PickupArtifactsAction( HeroBase &, HeroBase & );
     void EagleEyeSkillAction( HeroBase &, const SpellStorage &, bool );
     void NecromancySkillAction( HeroBase &, u32, bool );
 }
 
 Battle::Result Battle::Loader( Army & army1, Army & army2, s32 mapsindex )
 {
+    // Validate the arguments - check if battle should even load
+    if ( !army1.isValid() || !army2.isValid() ) {
+        Result result;
+        // Check second army first so attacker would win by default
+        if ( !army2.isValid() ) {
+            result.army1 = RESULT_WINS;
+            DEBUG( DBG_BATTLE, DBG_WARN, "Invalid battle detected! Index " << mapsindex << ", Army: " << army2.String() );
+        }
+        else {
+            result.army2 = RESULT_WINS;
+            DEBUG( DBG_BATTLE, DBG_WARN, "Invalid battle detected! Index " << mapsindex << ", Army: " << army1.String() );
+        }
+        return result;
+    }
+
     // pre battle army1
     if ( army1.GetCommander() ) {
         if ( army1.GetCommander()->isCaptain() )
@@ -92,19 +107,33 @@ Battle::Result Battle::Loader( Army & army1, Army & army2, s32 mapsindex )
     HeroBase * hero_loss = ( result.army1 & RESULT_LOSS ? army1.GetCommander() : ( result.army2 & RESULT_LOSS ? army2.GetCommander() : NULL ) );
     const u32 loss_result = result.army1 & RESULT_LOSS ? result.army1 : result.army2;
 
+    const bool isWinnerHuman = hero_wins && hero_wins->isControlHuman();
+    const bool transferArtifacts
+        = ( hero_wins && hero_loss && !( ( RESULT_RETREAT | RESULT_SURRENDER ) & loss_result ) && hero_wins->isHeroes() && hero_loss->isHeroes() );
+    bool artifactsTransferred = !transferArtifacts;
+
     if ( local ) {
         AGG::ResetMixer();
 
         // fade arena
-        arena.FadeArena();
+        const bool clearMessageLog
+            = ( result.army1 & RESULT_RETREAT ) || ( result.army2 & RESULT_RETREAT ) || ( result.army1 & RESULT_SURRENDER ) || ( result.army2 & RESULT_SURRENDER );
+        arena.FadeArena( clearMessageLog );
 
         // dialog summary
-        arena.DialogBattleSummary( result );
+        if ( isWinnerHuman ) {
+            artifactsTransferred = true;
+        }
+        arena.DialogBattleSummary( result, transferArtifacts && isWinnerHuman );
+    }
+
+    if ( !artifactsTransferred ) {
+        PickupArtifactsAction( *hero_wins, *hero_loss );
     }
 
     // save count troop
-    arena.GetForce1().SyncArmyCount();
-    arena.GetForce2().SyncArmyCount();
+    arena.GetForce1().SyncArmyCount( ( result.army1 & RESULT_WINS ) != 0 );
+    arena.GetForce2().SyncArmyCount( ( result.army2 & RESULT_WINS ) != 0 );
 
     // after battle army1
     if ( army1.GetCommander() ) {
@@ -121,10 +150,6 @@ Battle::Result Battle::Loader( Army & army1, Army & army2, s32 mapsindex )
         else
             army2.GetCommander()->ActionAfterBattle();
     }
-
-    // pickup artifact
-    if ( hero_wins && hero_loss && !( ( RESULT_RETREAT | RESULT_SURRENDER ) & loss_result ) && hero_wins->isHeroes() && hero_loss->isHeroes() )
-        PickupArtifactsAction( *hero_wins, *hero_loss, hero_wins->isControlHuman() );
 
     // eagle eye capability
     if ( hero_wins && hero_loss && hero_wins->GetLevelSkill( Skill::Secondary::EAGLEEYE ) && hero_loss->isHeroes() )
@@ -156,7 +181,7 @@ Battle::Result Battle::Loader( Army & army1, Army & army2, s32 mapsindex )
     return result;
 }
 
-void Battle::PickupArtifactsAction( HeroBase & hero1, HeroBase & hero2, bool local )
+void Battle::PickupArtifactsAction( HeroBase & hero1, HeroBase & hero2 )
 {
     BagArtifacts & bag1 = hero1.GetBagArtifacts();
     BagArtifacts & bag2 = hero2.GetBagArtifacts();
@@ -168,13 +193,9 @@ void Battle::PickupArtifactsAction( HeroBase & hero1, HeroBase & hero2, bool loc
             art = Artifact::UNKNOWN;
         }
         else if ( art() != Artifact::UNKNOWN && art() != Artifact::MAGIC_BOOK ) {
-            BagArtifacts::iterator it = std::find( bag1.begin(), bag1.end(), Artifact( ( Artifact::UNKNOWN ) ) );
+            BagArtifacts::iterator it = std::find( bag1.begin(), bag1.end(), Artifact( Artifact::UNKNOWN ) );
             if ( bag1.end() != it ) {
                 *it = art;
-                if ( local ) {
-                    Game::PlayPickupSound();
-                    Dialog::ArtifactInfo( _( "You have captured an enemy artifact!" ), "", art );
-                }
             }
             art = Artifact::UNKNOWN;
         }
@@ -258,13 +279,13 @@ void Battle::NecromancySkillAction( HeroBase & hero, u32 killed, bool local )
         percent = 90;
 
     const Monster mons( Monster::SKELETON );
-    const u32 count = Monster::GetCountFromHitPoints( Monster::SKELETON, mons.GetHitPoints() * killed * percent / 100 );
+    uint32_t count = Monster::GetCountFromHitPoints( Monster::SKELETON, mons.GetHitPoints() * killed * percent / 100 );
     if ( count == 0u )
-        return;
+        count = 1;
     army.JoinTroop( mons, count );
 
     if ( local ) {
-        std::string msg = _( "Practicing the dark arts of necromancy, you are able to raise %{count} of the enemy's dead to return under your service as %{monster}" );
+        std::string msg = _( "Practicing the dark arts of necromancy, you are able to raise %{count} of the enemy's dead to return under your service as %{monster}." );
         StringReplace( msg, "%{count}", count );
         StringReplace( msg, "%{monster}", mons.GetPluralName( count ) );
         fheroes2::Image sf1( 40, 45 );
@@ -322,12 +343,12 @@ u32 Battle::Result::GetExperienceDefender( void ) const
 
 bool Battle::Result::AttackerWins( void ) const
 {
-    return army1 & RESULT_WINS;
+    return ( army1 & RESULT_WINS ) != 0;
 }
 
 bool Battle::Result::DefenderWins( void ) const
 {
-    return army2 & RESULT_WINS;
+    return ( army2 & RESULT_WINS ) != 0;
 }
 
 StreamBase & Battle::operator<<( StreamBase & msg, const Result & res )

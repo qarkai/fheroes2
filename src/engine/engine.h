@@ -25,7 +25,6 @@
 #include "audio.h"
 #include "audio_cdrom.h"
 #include "audio_mixer.h"
-#include "display.h"
 #include "font.h"
 #include "rand.h"
 #include "serialize.h"
@@ -36,6 +35,7 @@
 #define INIT_AUDIO SDL_INIT_AUDIO
 #define INIT_TIMER SDL_INIT_TIMER
 #define INIT_CDROM SDL_INIT_CDROM
+#define INIT_GAMECONTROLLER SDL_INIT_GAMECONTROLLER
 
 namespace SDL
 {

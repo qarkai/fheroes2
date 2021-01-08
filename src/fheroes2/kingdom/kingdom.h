@@ -91,7 +91,7 @@ public:
     Heroes * GetLastLostHero( void ) const;
 
     const Heroes * GetFirstHeroStartCondLoss( void ) const;
-    const Heroes * GetBestHero( void ) const;
+    Heroes * GetBestHero();
 
     int GetControl( void ) const;
     int GetColor( void ) const;
@@ -115,6 +115,7 @@ public:
     u32 GetLostTownDays( void ) const;
     u32 GetCountNecromancyShrineBuild( void ) const;
     u32 GetCountBuilding( u32 ) const;
+    uint32_t GetCountThievesGuild() const;
 
     Recruits & GetRecruits( void );
 
@@ -155,12 +156,14 @@ public:
     bool isVisited( const Maps::Tiles & ) const;
     bool isVisited( s32, int obj ) const;
 
+    bool isValidKingdomObject( const Maps::Tiles & tile, int objectID ) const;
+
     bool HeroesMayStillMove( void ) const;
 
     const Puzzle & PuzzleMaps( void ) const;
     Puzzle & PuzzleMaps( void );
 
-    void SetVisitTravelersTent( int );
+    void SetVisitTravelersTent( int color );
     bool IsVisitTravelersTent( int ) const;
 
     void UpdateRecruits( void );

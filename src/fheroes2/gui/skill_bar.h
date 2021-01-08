@@ -29,12 +29,12 @@ public:
     PrimarySkillsBar( const Heroes *, bool mini );
 
     void SetTextOff( s32, s32 );
-    void RedrawBackground( const Rect &, fheroes2::Image & );
-    void RedrawItem( int &, const Rect &, fheroes2::Image & );
+    virtual void RedrawBackground( const Rect &, fheroes2::Image & ) override;
+    virtual void RedrawItem( int &, const Rect &, fheroes2::Image & ) override;
 
-    bool ActionBarSingleClick( const Point &, int &, const Rect & );
-    bool ActionBarPressRight( const Point &, int &, const Rect & );
-    bool ActionBarCursor( const Point &, int &, const Rect & );
+    virtual bool ActionBarLeftMouseSingleClick( int & skill ) override;
+    virtual bool ActionBarRightMouseHold( int & skill ) override;
+    virtual bool ActionBarCursor( int & skill ) override;
 
     bool QueueEventProcessing( std::string * = NULL );
 
@@ -43,7 +43,7 @@ protected:
     fheroes2::Image backsf;
     bool use_mini_sprite;
     std::vector<int> content;
-    Point toff;
+    fheroes2::Point toff;
     std::string msg;
 };
 
@@ -52,12 +52,12 @@ class SecondarySkillsBar : public Interface::ItemsBar<Skill::Secondary>
 public:
     SecondarySkillsBar( bool mini = true, bool change = false );
 
-    void RedrawBackground( const Rect &, fheroes2::Image & );
-    void RedrawItem( Skill::Secondary &, const Rect &, fheroes2::Image & );
+    virtual void RedrawBackground( const Rect &, fheroes2::Image & ) override;
+    virtual void RedrawItem( Skill::Secondary &, const Rect &, fheroes2::Image & ) override;
 
-    bool ActionBarSingleClick( const Point &, Skill::Secondary &, const Rect & );
-    bool ActionBarPressRight( const Point &, Skill::Secondary &, const Rect & );
-    bool ActionBarCursor( const Point &, Skill::Secondary &, const Rect & );
+    virtual bool ActionBarLeftMouseSingleClick( Skill::Secondary & skill ) override;
+    virtual bool ActionBarRightMouseHold( Skill::Secondary & skill ) override;
+    virtual bool ActionBarCursor( Skill::Secondary & skill ) override;
 
     bool QueueEventProcessing( std::string * = NULL );
 

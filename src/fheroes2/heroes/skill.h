@@ -119,6 +119,7 @@ namespace Skill
         Secondary * FindSkill( int );
         std::string String( void ) const;
         int Count( void ) const;
+        int GetTotalLevel() const;
         std::vector<Secondary> & ToVector( void );
 
     protected:
@@ -156,8 +157,6 @@ namespace Skill
         virtual bool isHeroes( void ) const;
 
         int LevelUp( int race, int level );
-
-        std::string StringSkills( const std::string & ) const;
 
         static const char * String( int );
         static std::string StringDescription( int, const Heroes * );

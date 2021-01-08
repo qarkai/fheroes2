@@ -85,10 +85,12 @@ Battle::Position Battle::Position::GetCorrect( const Unit & b, s32 head )
             if ( !result.second )
                 result.second = Board::GetCell( head, b.isReflect() ? RIGHT : LEFT );
 
-            if ( result.second )
+            if ( result.second ) {
                 std::swap( result.first, result.second );
-            else
+            }
+            else {
                 DEBUG( DBG_BATTLE, DBG_WARN, "NULL pointer, " << b.String() << ", dst: " << head );
+            }
         }
     }
 
@@ -103,6 +105,11 @@ bool Battle::Position::isReflect( void ) const
 bool Battle::Position::isValid( void ) const
 {
     return first && ( !second || ( ( LEFT | RIGHT ) & Board::GetDirection( first->GetIndex(), second->GetIndex() ) ) );
+}
+
+bool Battle::Position::contains( int cellIndex ) const
+{
+    return ( first && first->GetIndex() == cellIndex ) || ( second && second->GetIndex() == cellIndex );
 }
 
 Battle::Cell::Cell()
@@ -125,19 +132,12 @@ Battle::Cell::Cell( s32 ii )
 
 void Battle::Cell::SetArea( const Rect & area )
 {
-    if ( Settings::Get().QVGA() ) {
-        pos.x = area.x + 45 - ( ( ( index / ARENAW ) % 2 ) ? CELLW2 / 2 : 0 ) + ( CELLW2 - 1 ) * ( index % ARENAW );
-        pos.y = ( area.y + area.h - 188 ) + ( ( CELLH2 - ( CELLH2 - CELLH2_VER_SIDE ) / 2 - 1 ) * ( index / ARENAW ) );
-        pos.w = CELLW2;
-        pos.h = CELLH2;
-    }
-    else {
-        pos.x = area.x + 89 - ( ( ( index / ARENAW ) % 2 ) ? CELLW / 2 : 0 ) + ( CELLW ) * ( index % ARENAW );
-        pos.y = area.y + 62 + ( ( ( CELLH - ( CELLH - CELLH_VER_SIDE ) / 2 ) ) * ( index / ARENAW ) );
-        pos.w = CELLW;
-        pos.h = CELLH;
-    }
-    const short vertical_side_size = Settings::Get().QVGA() ? CELLH2_VER_SIDE : CELLH_VER_SIDE;
+    pos.x = area.x + 89 - ( ( ( index / ARENAW ) % 2 ) ? CELLW / 2 : 0 ) + ( CELLW ) * ( index % ARENAW );
+    pos.y = area.y + 62 + ( ( CELLH - ( CELLH - CELLH_VER_SIDE ) / 2 ) * ( index / ARENAW ) );
+    pos.w = CELLW;
+    pos.h = CELLH;
+
+    const short vertical_side_size = CELLH_VER_SIDE;
     // center
     coord[0] = Point( INFL * pos.x + INFL * pos.w / 2, INFL * pos.y + INFL * pos.h / 2 );
     // coordinates
@@ -241,7 +241,7 @@ bool Battle::Cell::isPassable4( const Unit & b, const Cell & from ) const
         case TOP_RIGHT:
         case BOTTOM_LEFT:
         case TOP_LEFT: {
-            bool reflect = ( BOTTOM_LEFT | TOP_LEFT ) & dir;
+            const bool reflect = ( ( BOTTOM_LEFT | TOP_LEFT ) & dir ) != 0;
             const Cell * tail = Board::GetCell( index, reflect ? RIGHT : LEFT );
             return tail && tail->isPassable1( true ) && isPassable1( true );
         }
@@ -269,8 +269,8 @@ bool Battle::Cell::isPassable3( const Unit & b, bool check_reflect ) const
             return cell && ( cell->isPassable1( true ) || cell->index == b.GetTailIndex() || cell->index == b.GetHeadIndex() ) && isPassable1( true );
         }
         else {
-            Cell * left = Board::GetCell( index, LEFT );
-            Cell * right = Board::GetCell( index, RIGHT );
+            const Cell * left = Board::GetCell( index, LEFT );
+            const Cell * right = Board::GetCell( index, RIGHT );
             return ( ( left && ( left->isPassable1( true ) || left->index == b.GetTailIndex() || left->index == b.GetHeadIndex() ) )
                      || ( right && ( right->isPassable1( true ) || right->index == b.GetTailIndex() || right->index == b.GetHeadIndex() ) ) )
                    && isPassable1( true );

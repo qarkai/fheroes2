@@ -245,8 +245,8 @@ Battle::Arena::Arena( Army & a1, Army & a2, s32 index, bool local )
         towers[0] = castle->isBuild( BUILD_LEFTTURRET ) ? new Tower( *castle, TWR_LEFT ) : NULL;
         towers[1] = new Tower( *castle, TWR_CENTER );
         towers[2] = castle->isBuild( BUILD_RIGHTTURRET ) ? new Tower( *castle, TWR_RIGHT ) : NULL;
-        bool fortification = ( Race::KNGT == castle->GetRace() ) && castle->isBuild( BUILD_SPEC );
-        catapult = army1->GetCommander() ? new Catapult( *army1->GetCommander(), fortification ) : NULL;
+        const bool fortification = ( Race::KNGT == castle->GetRace() ) && castle->isBuild( BUILD_SPEC );
+        catapult = army1->GetCommander() ? new Catapult( *army1->GetCommander() ) : NULL;
         bridge = new Bridge();
 
         // catapult cell
@@ -329,22 +329,28 @@ void Battle::Arena::TurnTroop( Unit * current_troop )
 {
     Actions actions;
     end_turn = false;
+    const bool isImmovable = current_troop->Modes( SP_BLIND | IS_PARALYZE_MAGIC );
 
     DEBUG( DBG_BATTLE, DBG_TRACE, current_troop->String( true ) );
 
     // morale check right before the turn
-    if ( !current_troop->Modes( SP_BLIND | IS_PARALYZE_MAGIC ) ) {
+    if ( !isImmovable ) {
         if ( current_troop->isAffectedByMorale() )
             current_troop->SetRandomMorale();
     }
 
     while ( !end_turn ) {
-        // bad morale
-        if ( current_troop->Modes( MORALE_BAD ) ) {
+        if ( !current_troop->isValid() ) { // looks like the unit died
+            end_turn = true;
+        }
+        else if ( current_troop->Modes( MORALE_BAD ) ) { // bad morale
             actions.push_back( Command( MSG_BATTLE_MORALE, current_troop->GetUID(), false ) );
             end_turn = true;
         }
         else {
+            // re-calculate possible paths in case unit moved or it's a new turn
+            _pathfinder.calculate( *current_troop );
+
             // turn opponents
             if ( current_troop->isControlRemote() )
                 RemoteTurn( *current_troop, actions );
@@ -369,12 +375,14 @@ void Battle::Arena::TurnTroop( Unit * current_troop )
                 Force::UpdateOrderUnits( *army1, *army2, *armies_order );
 
             // check end battle
-            if ( !BattleValid() )
+            if ( !BattleValid() ) {
                 end_turn = true;
+                break;
+            }
 
             // good morale
             if ( !end_turn && current_troop->isValid() && !current_troop->Modes( TR_SKIPMOVE ) && current_troop->Modes( TR_MOVED ) && current_troop->Modes( MORALE_GOOD )
-                 && BattleValid() ) {
+                 && !isImmovable ) {
                 actions.push_back( Command( MSG_BATTLE_MORALE, current_troop->GetUID(), true ) );
                 end_turn = false;
             }
@@ -488,7 +496,7 @@ void Battle::Arena::Turns( void )
         if ( army2->GetCommander() )
             result_game.exp1 += 500;
 
-        Force * army_loss = ( result_game.army1 & RESULT_LOSS ? army1 : ( result_game.army2 & RESULT_LOSS ? army2 : NULL ) );
+        const Force * army_loss = ( result_game.army1 & RESULT_LOSS ? army1 : ( result_game.army2 & RESULT_LOSS ? army2 : NULL ) );
         result_game.killed = army_loss ? army_loss->GetDeadCounts() : 0;
     }
 }
@@ -550,16 +558,56 @@ Battle::Indexes Battle::Arena::GetPath( const Unit & b, const Position & dst )
 {
     Indexes result = board.GetAStarPath( b, dst );
 
-    if ( result.size() ) {
-        if ( IS_DEBUG( DBG_BATTLE, DBG_TRACE ) ) {
-            std::stringstream ss;
-            for ( u32 ii = 0; ii < result.size(); ++ii )
-                ss << result[ii] << ", ";
-            DEBUG( DBG_BATTLE, DBG_TRACE, ss.str() );
+    if ( !result.empty() && IS_DEBUG( DBG_BATTLE, DBG_TRACE ) ) {
+        std::stringstream ss;
+        for ( u32 ii = 0; ii < result.size(); ++ii )
+            ss << result[ii] << ", ";
+        DEBUG( DBG_BATTLE, DBG_TRACE, ss.str() );
+    }
+
+    return result;
+}
+
+std::pair<int, uint32_t> Battle::Arena::CalculateMoveToUnit( const Unit & target )
+{
+    std::pair<int, uint32_t> result = {-1, MAXU16};
+
+    const Position & pos = target.GetPosition();
+    const Cell * head = pos.GetHead();
+    const Cell * tail = pos.GetTail();
+
+    if ( head ) {
+        const ArenaNode & headNode = _pathfinder.getNode( head->GetIndex() );
+        if ( headNode._from != -1 ) {
+            result.first = headNode._from;
+            result.second = headNode._cost;
+        }
+    }
+
+    if ( tail ) {
+        const ArenaNode & tailNode = _pathfinder.getNode( tail->GetIndex() );
+        if ( tailNode._from != -1 && tailNode._cost < result.second ) {
+            result.first = tailNode._from;
+            result.second = tailNode._cost;
         }
     }
 
     return result;
+}
+
+uint32_t Battle::Arena::CalculateMoveDistance( int32_t indexTo )
+{
+    return Board::isValidIndex( indexTo ) ? _pathfinder.getDistance( indexTo ) : MAXU16;
+}
+
+bool Battle::Arena::hexIsAccessible( int32_t indexTo )
+{
+    return Board::isValidIndex( indexTo ) && _pathfinder.hexIsAccessible( indexTo );
+}
+
+bool Battle::Arena::hexIsPassable( int32_t indexTo )
+{
+    return Board::isValidIndex( indexTo ) && _pathfinder.hexIsPassable( indexTo );
 }
 
 Battle::Unit * Battle::Arena::GetTroopBoard( s32 index )
@@ -643,10 +691,10 @@ const Battle::Unit * Battle::Arena::GetEnemyMaxQuality( int my_color ) const
     return res;
 }
 
-void Battle::Arena::FadeArena( void ) const
+void Battle::Arena::FadeArena( bool clearMessageLog ) const
 {
     if ( interface )
-        interface->FadeArena();
+        interface->FadeArena( clearMessageLog );
 }
 
 const SpellStorage & Battle::Arena::GetUsageSpells( void ) const
@@ -665,10 +713,13 @@ s32 Battle::Arena::GetFreePositionNearHero( int color ) const
     else if ( army2->GetColor() == color )
         cells = cells2;
 
-    if ( cells )
-        for ( u32 ii = 0; ii < 3; ++ii )
-            if ( board[cells[ii]].isPassable1( true ) && NULL == board[cells[ii]].GetUnit() )
+    if ( cells ) {
+        for ( u32 ii = 0; ii < 3; ++ii ) {
+            if ( board[cells[ii]].isPassable1( true ) && NULL == board[cells[ii]].GetUnit() ) {
                 return cells[ii];
+            }
+        }
+    }
 
     return -1;
 }
@@ -783,16 +834,51 @@ bool Battle::Arena::isDisableCastSpell( const Spell & spell, std::string * msg )
 
 bool Battle::Arena::GraveyardAllowResurrect( s32 index, const Spell & spell ) const
 {
-    const HeroBase * hero = GetCurrentCommander();
-    const Unit * killed = GetTroopUID( graveyard.GetLastTroopUID( index ) );
-    const Unit * tail = killed && killed->isWide() ? GetTroopUID( graveyard.GetLastTroopUID( killed->GetTailIndex() ) ) : NULL;
+    if ( !spell.isResurrect() )
+        return false;
 
-    return killed && ( !killed->isWide() || killed == tail ) && hero && spell.isResurrect() && killed->AllowApplySpell( spell, hero, NULL );
+    const HeroBase * hero = GetCurrentCommander();
+    if ( hero == NULL )
+        return false;
+
+    const Unit * killed = GetTroopUID( graveyard.GetLastTroopUID( index ) );
+    if ( killed == NULL )
+        return false;
+
+    if ( !killed->AllowApplySpell( spell, hero, NULL ) )
+        return false;
+
+    if ( Board::GetCell( index )->GetUnit() != NULL )
+        return false;
+
+    if ( !killed->isWide() )
+        return true;
+
+    const int tailIndex = killed->GetTailIndex();
+    const int headIndex = killed->GetHeadIndex();
+    const int secondIndex = tailIndex == index ? headIndex : tailIndex;
+
+    if ( Board::GetCell( secondIndex )->GetUnit() != NULL )
+        return false;
+
+    return true;
 }
 
 const Battle::Unit * Battle::Arena::GraveyardLastTroop( s32 index ) const
 {
     return GetTroopUID( graveyard.GetLastTroopUID( index ) );
+}
+
+std::vector<const Battle::Unit *> Battle::Arena::GetGraveyardTroops( const int32_t hexIndex ) const
+{
+    const TroopUIDs & ids = graveyard.GetTroopUIDs( hexIndex );
+
+    std::vector<const Battle::Unit *> units( ids.size() );
+    for ( size_t i = 0; i < ids.size(); ++i ) {
+        units[i] = GetTroopUID( ids[i] );
+    }
+
+    return units;
 }
 
 Battle::Indexes Battle::Arena::GraveyardClosedCells( void ) const
@@ -1057,7 +1143,7 @@ u32 Battle::Arena::GetObstaclesPenalty( const Unit & attacker, const Unit & defe
         return 0;
 
     u32 result = 0;
-    const u32 step = Settings::Get().QVGA() ? CELLW2 / 3 : CELLW / 3;
+    const u32 step = CELLW / 3;
 
     if ( castle ) {
         // archery skill

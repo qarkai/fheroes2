@@ -33,7 +33,7 @@ Point::Point()
     , y( 0 )
 {}
 
-Point::Point( s16 px, s16 py )
+Point::Point( int16_t px, int16_t py )
     : x( px )
     , y( py )
 {}
@@ -150,14 +150,9 @@ Size Size::operator-( const Size & sz ) const
     return Size( w - sz.w, h - sz.h );
 }
 
-bool Size::isEmpty( void ) const
-{
-    return 0 == w && 0 == h;
-}
-
 Rect::Rect() {}
 
-Rect::Rect( s16 rx, s16 ry, u16 rw, u16 rh )
+Rect::Rect( int16_t rx, int16_t ry, u16 rw, u16 rh )
     : Point( rx, ry )
     , Size( rw, rh )
 {}
@@ -172,20 +167,10 @@ Rect::Rect( const Point & pt, const Size & sz )
     , Size( sz )
 {}
 
-Rect::Rect( const SDL_Rect & rt )
-    : Point( rt.x, rt.y )
-    , Size( rt.w, rt.h )
-{}
-
 Rect::Rect( const fheroes2::Rect & rect )
     : Point( rect.x, rect.y )
     , Size( rect.width, rect.height )
 {}
-
-fheroes2::Rect Rect::convert() const
-{
-    return fheroes2::Rect( x, y, w, h );
-}
 
 Rect Rect::Get( const Point & pt1, const Point & pt2 )
 {
@@ -254,36 +239,6 @@ bool Rect::operator&( const Point & pt ) const
 bool Rect::operator&( const Rect & rt ) const
 {
     return !( x > rt.x + rt.w || x + w < rt.x || y > rt.y + rt.h || y + h < rt.y );
-}
-
-Rect Rect::operator^( const Rect & other ) const
-{
-    Rect temp = other;
-    if ( temp.x < x ) {
-        const int16_t diff = x - temp.x;
-        temp.x = x;
-        temp.w -= diff;
-    }
-    if ( temp.y < y ) {
-        const int16_t diff = y - temp.y;
-        temp.y = y;
-        temp.h -= diff;
-    }
-
-    if ( temp.x > x + w || temp.y > y + h || temp.w < 0 || temp.h < 0 )
-        return Rect();
-
-    if ( temp.x + temp.w > x + w ) {
-        const int16_t diff = temp.x + temp.w - ( x + w );
-        temp.w -= diff;
-    }
-
-    if ( temp.y + temp.h > y + h ) {
-        const int16_t diff = temp.y + temp.h - ( y + h );
-        temp.h -= diff;
-    }
-
-    return temp;
 }
 
 const Point & Rect::getPosition() const
@@ -367,30 +322,6 @@ std::pair<Rect, Point> Rect::Fixed4Blit( const Rect & srcrt, const Rect & dstrt 
         if ( dstptfix.y + srcrtfix.h > dstrt.y + dstrt.h )
             srcrtfix.h = dstrt.y + dstrt.h - dstptfix.y;
     }
-
-    return res;
-}
-
-SDL_Rect SDLRect( s32 x, s32 y, u32 w, u32 h )
-{
-    SDL_Rect res;
-
-    res.x = x;
-    res.y = y;
-    res.w = w;
-    res.h = h;
-
-    return res;
-}
-
-SDL_Rect SDLRect( const Rect & rt2 )
-{
-    SDL_Rect res;
-
-    res.x = rt2.x;
-    res.y = rt2.y;
-    res.w = rt2.w;
-    res.h = rt2.h;
 
     return res;
 }

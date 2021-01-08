@@ -76,7 +76,7 @@ struct HeroRow
         Clear();
 
         armyBar = new ArmyBar( &hero->GetArmy(), true, false );
-        armyBar->SetBackground( Size( 41, 53 ), RGBA( 72, 28, 0 ) );
+        armyBar->SetBackground( Size( 41, 53 ), fheroes2::GetColorId( 72, 28, 0 ) );
         armyBar->SetColRows( 5, 1 );
         armyBar->SetHSpace( -1 );
 
@@ -106,19 +106,19 @@ class StatsHeroesList : public Interface::ListBox<HeroRow>
 public:
     StatsHeroesList( const Point & pt, KingdomHeroes & );
 
-    void RedrawItem( const HeroRow &, s32, s32, bool );
-    void RedrawBackground( const Point & );
+    virtual void RedrawItem( const HeroRow &, s32, s32, bool ) override;
+    virtual void RedrawBackground( const Point & ) override;
 
-    void ActionCurrentUp( void ){};
-    void ActionCurrentDn( void ){};
-    void ActionListSingleClick( HeroRow & ){};
-    void ActionListDoubleClick( HeroRow & ){};
-    void ActionListPressRight( HeroRow & ){};
+    virtual void ActionCurrentUp() override {}
+    virtual void ActionCurrentDn() override {}
+    virtual void ActionListSingleClick( HeroRow & ) override {}
+    virtual void ActionListDoubleClick( HeroRow & ) override {}
+    virtual void ActionListPressRight( HeroRow & ) override {}
 
-    void ActionListSingleClick( HeroRow &, const Point &, s32, s32 );
-    void ActionListDoubleClick( HeroRow &, const Point &, s32, s32 );
-    void ActionListPressRight( HeroRow &, const Point &, s32, s32 );
-    bool ActionListCursor( HeroRow &, const Point & );
+    virtual void ActionListSingleClick( HeroRow &, const Point &, s32, s32 ) override;
+    virtual void ActionListDoubleClick( HeroRow &, const Point &, s32, s32 ) override;
+    virtual void ActionListPressRight( HeroRow &, const Point &, s32, s32 ) override;
+    virtual bool ActionListCursor( HeroRow &, const Point & ) override;
 };
 
 StatsHeroesList::StatsHeroesList( const Point & pt, KingdomHeroes & heroes )
@@ -127,11 +127,11 @@ StatsHeroesList::StatsHeroesList( const Point & pt, KingdomHeroes & heroes )
     const fheroes2::Sprite & back = fheroes2::AGG::GetICN( ICN::OVERVIEW, 13 );
 
     SetTopLeft( pt );
-    SetScrollSplitter( fheroes2::AGG::GetICN( ICN::SCROLL, 4 ), Rect( pt.x + 629, pt.y + 18, back.width(), back.height() ) );
+    SetScrollBar( fheroes2::AGG::GetICN( ICN::SCROLL, 4 ), fheroes2::Rect( pt.x + 629, pt.y + 18, back.width(), back.height() - 2 ) );
     SetScrollButtonUp( ICN::SCROLL, 0, 1, fheroes2::Point( pt.x + 626, pt.y ) );
     SetScrollButtonDn( ICN::SCROLL, 2, 3, fheroes2::Point( pt.x + 626, pt.y + 20 + back.height() ) );
     SetAreaMaxItems( 4 );
-    SetAreaItems( Rect( pt.x + 30, pt.y + 17, 594, 344 ) );
+    SetAreaItems( fheroes2::Rect( pt.x + 30, pt.y + 17, 594, 344 ) );
 
     content.resize( heroes.size() );
 
@@ -148,35 +148,39 @@ void StatsHeroesList::ActionListDoubleClick( HeroRow & row, const Point & cursor
 
 void StatsHeroesList::ActionListSingleClick( HeroRow & row, const Point & cursor, s32 ox, s32 oy )
 {
-    if ( row.hero && ( Rect( ox + 5, oy + 4, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) )
+    if ( row.hero
+         && ( fheroes2::Rect( ox + 5, oy + 4, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & fheroes2::Point( cursor.x, cursor.y ) ) )
         Game::OpenHeroesDialog( *row.hero, false );
 }
 
 void StatsHeroesList::ActionListPressRight( HeroRow & row, const Point & cursor, s32 ox, s32 oy )
 {
-    if ( row.hero && ( Rect( ox + 5, oy + 4, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) )
+    if ( row.hero
+         && ( fheroes2::Rect( ox + 5, oy + 4, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & fheroes2::Point( cursor.x, cursor.y ) ) )
         Dialog::QuickInfo( *row.hero );
 }
 
 bool StatsHeroesList::ActionListCursor( HeroRow & row, const Point & cursor )
 {
-    if ( ( row.armyBar->GetArea() & cursor ) && row.armyBar->QueueEventProcessing() ) {
+    const fheroes2::Point cursorPos( cursor.x, cursor.y );
+
+    if ( ( row.armyBar->GetArea() & cursorPos ) && row.armyBar->QueueEventProcessing() ) {
         if ( row.artifactsBar->isSelected() )
             row.artifactsBar->ResetSelected();
         Cursor::Get().Hide();
         return true;
     }
-    else if ( ( row.artifactsBar->GetArea() & cursor ) && row.artifactsBar->QueueEventProcessing() ) {
+    else if ( ( row.artifactsBar->GetArea() & cursorPos ) && row.artifactsBar->QueueEventProcessing() ) {
         if ( row.armyBar->isSelected() )
             row.armyBar->ResetSelected();
         Cursor::Get().Hide();
         return true;
     }
-    else if ( ( row.primskillsBar->GetArea() & cursor ) && row.primskillsBar->QueueEventProcessing() ) {
+    else if ( ( row.primskillsBar->GetArea() & cursorPos ) && row.primskillsBar->QueueEventProcessing() ) {
         Cursor::Get().Hide();
         return true;
     }
-    else if ( ( row.secskillsBar->GetArea() & cursor ) && row.secskillsBar->QueueEventProcessing() ) {
+    else if ( ( row.secskillsBar->GetArea() & cursorPos ) && row.secskillsBar->QueueEventProcessing() ) {
         Cursor::Get().Hide();
         return true;
     }
@@ -186,6 +190,8 @@ bool StatsHeroesList::ActionListCursor( HeroRow & row, const Point & cursor )
 
 void StatsHeroesList::RedrawItem( const HeroRow & row, s32 dstx, s32 dsty, bool current )
 {
+    (void)current;
+
     if ( row.hero ) {
         Text text( "", Font::SMALL );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::OVERVIEW, 10 ), fheroes2::Display::instance(), dstx, dsty );
@@ -240,7 +246,7 @@ void StatsHeroesList::RedrawBackground( const Point & dst )
     text.Set( _( "Artifacts" ) );
     text.Blit( dst.x + 500 - text.w() / 2, dst.y + 1 );
 
-    // splitter background
+    // scrollbar background
     fheroes2::Blit( fheroes2::AGG::GetICN( ICN::OVERVIEW, 13 ), display, dst.x + 628, dst.y + 17 );
 
     // items background
@@ -283,7 +289,7 @@ struct CstlRow
         castle = ptr;
 
         Clear();
-        const RGBA fill( 40, 12, 0 );
+        const uint8_t fill = fheroes2::GetColorId( 40, 12, 0 );
 
         armyBarGuard = new ArmyBar( &castle->GetArmy(), true, false );
         armyBarGuard->SetBackground( Size( 41, 41 ), fill );
@@ -299,7 +305,7 @@ struct CstlRow
             armyBarGuest->SetHSpace( -1 );
         }
 
-        dwellingsBar = new DwellingsBar( *castle, Size( 39, 52 ), fill );
+        dwellingsBar = new DwellingsBar( *castle, Size( 39, 52 ) );
         dwellingsBar->SetColRows( 6, 1 );
         dwellingsBar->SetHSpace( 2 );
     }
@@ -312,19 +318,19 @@ class StatsCastlesList : public Interface::ListBox<CstlRow>
 public:
     StatsCastlesList( const Point & pt, KingdomCastles & );
 
-    void RedrawItem( const CstlRow &, s32, s32, bool );
-    void RedrawBackground( const Point & );
+    virtual void RedrawItem( const CstlRow &, s32, s32, bool ) override;
+    virtual void RedrawBackground( const Point & ) override;
 
-    void ActionCurrentUp( void ){};
-    void ActionCurrentDn( void ){};
-    void ActionListDoubleClick( CstlRow & ){};
-    void ActionListSingleClick( CstlRow & ){};
-    void ActionListPressRight( CstlRow & ){};
+    virtual void ActionCurrentUp( void ) override {}
+    virtual void ActionCurrentDn( void ) override {}
+    virtual void ActionListDoubleClick( CstlRow & ) override {}
+    virtual void ActionListSingleClick( CstlRow & ) override {}
+    virtual void ActionListPressRight( CstlRow & ) override {}
 
-    void ActionListSingleClick( CstlRow &, const Point &, s32, s32 );
-    void ActionListDoubleClick( CstlRow &, const Point &, s32, s32 );
-    void ActionListPressRight( CstlRow &, const Point &, s32, s32 );
-    bool ActionListCursor( CstlRow &, const Point & );
+    virtual void ActionListSingleClick( CstlRow &, const Point &, s32, s32 ) override;
+    virtual void ActionListDoubleClick( CstlRow &, const Point &, s32, s32 ) override;
+    virtual void ActionListPressRight( CstlRow &, const Point &, s32, s32 ) override;
+    virtual bool ActionListCursor( CstlRow &, const Point & ) override;
 };
 
 StatsCastlesList::StatsCastlesList( const Point & pt, KingdomCastles & castles )
@@ -333,11 +339,11 @@ StatsCastlesList::StatsCastlesList( const Point & pt, KingdomCastles & castles )
     const fheroes2::Sprite & back = fheroes2::AGG::GetICN( ICN::OVERVIEW, 13 );
 
     SetTopLeft( pt );
-    SetScrollSplitter( fheroes2::AGG::GetICN( ICN::SCROLL, 4 ), Rect( pt.x + 629, pt.y + 18, back.width(), back.height() ) );
+    SetScrollBar( fheroes2::AGG::GetICN( ICN::SCROLL, 4 ), fheroes2::Rect( pt.x + 629, pt.y + 18, back.width(), back.height() - 2 ) );
     SetScrollButtonUp( ICN::SCROLL, 0, 1, fheroes2::Point( pt.x + 626, pt.y ) );
     SetScrollButtonDn( ICN::SCROLL, 2, 3, fheroes2::Point( pt.x + 626, pt.y + 20 + back.height() ) );
     SetAreaMaxItems( 4 );
-    SetAreaItems( Rect( pt.x + 30, pt.y + 17, 594, 344 ) );
+    SetAreaItems( fheroes2::Rect( pt.x + 30, pt.y + 17, 594, 344 ) );
 
     content.resize( castles.size() );
 
@@ -356,13 +362,13 @@ void StatsCastlesList::ActionListSingleClick( CstlRow & row, const Point & curso
 {
     if ( row.castle ) {
         // click castle icon
-        if ( Rect( ox + 17, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) {
+        if ( fheroes2::Rect( ox + 17, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & fheroes2::Point( cursor.x, cursor.y ) ) {
             Game::OpenCastleDialog( *row.castle );
             row.Init( row.castle );
         }
         else
             // click hero icon
-            if ( Rect( ox + 82, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) {
+            if ( fheroes2::Rect( ox + 82, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & fheroes2::Point( cursor.x, cursor.y ) ) {
             Heroes * hero = row.castle->GetHeroes().GuardFirst();
             if ( hero ) {
                 Game::OpenHeroesDialog( *hero, false );
@@ -375,10 +381,11 @@ void StatsCastlesList::ActionListSingleClick( CstlRow & row, const Point & curso
 void StatsCastlesList::ActionListPressRight( CstlRow & row, const Point & cursor, s32 ox, s32 oy )
 {
     if ( row.castle ) {
-        if ( ( Rect( ox + 17, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) )
+        if ( fheroes2::Rect( ox + 17, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & fheroes2::Point( cursor.x, cursor.y ) )
             Dialog::QuickInfo( *row.castle );
-        else if ( Rect( ox + 82, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() ) & cursor ) {
-            Heroes * hero = row.castle->GetHeroes().GuardFirst();
+        else if ( fheroes2::Rect( ox + 82, oy + 19, Interface::IconsBar::GetItemWidth(), Interface::IconsBar::GetItemHeight() )
+                  & fheroes2::Point( cursor.x, cursor.y ) ) {
+            const Heroes * hero = row.castle->GetHeroes().GuardFirst();
             if ( hero )
                 Dialog::QuickInfo( *hero );
         }
@@ -387,21 +394,23 @@ void StatsCastlesList::ActionListPressRight( CstlRow & row, const Point & cursor
 
 bool StatsCastlesList::ActionListCursor( CstlRow & row, const Point & cursor )
 {
-    if ( row.armyBarGuard && ( row.armyBarGuard->GetArea() & cursor )
+    const fheroes2::Point cursorPos( cursor.x, cursor.y );
+
+    if ( row.armyBarGuard && ( row.armyBarGuard->GetArea() & cursorPos )
          && ( row.armyBarGuest ? row.armyBarGuard->QueueEventProcessing( *row.armyBarGuest ) : row.armyBarGuard->QueueEventProcessing() ) ) {
         Cursor::Get().Hide();
         if ( row.armyBarGuest && row.armyBarGuest->isSelected() )
             row.armyBarGuest->ResetSelected();
         return true;
     }
-    else if ( row.armyBarGuest && ( row.armyBarGuest->GetArea() & cursor )
+    else if ( row.armyBarGuest && ( row.armyBarGuest->GetArea() & cursorPos )
               && ( row.armyBarGuard ? row.armyBarGuest->QueueEventProcessing( *row.armyBarGuard ) : row.armyBarGuest->QueueEventProcessing() ) ) {
         Cursor::Get().Hide();
         if ( row.armyBarGuard && row.armyBarGuard->isSelected() )
             row.armyBarGuard->ResetSelected();
         return true;
     }
-    else if ( row.dwellingsBar && ( row.dwellingsBar->GetArea() & cursor ) && row.dwellingsBar->QueueEventProcessing() ) {
+    else if ( row.dwellingsBar && ( row.dwellingsBar->GetArea() & cursorPos ) && row.dwellingsBar->QueueEventProcessing() ) {
         Cursor::Get().Hide();
         if ( row.armyBarGuest && row.armyBarGuest->isSelected() )
             row.armyBarGuest->ResetSelected();
@@ -415,6 +424,8 @@ bool StatsCastlesList::ActionListCursor( CstlRow & row, const Point & cursor )
 
 void StatsCastlesList::RedrawItem( const CstlRow & row, s32 dstx, s32 dsty, bool current )
 {
+    (void)current;
+
     if ( row.castle ) {
         Text text( "", Font::SMALL );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::OVERVIEW, 11 ), fheroes2::Display::instance(), dstx, dsty );
@@ -426,8 +437,13 @@ void StatsCastlesList::RedrawItem( const CstlRow & row, s32 dstx, s32 dsty, bool
 
         if ( hero ) {
             Interface::RedrawHeroesIcon( *hero, dstx + 82, dsty + 19 );
-            text.Set( hero->StringSkills( "-" ) );
+            const std::string sep = "-";
+            text.Set( GetString( hero->GetAttack() ) + sep + GetString( hero->GetDefense() ) + sep + GetString( hero->GetPower() ) + sep
+                      + GetString( hero->GetKnowledge() ) );
             text.Blit( dstx + 104 - text.w() / 2, dsty + 43 );
+        }
+        else {
+            row.castle->GetCaptain().PortraitRedraw( dstx + 82, dsty + 19, PORT_SMALL, fheroes2::Display::instance() );
         }
 
         text.Set( row.castle->GetName() );
@@ -466,7 +482,7 @@ void StatsCastlesList::RedrawBackground( const Point & dst )
     text.Set( _( "Available" ) );
     text.Blit( dst.x + 500 - text.w() / 2, dst.y + 1 );
 
-    // splitter background
+    // scrollbar background
     fheroes2::Blit( fheroes2::AGG::GetICN( ICN::OVERVIEW, 13 ), display, dst.x + 628, dst.y + 17 );
 
     // items background
@@ -651,9 +667,9 @@ void Kingdom::OverviewDialog( void )
         listStats->QueueEventProcessing();
 
         if ( le.MouseClickLeft( rectIncome ) )
-            Dialog::ResourceInfo( "", _( "Income:" ), GetIncome( INCOME_ALL ), Dialog::OK );
+            Dialog::ResourceInfo( _( "Income" ), "", GetIncome( INCOME_ALL ), Dialog::OK );
         else if ( le.MousePressRight( rectIncome ) )
-            Dialog::ResourceInfo( "", _( "Income:" ), GetIncome( INCOME_ALL ), 0 );
+            Dialog::ResourceInfo( _( "Income" ), "", GetIncome( INCOME_ALL ), 0 );
 
         // redraw
         if ( !cursor.isVisible() || redraw ) {

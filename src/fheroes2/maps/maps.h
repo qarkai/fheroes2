@@ -28,7 +28,6 @@
 #define TILEWIDTH 32
 
 struct Point;
-class IndexDistance;
 
 class MapsIndexes : public std::vector<s32>
 {};
@@ -46,18 +45,10 @@ namespace Maps
 
     typedef MapsIndexes Indexes;
 
-    class IndexesDistance : public std::vector<IndexDistance>
-    {
-        void Assign( s32, const Indexes &, int sort /* 0: none, 1: short first, 2: long first */ );
-
-    public:
-        IndexesDistance( s32, const Indexes &, int sort = 0 );
-        IndexesDistance( s32, s32, u32 dist, int sort = 0 );
-    };
-
     const char * SizeString( int size );
     const char * GetMinesName( int res );
 
+    int GetDirection( int from, int to );
     s32 GetDirectionIndex( s32, int direct );
     bool isValidDirection( s32, int direct );
 
@@ -70,23 +61,20 @@ namespace Maps
     s32 GetIndexFromAbsPoint( const Point & mp );
     s32 GetIndexFromAbsPoint( s32 px, s32 py );
 
-    Indexes GetAllIndexes( void );
     Indexes GetAroundIndexes( s32 );
     Indexes GetAroundIndexes( s32, int dist, bool sort = false ); // sorting distance
     Indexes GetDistanceIndexes( s32 center, int dist );
 
     Indexes ScanAroundObject( s32, int obj );
-    Indexes ScanAroundObjects( s32, const u8 * objs );
     Indexes ScanAroundObject( s32, u32 dist, int obj );
-    Indexes ScanAroundObjects( s32, u32 dist, const u8 * objs );
 
     Indexes GetTilesUnderProtection( s32 );
     bool TileIsUnderProtection( s32 );
     bool IsNearTiles( s32, s32 );
 
-    Indexes GetObjectPositions( int obj, bool check_hero );
-    Indexes GetObjectPositions( s32, int obj, bool check_hero );
-    Indexes GetObjectsPositions( const u8 * objs );
+    Indexes GetObjectPositions( int obj, bool ignoreHeroes );
+    Indexes GetObjectPositions( s32, int obj, bool ignoreHeroes );
+    Indexes GetObjectsPositions( const std::vector<u8> & objs );
 
     int TileIsCoast( s32, int direct = DIRECTION_ALL );
 

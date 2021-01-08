@@ -57,6 +57,7 @@ public:
     payment_t GetUpgradeCost( void ) const;
 
     virtual bool isValid( void ) const;
+    virtual bool isEmpty( void ) const;
     virtual bool isBattle( void ) const;
     virtual bool isModes( u32 ) const;
     virtual std::string GetAttackString( void ) const;
@@ -67,6 +68,7 @@ public:
     virtual u32 GetSpeed( void ) const;
     virtual u32 GetAffectedDuration( u32 ) const;
     virtual double GetStrength() const;
+    virtual double GetStrengthWithBonus( int bonusAttack, int bonusDefense ) const;
 
 protected:
     friend StreamBase & operator<<( StreamBase &, const Troop & );

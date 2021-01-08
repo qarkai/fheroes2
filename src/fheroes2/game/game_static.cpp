@@ -229,7 +229,7 @@ namespace GameStatic
     u8 whirlpool_lost_percent = 50;
 
     /* town, castle, heroes, artifact_telescope, object_observation_tower, object_magi_eyes */
-    u8 overview_distance[] = {4, 5, 4, 1, 20, 9, 8};
+    u8 overview_distance[] = {4, 5, 4, 1, 20, 9};
 
     u8 gameover_lost_days = 7;
 
@@ -270,7 +270,7 @@ namespace GameStatic
     u32 uniq = 0;
 }
 
-StreamBase & GameStatic::operator<<( StreamBase & msg, const Data & obj )
+StreamBase & GameStatic::operator<<( StreamBase & msg, const Data & /*obj*/ )
 {
     msg << whirlpool_lost_percent << kingdom_max_heroes << castle_grown_well << castle_grown_wel2 << castle_grown_week_of << castle_grown_month_of
         << heroes_spell_points_day << gameover_lost_days << spell_dd_distance << spell_dd_sp << spell_dd_hp;
@@ -313,7 +313,7 @@ StreamBase & GameStatic::operator<<( StreamBase & msg, const Data & obj )
     return msg;
 }
 
-StreamBase & GameStatic::operator>>( StreamBase & msg, Data & obj )
+StreamBase & GameStatic::operator>>( StreamBase & msg, Data & /*obj*/ )
 {
     msg >> whirlpool_lost_percent >> kingdom_max_heroes >> castle_grown_well >> castle_grown_wel2 >> castle_grown_week_of >> castle_grown_month_of
         >> heroes_spell_points_day >> gameover_lost_days >> spell_dd_distance >> spell_dd_sp >> spell_dd_hp;
@@ -369,26 +369,6 @@ u32 GameStatic::GetOverViewDistance( u32 d )
 u32 GameStatic::GetGameOverLostDays( void )
 {
     return gameover_lost_days;
-}
-
-cost_t & GameStatic::GetKingdomStartingResource( int df )
-{
-    switch ( df ) {
-    case Difficulty::EASY:
-        return kingdom_starting_resource[0];
-    case Difficulty::NORMAL:
-        return kingdom_starting_resource[1];
-    case Difficulty::HARD:
-        return kingdom_starting_resource[2];
-    case Difficulty::EXPERT:
-        return kingdom_starting_resource[3];
-    case Difficulty::IMPOSSIBLE:
-        return kingdom_starting_resource[4];
-    default:
-        break;
-    }
-
-    return kingdom_starting_resource[5];
 }
 
 u32 GameStatic::GetHeroesRestoreSpellPointsPerDay( void )
@@ -755,7 +735,7 @@ void Skill::UpdateStats( const std::string & spec )
 }
 
 #else
-void Skill::UpdateStats( const std::string & stats ) {}
+void Skill::UpdateStats( const std::string & ) {}
 #endif
 
 GameStatic::Data & GameStatic::Data::Get( void )

@@ -44,10 +44,10 @@ namespace Battle
 
     Unit * ForceGetCurrentUnitPart( Units & units1, Units & units2, bool part1, bool units1_first, bool orders_mode )
     {
-        Units::iterator it1 = part1 ? std::find_if( units1.begin(), units1.end(), std::bind2nd( std::ptr_fun( &AllowPart1 ), orders_mode ) )
-                                    : std::find_if( units1.begin(), units1.end(), std::bind2nd( std::ptr_fun( &AllowPart2 ), orders_mode ) );
-        Units::iterator it2 = part1 ? std::find_if( units2.begin(), units2.end(), std::bind2nd( std::ptr_fun( &AllowPart1 ), orders_mode ) )
-                                    : std::find_if( units2.begin(), units2.end(), std::bind2nd( std::ptr_fun( &AllowPart2 ), orders_mode ) );
+        Units::iterator it1 = part1 ? std::find_if( units1.begin(), units1.end(), [orders_mode]( const Unit * v ) { return AllowPart1( v, orders_mode ); } )
+                                    : std::find_if( units1.begin(), units1.end(), [orders_mode]( const Unit * v ) { return AllowPart2( v, orders_mode ); } );
+        Units::iterator it2 = part1 ? std::find_if( units2.begin(), units2.end(), [orders_mode]( const Unit * v ) { return AllowPart1( v, orders_mode ); } )
+                                    : std::find_if( units2.begin(), units2.end(), [orders_mode]( const Unit * v ) { return AllowPart2( v, orders_mode ); } );
         Unit * result = NULL;
 
         if ( it1 != units1.end() && it2 != units2.end() ) {
@@ -89,6 +89,7 @@ Battle::Units::Units()
 }
 
 Battle::Units::Units( const Units & units, bool filter )
+    : std::vector<Unit *>()
 {
     reserve( CAPACITY < units.size() ? units.size() : CAPACITY );
     assign( units.begin(), units.end() );
@@ -236,49 +237,36 @@ bool Battle::Force::isValid( void ) const
     return end() != std::find_if( begin(), end(), []( const Unit * unit ) { return unit->isValid(); } );
 }
 
-u32 Battle::Force::GetSurrenderCost( void ) const
+uint32_t Battle::Force::GetSurrenderCost( void ) const
 {
-    float res = 0;
+    double res = 0;
 
     for ( const_iterator it = begin(); it != end(); ++it )
         if ( ( *it )->isValid() ) {
-            payment_t payment = ( *it )->GetCost();
+            const payment_t & payment = ( *it )->GetCost();
             res += payment.gold;
         }
 
     const HeroBase * commander = GetCommander();
-
     if ( commander ) {
+        const Artifact art( Artifact::STATESMAN_QUILL );
+        double mod = commander->HasArtifact( art ) ? art.ExtraValue() / 100.0 : 0.5;
+
         switch ( commander->GetLevelSkill( Skill::Secondary::DIPLOMACY ) ) {
-        // 40%
         case Skill::Level::BASIC:
-            res = res * 40 / 100;
+            mod *= 0.8;
             break;
-        // 30%
         case Skill::Level::ADVANCED:
-            res = res * 30 / 100;
+            mod *= 0.6;
             break;
-        // 20%
         case Skill::Level::EXPERT:
-            res = res * 20 / 100;
-            break;
-        // 50%
-        default:
-            res = res * 50 / 100;
+            mod *= 0.4;
             break;
         }
-
-        Artifact art( Artifact::STATESMAN_QUILL );
-
-        if ( commander->HasArtifact( art ) )
-            res -= res * art.ExtraValue() / 100;
+        res *= mod;
     }
-
-    // limit
-    if ( res < 100 )
-        res = 100.0;
-
-    return static_cast<u32>( res );
+    // Total cost should always be at least 1 gold
+    return res >= 1 ? static_cast<uint32_t>( res + 0.5 ) : 1;
 }
 
 void Battle::Force::NewTurn( void )
@@ -428,7 +416,7 @@ void Battle::Force::resetIdleAnimation()
 
 bool Battle::Force::HasMonster( const Monster & mons ) const
 {
-    return end() != std::find_if( begin(), end(), [mons]( const Unit * unit ) { return unit->isMonster( mons() ); } );
+    return end() != std::find_if( begin(), end(), [&mons]( const Unit * unit ) { return unit->isMonster( mons.GetID() ); } );
 }
 
 u32 Battle::Force::GetDeadCounts( void ) const
@@ -452,16 +440,59 @@ u32 Battle::Force::GetDeadHitPoints( void ) const
     return res;
 }
 
-void Battle::Force::SyncArmyCount( void )
+void Battle::Force::SyncArmyCount( bool checkResurrected )
 {
+    // A special case: when every creature was resurrected by Ressurection
+    // In this case we have to find the weakest troop and set it to 1
+    Troop * restoredTroop = nullptr;
+    if ( checkResurrected ) {
+        bool isAllDead = true;
+        std::vector<Troop *> armyMonsters;
+        for ( u32 index = 0; index < army.Size(); ++index ) {
+            Troop * troop = army.GetTroop( index );
+
+            if ( troop && troop->isValid() ) {
+                const Unit * unit = FindUID( uids.at( index ) );
+                if ( unit ) {
+                    if ( unit->GetDead() > 0 ) {
+                        if ( unit->GetDead() < troop->GetCount() ) {
+                            isAllDead = false;
+                            break;
+                        }
+                    }
+                    else {
+                        isAllDead = false;
+                        break;
+                    }
+                }
+
+                armyMonsters.push_back( troop );
+            }
+        }
+
+        if ( isAllDead && !armyMonsters.empty() ) {
+            std::sort( armyMonsters.begin(), armyMonsters.end(), []( const Troop * one, const Troop * two ) { return one->GetStrength() < two->GetStrength(); } );
+
+            restoredTroop = armyMonsters.front();
+        }
+    }
+
     for ( u32 index = 0; index < army.Size(); ++index ) {
         Troop * troop = army.GetTroop( index );
 
         if ( troop && troop->isValid() ) {
             const Unit * unit = FindUID( uids.at( index ) );
 
-            if ( unit && unit->GetDead() )
-                troop->SetCount( unit->GetDead() > troop->GetCount() ? 0 : troop->GetCount() - unit->GetDead() );
+            if ( unit ) {
+                if ( unit->GetDead() )
+                    troop->SetCount( unit->GetDead() > troop->GetCount() ? 0 : troop->GetCount() - unit->GetDead() );
+                else if ( unit->GetID() == Monster::GHOST )
+                    troop->SetCount( unit->GetCount() );
+            }
         }
+    }
+
+    if ( restoredTroop != nullptr ) {
+        restoredTroop->SetCount( 1 );
     }
 }

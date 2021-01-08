@@ -54,15 +54,9 @@ std::string Direction::String( int direct )
     return res.empty() ? str_direct[0] : res;
 }
 
-int Direction::Get( s32 from, s32 to )
+bool Direction::isDiagonal( int direction )
 {
-    const Directions directions = Direction::All();
-
-    for ( Directions::const_iterator it = directions.begin(); it != directions.end(); ++it )
-        if ( to == Maps::GetDirectionIndex( from, *it ) )
-            return *it;
-
-    return to == from ? CENTER : UNKNOWN;
+    return ( direction & DIRECTION_ALL_CORNERS ) != 0;
 }
 
 bool Direction::ShortDistanceClockWise( int from, int to )
@@ -206,8 +200,8 @@ int Direction::Reflect( int direct )
     return UNKNOWN;
 }
 
-Directions Direction::All( void )
+const Directions & Direction::All( void )
 {
-    const int directs[] = {TOP_LEFT, TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT};
-    return Directions( directs, directs + 8 );
+    static const Directions allDirections = Directions( {TOP_LEFT, TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT} );
+    return allDirections;
 }

@@ -28,8 +28,8 @@
 namespace fheroes2
 {
     // Image contains image layer and transform layer.
-    // - transform layer is used to apply some changes to an image on which we draw the current one. For example, shadowing
-    // - image layer is used to copy pixel value to destination image
+    // - image layer contains visible pixels which are copy to a destination image
+    // - transform layer is used to apply some transformation to an image on which we draw the current one. For example, shadowing
     class Image
     {
     public:
@@ -44,8 +44,15 @@ namespace fheroes2
         virtual void resize( int32_t width_, int32_t height_ );
 
         // It's safe to cast to uint32_t as width and height are always >= 0
-        int32_t width() const;
-        int32_t height() const;
+        int32_t width() const
+        {
+            return _width;
+        }
+
+        int32_t height() const
+        {
+            return _height;
+        }
 
         virtual uint8_t * image();
         virtual const uint8_t * image() const;
@@ -53,20 +60,37 @@ namespace fheroes2
         uint8_t * transform();
         const uint8_t * transform() const;
 
-        bool empty() const;
+        bool empty() const
+        {
+            return _data.empty();
+        }
 
-        void reset(); // makes image fully transparent (transform layer is 1)
+        void reset(); // makes image fully transparent (transform layer is set to 1)
         void clear(); // makes the image empty
 
-        void fill( uint8_t value ); // fill only 'image' layer
+        void fill( uint8_t value ); // fill 'image' layer with given value, setting 'transform' layer set to 0
 
         void swap( Image & image );
+
+        // This is an optional indicator for image processing functions.
+        // The whole image still consists of 2 layers but transform layer could be ignored in computations.
+        bool singleLayer() const
+        {
+            return _singleLayer;
+        }
+
+    protected:
+        void disableTransformLayer() // disable transform layer usage. Be careful! Use only for display related images!
+        {
+            _singleLayer = true;
+        }
 
     private:
         int32_t _width;
         int32_t _height;
-        std::vector<uint8_t> _image;
-        std::vector<uint8_t> _transform;
+        std::vector<uint8_t> _data; // holds 2 image layers
+
+        bool _singleLayer; // only for images which are not used for any other operations except displaying on screen. Non-copyable member.
     };
 
     class Sprite : public Image
@@ -81,8 +105,15 @@ namespace fheroes2
         Sprite & operator=( const Sprite & image );
         Sprite & operator=( Sprite && image );
 
-        int32_t x() const;
-        int32_t y() const;
+        int32_t x() const
+        {
+            return _x;
+        }
+
+        int32_t y() const
+        {
+            return _y;
+        }
 
         virtual void setPosition( int32_t x_, int32_t y_ );
 
@@ -101,14 +132,32 @@ namespace fheroes2
         ImageRestorer( Image & image, int32_t x_, int32_t y_, int32_t width, int32_t height );
         ~ImageRestorer(); // restore method will be call upon object's destruction
 
+        ImageRestorer( const ImageRestorer & ) = delete;
+
         void update( int32_t x_, int32_t y_, int32_t width, int32_t height );
 
-        int32_t x() const;
-        int32_t y() const;
-        int32_t width() const;
-        int32_t height() const;
+        int32_t x() const
+        {
+            return _x;
+        }
+
+        int32_t y() const
+        {
+            return _y;
+        }
+
+        int32_t width() const
+        {
+            return _width;
+        }
+
+        int32_t height() const
+        {
+            return _height;
+        }
 
         void restore();
+        void reset();
 
     private:
         Image & _image;
@@ -168,16 +217,23 @@ namespace fheroes2
     // roi is an optional parameter when you need to draw in a small than image area
     void DrawLine( Image & image, const Point & start, const Point & end, uint8_t value, const Rect & roi = Rect() );
 
+    void DrawRect( Image & image, const Rect & roi, uint8_t value );
+
     // Please use GetColorId function if you want to use an RGB value
     void Fill( Image & image, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t colorId );
+
+    bool FitToRoi( const Image & in, Point & inPos, const Image & out, Point & outPos, Size & outputSize, const Rect & outputRoi );
 
     Image Flip( const Image & in, bool horizontally, bool vertically );
 
     // Returns a closest color ID from the original game's palette
     uint8_t GetColorId( uint8_t red, uint8_t green, uint8_t blue );
 
-    // This function does NOT check transform layer
+    // This function does NOT check transform layer. If you intent to replace few colors at the same image please use ApplyPalette to be more efficient.
     void ReplaceColorId( Image & image, uint8_t oldColorId, uint8_t newColorId );
+
+    // Use this function only when you need to convert pixel value into transform layer
+    void ReplaceColorIdByTransformId( Image & image, uint8_t colorId, uint8_t transformId );
 
     // Please remember that subpixel accuracy resizing is extremely slow!
     void Resize( const Image & in, Image & out, bool isSubpixelAccuracy = false );

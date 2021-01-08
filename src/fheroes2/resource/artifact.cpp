@@ -105,9 +105,9 @@ artifactstats_t artifacts[] = {
     {0, 2, TYPE0, _( "Enchanted Hourglass" ), _( "The %{name} extends the duration of all your spells by %{count} turns." )},
     {0, 0, TYPE0, _( "Gold Watch" ), _( "The %{name} doubles the effectiveness of your hypnotize spells." )},
     {0, 0, TYPE0, _( "Skullcap" ), _( "The %{name} halves the casting cost of all mind influencing spells." )},
-    {0, 0, TYPE0, _( "Ice Cloak" ), _( "The %{name} halves all damage your troops take from cold spells." )},
-    {0, 0, TYPE0, _( "Fire Cloak" ), _( "The %{name} halves all damage your troops take from fire spells." )},
-    {0, 0, TYPE0, _( "Lightning Helm" ), _( "The %{name} halves all damage your troops take from lightning spells." )},
+    {0, 50, TYPE0, _( "Ice Cloak" ), _( "The %{name} halves all damage your troops take from cold spells." )},
+    {0, 50, TYPE0, _( "Fire Cloak" ), _( "The %{name} halves all damage your troops take from fire spells." )},
+    {0, 50, TYPE0, _( "Lightning Helm" ), _( "The %{name} halves all damage your troops take from lightning spells." )},
     {0, 50, TYPE0, _( "Evercold Icicle" ), _( "The %{name} causes your cold spells to do %{count} percent more damage to enemy troops." )},
     {0, 50, TYPE0, _( "Everhot Lava Rock" ), _( "The %{name} causes your fire spells to do %{count} percent more damage to enemy troops." )},
     {0, 50, TYPE0, _( "Lightning Rod" ), _( "The %{name} causes your lightning spells to do %{count} percent more damage to enemy troops." )},
@@ -123,7 +123,7 @@ artifactstats_t artifacts[] = {
     {0, 0, TYPE0, _( "Kinetic Pendant" ), _( "The %{name} makes all your troops immune to paralyze spells." )},
     {0, 0, TYPE0, _( "Pendant of Death" ), _( "The %{name} makes all your troops immune to holy spells." )},
     {0, 0, TYPE0, _( "Wand of Negation" ), _( "The %{name} protects your troops from the Dispel Magic spell." )},
-    {0, 50, TYPE0, _( "Golden Bow" ), _( "The %{name} eliminates the %{count} percent penalty for your troops shooting past obstacles. (e.g. castle walls)" )},
+    {0, 50, TYPE0, _( "Golden Bow" ), _( "The %{name} eliminates the %{count} percent penalty for your troops shooting past obstacles (e.g. castle walls)." )},
     {0, 1, TYPE4, _( "Telescope" ), _( "The %{name} increases the amount of terrain your hero reveals when adventuring by %{count} extra square." )},
     {0, 10, TYPE0, _( "Statesman's Quill" ), _( "The %{name} reduces the cost of surrender to %{count} percent of the total cost of troops you have in your army." )},
     {0, 10, TYPE0, _( "Wizard's Hat" ), _( "The %{name} increases the duration of your spells by %{count} turns." )},
@@ -257,6 +257,8 @@ void Artifact::UpdateStats( const std::string & spec )
     }
     else
         VERBOSE( spec << ": " << doc.ErrorDesc() );
+#else
+    (void)spec;
 #endif
 }
 
@@ -394,25 +396,25 @@ int Artifact::LoyaltyLevel( void ) const
     switch ( id ) {
     case MASTHEAD:
     case SPADE_NECROMANCY:
+    case HEART_FIRE:
+    case HEART_ICE:
         return ART_LEVEL2;
 
-    case BREASTPLATE_ANDURAN:
-    case BATTLE_GARB:
-    case HELMET_ANDURAN:
+    case ARM_MARTYR:
     case HOLY_HAMMER:
     case LEGENDARY_SCEPTER:
-    case SPHERE_NEGATION:
     case STAFF_WIZARDRY:
     case SWORD_BREAKER:
-    case SWORD_ANDURAN:
     case CRYSTAL_BALL:
         return ART_LEVEL3;
 
     case SPELL_SCROLL:
-    case ARM_MARTYR:
     case BROACH_SHIELDING:
-    case HEART_FIRE:
-    case HEART_ICE:
+    case SWORD_ANDURAN:
+    case BREASTPLATE_ANDURAN:
+    case BATTLE_GARB:
+    case HELMET_ANDURAN:
+    case SPHERE_NEGATION:
         return ART_NORANDOM;
 
     default:
@@ -543,6 +545,27 @@ int Artifact::Level( void ) const
     }
 
     return ART_NONE;
+}
+
+// Convert artifact flags into simple usable level value
+int Artifact::getArtifactValue() const
+{
+    const int level = Level();
+
+    if ( level & ART_LEVEL1 ) {
+        return 1;
+    }
+    else if ( level & ART_LEVEL2 ) {
+        return 2;
+    }
+    else if ( level & ART_LEVEL3 ) {
+        return 3;
+    }
+    else if ( level & ART_ULTIMATE ) {
+        return 5;
+    }
+
+    return 0;
 }
 
 /* return index sprite objnarti.icn */
@@ -786,12 +809,54 @@ bool BagArtifacts::MakeBattleGarb( void )
 
 u32 BagArtifacts::CountArtifacts( void ) const
 {
-    return std::count_if( begin(), end(), std::mem_fun_ref( &Artifact::isValid ) );
+    // no way that we have more than 4 billion artifacts so static_cast is totally valid
+    return static_cast<uint32_t>( std::count_if( begin(), end(), []( const Artifact & art ) { return art.isValid(); } ) );
+}
+
+int BagArtifacts::getArtifactValue() const
+{
+    int result = 0;
+    for ( const Artifact & art : *this ) {
+        if ( art.isValid() )
+            result += art.getArtifactValue();
+    }
+
+    return result;
+}
+
+void BagArtifacts::exchangeArtifacts( BagArtifacts & giftBag )
+{
+    std::vector<Artifact> combined;
+    for ( auto it = begin(); it != end(); ++it ) {
+        if ( it->isValid() && it->GetID() != Artifact::MAGIC_BOOK ) {
+            combined.push_back( *it );
+            it->Reset();
+        }
+    }
+
+    for ( auto it = giftBag.begin(); it != giftBag.end(); ++it ) {
+        if ( it->isValid() && it->GetID() != Artifact::MAGIC_BOOK ) {
+            combined.push_back( *it );
+            it->Reset();
+        }
+    }
+
+    // better artifacts at the end
+    std::sort( combined.begin(), combined.end(), []( const Artifact & left, const Artifact & right ) { return left.getArtifactValue() < right.getArtifactValue(); } );
+
+    // reset and clear all current artifacts, put back the best
+    while ( combined.size() && PushArtifact( combined.back() ) ) {
+        combined.pop_back();
+    }
+
+    while ( combined.size() && giftBag.PushArtifact( combined.back() ) ) {
+        combined.pop_back();
+    }
 }
 
 bool BagArtifacts::ContainUltimateArtifact( void ) const
 {
-    return end() != std::find_if( begin(), end(), std::mem_fun_ref( &Artifact::isUltimate ) );
+    return end() != std::find_if( begin(), end(), []( const Artifact & art ) { return art.isUltimate(); } );
 }
 
 void BagArtifacts::RemoveScroll( const Artifact & art )
@@ -816,7 +881,7 @@ std::string BagArtifacts::String( void ) const
 
 u32 BagArtifacts::Count( const Artifact & art ) const
 {
-    return std::count( begin(), end(), art );
+    return static_cast<uint32_t>( std::count( begin(), end(), art ) ); // no way that we have more than 4 billion artifacts
 }
 
 u32 GoldInsteadArtifact( int obj )
@@ -860,7 +925,7 @@ ArtifactsBar::ArtifactsBar( const Heroes * ptr, bool mini, bool ro, bool change 
 
         spcursor.resize( backsf.width(), backsf.height() );
         spcursor.reset();
-        fheroes2::DrawBorder( spcursor, fheroes2::GetColorId( 0xc0, 0x2c, 0 ) );
+        fheroes2::DrawBorder( spcursor, 214 );
     }
     else {
         const fheroes2::Sprite & sprite = fheroes2::AGG::GetICN( ICN::ARTIFACT, 0 );
@@ -912,7 +977,7 @@ void ArtifactsBar::RedrawItem( Artifact & art, const Rect & pos, bool selected, 
     }
 }
 
-bool ArtifactsBar::ActionBarSingleClick( const Point & cursor, Artifact & art, const Rect & pos )
+bool ArtifactsBar::ActionBarLeftMouseSingleClick( Artifact & art )
 {
     if ( isSelected() ) {
         if ( !read_only )
@@ -935,7 +1000,7 @@ bool ArtifactsBar::ActionBarSingleClick( const Point & cursor, Artifact & art, c
     return true;
 }
 
-bool ArtifactsBar::ActionBarDoubleClick( const Point & cursor, Artifact & art, const Rect & pos )
+bool ArtifactsBar::ActionBarLeftMouseDoubleClick( Artifact & art )
 {
     if ( art() == Artifact::MAGIC_BOOK ) {
         if ( can_change )
@@ -953,7 +1018,7 @@ bool ArtifactsBar::ActionBarDoubleClick( const Point & cursor, Artifact & art, c
             payment_t cost = spell.GetCost();
             u32 answer = 0;
             std::string text = _(
-                "Do you want to use your knowledge of magical secrets to transcribe the %{spell} Scroll into your spell book?\nThe Scroll will be consumed.\n Spell point: %{sp}" );
+                "Do you want to use your knowledge of magical secrets to transcribe the %{spell} Scroll into your Magic Book?\nThe Spell Scroll will be consumed.\n Cost in spell point: %{sp}" );
 
             StringReplace( text, "%{spell}", spell.GetName() );
             StringReplace( text, "%{sp}", spell.SpellPoint() );
@@ -964,10 +1029,12 @@ bool ArtifactsBar::ActionBarDoubleClick( const Point & cursor, Artifact & art, c
                 StringReplace( text, "%{mp}", spell.MovePoint() );
             }
 
+            const std::string title = _( "Transcribe Spell Scroll" );
+
             if ( cost.GetValidItemsCount() )
-                answer = Dialog::ResourceInfo( "", text, cost, Dialog::YES | Dialog::NO );
+                answer = Dialog::ResourceInfo( title, text, cost, Dialog::YES | Dialog::NO );
             else
-                answer = Dialog::Message( "", text, Font::BIG, Dialog::YES | Dialog::NO );
+                answer = Dialog::Message( title, text, Font::BIG, Dialog::YES | Dialog::NO );
 
             if ( answer == Dialog::YES )
                 const_cast<Heroes *>( hero )->TranscribeScroll( art );
@@ -982,7 +1049,7 @@ bool ArtifactsBar::ActionBarDoubleClick( const Point & cursor, Artifact & art, c
     return true;
 }
 
-bool ArtifactsBar::ActionBarPressRight( const Point & cursor, Artifact & art, const Rect & pos )
+bool ArtifactsBar::ActionBarRightMouseHold( Artifact & art )
 {
     ResetSelected();
 
@@ -996,7 +1063,7 @@ bool ArtifactsBar::ActionBarPressRight( const Point & cursor, Artifact & art, co
     return true;
 }
 
-bool ArtifactsBar::ActionBarSingleClick( const Point & cursor, Artifact & art1, const Rect & pos1, Artifact & art2, const Rect & pos2 )
+bool ArtifactsBar::ActionBarLeftMouseSingleClick( Artifact & art1, Artifact & art2 )
 {
     if ( art1() != Artifact::MAGIC_BOOK && art2() != Artifact::MAGIC_BOOK ) {
         std::swap( art1, art2 );
@@ -1006,18 +1073,18 @@ bool ArtifactsBar::ActionBarSingleClick( const Point & cursor, Artifact & art1, 
     return true;
 }
 
-bool ArtifactsBar::ActionBarCursor( const Point & cursor, Artifact & art, const Rect & pos )
+bool ArtifactsBar::ActionBarCursor( Artifact & art )
 {
     if ( isSelected() ) {
-        Artifact * art2 = GetSelectedItem();
+        const Artifact * art2 = GetSelectedItem();
 
         if ( &art == art2 ) {
             if ( art() == Artifact::MAGIC_BOOK )
-                msg = _( "Open book" );
+                msg = _( "View Spells" );
             else if ( art() == Artifact::SPELL_SCROLL && Settings::Get().ExtHeroAllowTranscribingScroll() && hero->CanTranscribeScroll( art ) )
-                msg = _( "Transcribe scroll" );
+                msg = _( "Transcribe Spell Scroll" );
             else {
-                msg = _( "View %{name}" );
+                msg = _( "View %{name} Info" );
                 StringReplace( msg, "%{name}", art.GetName() );
             }
         }
@@ -1041,7 +1108,7 @@ bool ArtifactsBar::ActionBarCursor( const Point & cursor, Artifact & art, const 
     return false;
 }
 
-bool ArtifactsBar::ActionBarCursor( const Point & cursor, Artifact & art1, const Rect & pos1, Artifact & art2 /* selected */, const Rect & pos2 )
+bool ArtifactsBar::ActionBarCursor( Artifact & art1, Artifact & art2 /* selected */ )
 {
     if ( art2() == Artifact::MAGIC_BOOK || art1() == Artifact::MAGIC_BOOK )
         msg = _( "Cannot move artifact" );

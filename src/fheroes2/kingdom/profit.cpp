@@ -85,6 +85,8 @@ void ProfitConditions::UpdateCosts( const std::string & spec )
     }
     else
         VERBOSE( spec << ": " << doc.ErrorDesc() );
+#else
+    (void)spec;
 #endif
 }
 
@@ -112,7 +114,7 @@ payment_t ProfitConditions::FromBuilding( u32 building, int race )
     }
 
     if ( id ) {
-        profitstats_t * ptr = &_profits[0];
+        const profitstats_t * ptr = &_profits[0];
         while ( ptr->id && std::strcmp( id, ptr->id ) )
             ++ptr;
         if ( ptr->id )
@@ -166,7 +168,7 @@ payment_t ProfitConditions::FromArtifact( int artifact )
     }
 
     if ( id ) {
-        profitstats_t * ptr = &_profits[0];
+        const profitstats_t * ptr = &_profits[0];
         while ( ptr->id && std::strcmp( id, ptr->id ) )
             ++ptr;
         if ( ptr->id )
@@ -208,7 +210,7 @@ payment_t ProfitConditions::FromMine( int type )
     }
 
     if ( id ) {
-        profitstats_t * ptr = &_profits[0];
+        const profitstats_t * ptr = &_profits[0];
         while ( ptr->id && std::strcmp( id, ptr->id ) )
             ++ptr;
         if ( ptr->id )

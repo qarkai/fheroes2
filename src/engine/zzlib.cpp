@@ -80,26 +80,6 @@ std::vector<u8> zlibCompress( const u8 * src, size_t srcsz )
     return res;
 }
 
-bool ZSurface::Load( int w, int h, int bpp, int pitch, u32 rmask, u32 gmask, u32 bmask, u32 amask, const u8 * p, size_t s )
-{
-    buf = zlibDecompress( p, s );
-
-    if ( !buf.empty() ) {
-        SDL_Surface * sf = SDL_CreateRGBSurfaceFrom( &buf[0], w, h, bpp, pitch, rmask, gmask, bmask, amask );
-
-#if SDL_VERSION_ATLEAST( 2, 0, 0 )
-        SDL_SetSurfaceBlendMode( sf, SDL_BLENDMODE_NONE );
-#endif
-        if ( !sf )
-            Error::Except( __FUNCTION__, SDL_GetError() );
-
-        Set( sf );
-        return true;
-    }
-
-    return false;
-}
-
 bool ZStreamFile::read( const std::string & fn, size_t offset )
 {
     StreamFile sf;
@@ -158,7 +138,7 @@ fheroes2::Image CreateImageFromZlib( int32_t width, int32_t height, const uint8_
         return fheroes2::Image();
 
     const std::vector<uint8_t> & uncompressedData = zlibDecompress( imageData, imageSize );
-    if ( width * height != uncompressedData.size() )
+    if ( static_cast<size_t>( width * height ) != uncompressedData.size() )
         return fheroes2::Image();
 
     fheroes2::Image out( width, height );
@@ -175,7 +155,7 @@ fheroes2::Image CreateImageFromZlib( int32_t width, int32_t height, const uint8_
 
     const std::vector<uint8_t> & uncompressedImageData = zlibDecompress( imageData, imageSize );
     const std::vector<uint8_t> & uncompressedTransformData = zlibDecompress( transformData, transformSize );
-    if ( width * height != uncompressedImageData.size() || uncompressedImageData.size() != uncompressedTransformData.size() )
+    if ( static_cast<size_t>( width * height ) != uncompressedImageData.size() || uncompressedImageData.size() != uncompressedTransformData.size() )
         return fheroes2::Image();
 
     fheroes2::Image out( width, height );

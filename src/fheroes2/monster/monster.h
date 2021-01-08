@@ -171,8 +171,10 @@ public:
     bool operator==( const Monster & ) const;
     bool operator!=( const Monster & ) const;
 
-    int operator()( void ) const;
-    int GetID( void ) const;
+    int GetID( void ) const
+    {
+        return id;
+    }
 
     void Upgrade( void );
     Monster GetUpgrade( void ) const;
@@ -191,7 +193,8 @@ public:
     u32 GetHitPoints( void ) const;
     u32 GetSpeed( void ) const;
     u32 GetGrown( void ) const;
-    int GetLevel( void ) const;
+    int GetMonsterLevel() const;
+    int GetRandomUnitLevel( void ) const;
     u32 GetRNDSize( bool skip ) const;
 
     const char * GetName( void ) const;
@@ -215,9 +218,8 @@ public:
     bool isAffectedByMorale( void ) const;
     bool isAlive( void ) const;
     bool hasMeleePenalty() const;
-    bool hasColorCycling() const;
 
-    double GetMonsterStrength() const;
+    double GetMonsterStrength( int attack = -1, int defense = -1 ) const;
     int ICNMonh( void ) const;
 
     u32 GetSpriteIndex( void ) const;

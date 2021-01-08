@@ -27,6 +27,7 @@
 #include <list>
 
 #include "bitmodes.h"
+#include "campaign_data.h"
 #include "dir.h"
 #include "gamedefs.h"
 #include "maps_fileinfo.h"
@@ -34,11 +35,13 @@
 #include "system.h"
 
 #define FORMAT_VERSION_090_RELEASE 9000
+#define FORMAT_VERSION_082_RELEASE 8200
 #define FORMAT_VERSION_080_RELEASE 8000
 #define FORMAT_VERSION_070_RELEASE 3269
 #define FORMAT_VERSION_3255 3255
-#define CURRENT_FORMAT_VERSION FORMAT_VERSION_080_RELEASE // TODO: update this value for a new release
 #define LAST_FORMAT_VERSION FORMAT_VERSION_3255
+
+#define CURRENT_FORMAT_VERSION FORMAT_VERSION_090_RELEASE // TODO: update this value for a new release
 
 enum
 {
@@ -96,6 +99,7 @@ enum MusicSource
 {
     MUSIC_MIDI_ORIGINAL,
     MUSIC_MIDI_EXPANSION,
+    MUSIC_EXTERNAL,
     MUSIC_CDROM
 };
 
@@ -128,8 +132,6 @@ public:
         GAME_DYNAMIC_INTERFACE = 0x10010000,
         GAME_BATTLE_SHOW_DAMAGE = 0x10100000,
         GAME_CONTINUE_AFTER_VICTORY = 0x10200000,
-        POCKETPC_HIDE_CURSOR = 0x10400000,
-        POCKETPC_LOW_MEMORY = 0x10800000,
         POCKETPC_TAP_MODE = 0x11000000,
         POCKETPC_DRAG_DROP_SCROLL = 0x12000000,
         POCKETPC_LOW_RESOLUTION = 0x14000000,
@@ -137,9 +139,7 @@ public:
         /* influence on game balance: save to savefile */
         WORLD_SHOW_VISITED_CONTENT = 0x20000001,
         WORLD_ABANDONED_MINE_RANDOM = 0x20000002,
-        WORLD_SAVE_MONSTER_BATTLE = 0x20000004,
         WORLD_ALLOW_SET_GUARDIAN = 0x20000008,
-        WORLD_NOREQ_FOR_ARTIFACTS = 0x20000010,
         WORLD_ARTIFACT_CRYSTAL_BALL = 0x20000020,
         WORLD_SCOUTING_EXTENDED = 0x20000040,
         WORLD_ONLY_FIRST_MONSTER_ATTACK = 0x20000080,
@@ -159,14 +159,11 @@ public:
         HEROES_REMEMBER_POINTS_RETREAT = 0x21000000,
         HEROES_SURRENDERING_GIVE_EXP = 0x22000000,
         HEROES_RECALCULATE_MOVEMENT = 0x24000000,
-        HEROES_PATROL_ALLOW_PICKUP = 0x28000000,
 
         CASTLE_MAGEGUILD_POINTS_TURN = 0x30000001,
-        WORLD_ARTSPRING_SEPARATELY_VISIT = 0x30000002,
-        CASTLE_ALLOW_RECRUITS_SPECIAL = 0x30000004,
         WORLD_STARTHERO_LOSSCOND4HUMANS = 0x30000008,
         WORLD_1HERO_HIRED_EVERY_WEEK = 0x30000010,
-        WORLD_DWELLING_ACCUMULATE_UNITS = 0x30000020,
+        WORLD_SCALE_NEUTRAL_ARMIES = 0x30000020,
         HEROES_ARENA_ANY_SKILLS = 0x30000080,
         WORLD_USE_UNIQUE_ARTIFACTS_ML = 0x30000100,
         WORLD_USE_UNIQUE_ARTIFACTS_RS = 0x30000200,
@@ -180,7 +177,6 @@ public:
         // UNUSED = 0x40008000,
         BATTLE_SOFT_WAITING = 0x40010000,
         BATTLE_REVERSE_WAIT_ORDER = 0x40020000,
-        BATTLE_MERGE_ARMIES = 0x40100000,
         BATTLE_SKIP_INCREASE_DEFENSE = 0x40200000,
         BATTLE_OBJECTS_ARCHERS_PENALTY = 0x42000000,
 
@@ -201,7 +197,6 @@ public:
     int AIMoveSpeed( void ) const;
     int BattleSpeed( void ) const;
     int ScrollSpeed( void ) const;
-    u32 MemoryLimit( void ) const;
 
     const std::string & SelectVideoDriver( void ) const;
 
@@ -229,7 +224,6 @@ public:
     bool FullScreen( void ) const;
     bool KeepAspectRatio( void ) const;
     bool ChangeFullscreenResolution( void ) const;
-    bool QVGA( void ) const;
     bool Sound( void ) const;
     bool Music( void ) const;
     bool ShowControlPanel( void ) const;
@@ -262,19 +256,15 @@ public:
     bool ExtHeroRememberPointsForRetreating( void ) const;
     bool ExtHeroSurrenderingGiveExp( void ) const;
     bool ExtHeroRecalculateMovement( void ) const;
-    bool ExtHeroPatrolAllowPickup( void ) const;
     bool ExtHeroAllowTranscribingScroll( void ) const;
     bool ExtHeroAllowBannedSecSkillsUpgrade( void ) const;
     bool ExtHeroArenaCanChoiseAnySkills( void ) const;
     bool ExtUnionsAllowCastleVisiting( void ) const;
     bool ExtUnionsAllowHeroesMeetings( void ) const;
-    bool ExtUnionsAllowViewMaps( void ) const;
     bool ExtWorldShowVisitedContent( void ) const;
     bool ExtWorldScouteExtended( void ) const;
     bool ExtWorldAbandonedMineRandom( void ) const;
-    bool ExtWorldSaveMonsterBattle( void ) const;
     bool ExtWorldAllowSetGuardian( void ) const;
-    bool ExtWorldNoRequirementsForArtifacts( void ) const;
     bool ExtWorldArtifactCrystalBall( void ) const;
     bool ExtWorldOnlyFirstMonsterAttack( void ) const;
     bool ExtWorldEyeEagleAsScholar( void ) const;
@@ -282,10 +272,9 @@ public:
     bool ExtWorldBanWeekOf( void ) const;
     bool ExtWorldNewVersionWeekOf( void ) const;
     bool ExtWorldBanPlagues( void ) const;
-    bool ExtWorldArtesianSpringSeparatelyVisit( void ) const;
     bool ExtWorldStartHeroLossCond4Humans( void ) const;
     bool ExtWorldOneHeroHiredEveryWeek( void ) const;
-    bool ExtWorldDwellingsAccumulateUnits( void ) const;
+    bool ExtWorldNeutralArmyDifficultyScaling( void ) const;
     bool ExtWorldUseUniqueArtifactsML( void ) const;
     bool ExtWorldUseUniqueArtifactsRS( void ) const;
     bool ExtWorldUseUniqueArtifactsPS( void ) const;
@@ -294,13 +283,11 @@ public:
     bool ExtWorldDisableBarrowMounds( void ) const;
     bool ExtCastleAllowGuardians( void ) const;
     bool ExtCastleGuildRestorePointsTurn( void ) const;
-    bool ExtCastleAllowRecruitSpecialHeroes( void ) const;
     bool ExtCastleOneHeroHiredEveryWeek( void ) const;
     bool ExtBattleShowDamage( void ) const;
     bool ExtBattleShowBattleOrder( void ) const;
     bool ExtBattleSoftWait( void ) const;
     bool ExtBattleObjectsArchersPenalty( void ) const;
-    bool ExtBattleMergeArmies( void ) const;
     bool ExtBattleSkipIncreaseDefense( void ) const;
     bool ExtBattleReverseWaitOrder( void ) const;
     bool ExtGameRememberLastFocus( void ) const;
@@ -313,8 +300,6 @@ public:
     bool ExtGameEvilInterface( void ) const;
     bool ExtGameDynamicInterface( void ) const;
     bool ExtGameHideInterface( void ) const;
-    bool ExtPocketHideCursor( void ) const;
-    bool ExtPocketLowMemory( void ) const;
     bool ExtPocketTapMode( void ) const;
     bool ExtPocketDragDropScroll( void ) const;
 
@@ -334,7 +319,6 @@ public:
     void SetShowIcons( bool );
     void SetShowButtons( bool );
     void SetShowStatus( bool );
-    void SetMemoryLimit( u32 );
     void SetAIMoveSpeed( int );
     void SetScrollSpeed( int );
     void SetHeroesMoveSpeed( int );
@@ -350,9 +334,14 @@ public:
     int MusicVolume( void ) const;
     MusicSource MusicType() const;
 
-    bool GameType( int ) const;
+    bool IsGameType( int type ) const;
     int GameType( void ) const;
     void SetGameType( int );
+
+    void SetCurrentCampaignScenarioBonus( const Campaign::ScenarioBonusData & bonus );
+    void SetCurrentCampaignScenarioID( const int scenarioID );
+    void SetCurrentCampaignID( const int campaignID );
+    void AddCurrentCampaignMapToFinished();
 
     Players & GetPlayers( void );
     const Players & GetPlayers( void ) const;
@@ -395,7 +384,6 @@ public:
     static ListDirs GetRootDirs( void );
     static std::string GetLastFile( const std::string & prefix, const std::string & name );
     static std::string GetWriteableDir( const char * );
-    static std::string GetSaveDir( void );
     static std::string GetLangDir( void );
 
     // deprecated
@@ -403,7 +391,7 @@ public:
     {
         return data_params;
     }
-    const ListDirs GetMapsParams( void ) const
+    ListDirs GetMapsParams( void ) const
     {
         return maps_params;
     }
@@ -445,6 +433,7 @@ private:
     int sound_volume;
     int music_volume;
     MusicSource _musicType;
+    int _controllerPointerSpeed;
     int heroes_speed;
     int ai_speed;
     int scroll_speed;
@@ -456,7 +445,6 @@ private:
     std::string video_driver;
 
     int port;
-    u32 memory_limit;
 
     Point pos_radr;
     Point pos_bttn;
@@ -464,6 +452,8 @@ private:
     Point pos_stat;
 
     Players players;
+
+    Campaign::CampaignData campaignData;
 };
 
 StreamBase & operator<<( StreamBase &, const Settings & );

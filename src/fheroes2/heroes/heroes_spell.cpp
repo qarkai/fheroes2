@@ -35,6 +35,9 @@
 #include "spell.h"
 #include "world.h"
 
+#include <assert.h>
+#include <memory>
+
 namespace
 {
     // Values are extracted from Heroes2 executable
@@ -57,28 +60,46 @@ bool ActionSpellDimensionDoor( Heroes & );
 bool ActionSpellTownGate( Heroes & );
 bool ActionSpellTownPortal( Heroes & );
 bool ActionSpellVisions( Heroes & );
-bool ActionSpellSetGuardian( Heroes &, const Spell &, int mons );
+bool ActionSpellSetGuardian( Heroes &, const Spell & );
 
 class CastleIndexListBox : public Interface::ListBox<s32>
 {
 public:
-    CastleIndexListBox( const Point & pt, int & res )
+    CastleIndexListBox( const Point & pt, int & res, const bool isEvilInterface )
         : Interface::ListBox<s32>( pt )
-        , result( res ){};
+        , result( res )
+        , _townFrameIcnId( isEvilInterface ? ICN::ADVBORDE : ICN::ADVBORD )
+        , _listBoxIcnId( isEvilInterface ? ICN::LISTBOX_EVIL : ICN::LISTBOX )
+    {}
 
-    void RedrawItem( const s32 &, s32, s32, bool );
-    void RedrawBackground( const Point & );
+    virtual void RedrawItem( const s32 &, s32, s32, bool ) override;
+    virtual void RedrawBackground( const Point & ) override;
 
-    void ActionCurrentUp( void ){};
-    void ActionCurrentDn( void ){};
-    void ActionListDoubleClick( s32 & )
+    virtual void ActionCurrentUp( void ) override {}
+
+    virtual void ActionCurrentDn( void ) override {}
+
+    virtual void ActionListDoubleClick( s32 & ) override
     {
         result = Dialog::OK;
-    };
-    void ActionListSingleClick( s32 & ){};
-    void ActionListPressRight( s32 & ){};
+    }
+
+    virtual void ActionListSingleClick( s32 & ) override {}
+
+    virtual void ActionListPressRight( int32_t & index ) override
+    {
+        const Castle * castle = world.GetCastle( Maps::GetPoint( index ) );
+        if ( castle != nullptr ) {
+            Cursor::Get().Hide();
+            Dialog::QuickInfo( *castle );
+        }
+    }
 
     int & result;
+
+private:
+    int _townFrameIcnId;
+    int _listBoxIcnId;
 };
 
 void CastleIndexListBox::RedrawItem( const s32 & index, s32 dstx, s32 dsty, bool current )
@@ -86,8 +107,18 @@ void CastleIndexListBox::RedrawItem( const s32 & index, s32 dstx, s32 dsty, bool
     const Castle * castle = world.GetCastle( Maps::GetPoint( index ) );
 
     if ( castle ) {
+        fheroes2::Blit( fheroes2::AGG::GetICN( _townFrameIcnId, 0 ), 481, 177, fheroes2::Display::instance(), dstx, dsty, 54, 30 );
+        Interface::RedrawCastleIcon( *castle, dstx + 4, dsty + 4 );
         Text text( castle->GetName(), ( current ? Font::YELLOW_BIG : Font::BIG ) );
-        text.Blit( dstx + 10, dsty );
+
+        if ( VisibleItemCount() > 0 ) {
+            const int32_t heightPerItem = ( rtAreaItems.height - VisibleItemCount() ) / VisibleItemCount();
+            text.Blit( dstx + 60, dsty + ( heightPerItem - text.h() ) / 2, 196 );
+        }
+        else {
+            assert( 0 ); // this should never happen!
+            text.Blit( dstx + 60, dsty, 196 );
+        }
     }
 }
 
@@ -96,27 +127,59 @@ void CastleIndexListBox::RedrawBackground( const Point & dst )
     fheroes2::Display & display = fheroes2::Display::instance();
 
     Text text( _( "Town Portal" ), Font::YELLOW_BIG );
-    text.Blit( dst.x + 140 - text.w() / 2, dst.y + 6 );
+    text.Blit( dst.x + 140 - text.w() / 2, dst.y + 5 );
 
     text.Set( _( "Select town to port to." ), Font::BIG );
-    text.Blit( dst.x + 140 - text.w() / 2, dst.y + 30 );
+    text.Blit( dst.x + 140 - text.w() / 2, dst.y + 25 );
 
-    fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 0 ), display, dst.x + 2, dst.y + 55 );
-    for ( u32 ii = 1; ii < 5; ++ii )
-        fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 1 ), display, dst.x + 2, dst.y + 55 + ( ii * 19 ) );
-    fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 2 ), display, dst.x + 2, dst.y + 145 );
+    const fheroes2::Sprite & upperPart = fheroes2::AGG::GetICN( _listBoxIcnId, 0 );
+    const fheroes2::Sprite & middlePart = fheroes2::AGG::GetICN( _listBoxIcnId, 1 );
+    const fheroes2::Sprite & lowerPart = fheroes2::AGG::GetICN( _listBoxIcnId, 2 );
 
-    fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 7 ), display, dst.x + 256, dst.y + 75 );
-    for ( u32 ii = 1; ii < 3; ++ii )
-        fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 8 ), display, dst.x + 256, dst.y + 74 + ( ii * 19 ) );
-    fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 9 ), display, dst.x + 256, dst.y + 126 );
+    int32_t offsetY = 45;
+    fheroes2::Blit( upperPart, display, dst.x + 2, dst.y + offsetY );
+
+    offsetY += upperPart.height();
+
+    int32_t totalHeight = rtAreaItems.height + 6;
+    int32_t middlePartCount = ( totalHeight - upperPart.height() - lowerPart.height() + middlePart.height() - 1 ) / middlePart.height();
+
+    for ( int32_t i = 0; i < middlePartCount; ++i ) {
+        fheroes2::Blit( fheroes2::AGG::GetICN( _listBoxIcnId, 1 ), display, dst.x + 2, dst.y + offsetY );
+        offsetY += middlePart.height();
+    }
+
+    fheroes2::Blit( lowerPart, display, dst.x + 2, dst.y + totalHeight - lowerPart.height() + 45 );
+
+    const fheroes2::Sprite & upperScrollbarArrow = fheroes2::AGG::GetICN( _listBoxIcnId, 3 );
+    const fheroes2::Sprite & lowerScrollbarArrow = fheroes2::AGG::GetICN( _listBoxIcnId, 5 );
+
+    totalHeight = rtAreaItems.height + 8 - upperScrollbarArrow.height() - lowerScrollbarArrow.height();
+
+    const fheroes2::Sprite & upperScrollbar = fheroes2::AGG::GetICN( _listBoxIcnId, 7 );
+    const fheroes2::Sprite & middleScrollbar = fheroes2::AGG::GetICN( _listBoxIcnId, 8 );
+    const fheroes2::Sprite & lowerScrollbar = fheroes2::AGG::GetICN( _listBoxIcnId, 9 );
+
+    offsetY = upperScrollbarArrow.height() + 44;
+    fheroes2::Blit( upperScrollbar, display, dst.x + 256, dst.y + offsetY );
+    offsetY += upperScrollbar.height();
+
+    middlePartCount = ( totalHeight - upperScrollbar.height() - lowerScrollbar.height() + middleScrollbar.height() - 1 ) / middleScrollbar.height();
+
+    for ( int32_t i = 0; i < middlePartCount; ++i ) {
+        fheroes2::Blit( middleScrollbar, display, dst.x + 256, dst.y + offsetY );
+        offsetY += middleScrollbar.height();
+    }
+
+    offsetY = upperScrollbarArrow.height() + 44 + totalHeight - lowerScrollbar.height();
+    fheroes2::Blit( lowerScrollbar, display, dst.x + 256, dst.y + offsetY );
 }
 
 bool Heroes::ActionSpellCast( const Spell & spell )
 {
     std::string error;
 
-    if ( !CanMove() ) {
+    if ( !CanMove() && ( spell == Spell::DIMENSIONDOOR || spell == Spell::TOWNGATE || spell == Spell::TOWNPORTAL ) ) {
         Dialog::Message( "", _( "Your hero is too tired to cast this spell today. Try again tomorrow." ), Font::BIG, Dialog::OK );
         return false;
     }
@@ -166,19 +229,19 @@ bool Heroes::ActionSpellCast( const Spell & spell )
         apply = ActionSpellVisions( *this );
         break;
     case Spell::HAUNT:
-        apply = ActionSpellSetGuardian( *this, spell, Monster::GHOST );
+        apply = ActionSpellSetGuardian( *this, spell );
         break;
     case Spell::SETEGUARDIAN:
-        apply = ActionSpellSetGuardian( *this, spell, Monster::EARTH_ELEMENT );
+        apply = ActionSpellSetGuardian( *this, spell );
         break;
     case Spell::SETAGUARDIAN:
-        apply = ActionSpellSetGuardian( *this, spell, Monster::AIR_ELEMENT );
+        apply = ActionSpellSetGuardian( *this, spell );
         break;
     case Spell::SETFGUARDIAN:
-        apply = ActionSpellSetGuardian( *this, spell, Monster::FIRE_ELEMENT );
+        apply = ActionSpellSetGuardian( *this, spell );
         break;
     case Spell::SETWGUARDIAN:
-        apply = ActionSpellSetGuardian( *this, spell, Monster::WATER_ELEMENT );
+        apply = ActionSpellSetGuardian( *this, spell );
         break;
     default:
         break;
@@ -243,37 +306,37 @@ void DialogNotAvailable( void )
     Dialog::Message( "", "Not available for current version", Font::BIG, Dialog::OK );
 }
 
-bool ActionSpellViewMines( Heroes & hero )
+bool ActionSpellViewMines( Heroes & )
 {
     DialogNotAvailable();
     return false;
 }
 
-bool ActionSpellViewResources( Heroes & hero )
+bool ActionSpellViewResources( Heroes & )
 {
     DialogNotAvailable();
     return false;
 }
 
-bool ActionSpellViewArtifacts( Heroes & hero )
+bool ActionSpellViewArtifacts( Heroes & )
 {
     DialogNotAvailable();
     return false;
 }
 
-bool ActionSpellViewTowns( Heroes & hero )
+bool ActionSpellViewTowns( Heroes & )
 {
     DialogNotAvailable();
     return false;
 }
 
-bool ActionSpellViewHeroes( Heroes & hero )
+bool ActionSpellViewHeroes( Heroes & )
 {
     DialogNotAvailable();
     return false;
 }
 
-bool ActionSpellViewAll( Heroes & hero )
+bool ActionSpellViewAll( Heroes & )
 {
     DialogNotAvailable();
     return false;
@@ -300,11 +363,22 @@ bool ActionSpellSummonBoat( Heroes & hero )
     }
 
     const s32 center = hero.GetIndex();
+    const Point & centerPoint = Maps::GetPoint( center );
 
     // find water
     s32 dst_water = -1;
-    const MapsIndexes & v = Maps::ScanAroundObject( center, MP2::OBJ_ZERO );
-    for ( MapsIndexes::const_iterator it = v.begin(); it != v.end(); ++it ) {
+    MapsIndexes freeTiles = Maps::ScanAroundObject( center, MP2::OBJ_ZERO );
+    std::sort( freeTiles.begin(), freeTiles.end(), [&centerPoint]( const int32_t left, const int32_t right ) {
+        const Point & leftPoint = Maps::GetPoint( left );
+        const Point & rightPoint = Maps::GetPoint( right );
+        const int32_t leftDiffX = leftPoint.x - centerPoint.x;
+        const int32_t leftDiffY = leftPoint.y - centerPoint.y;
+        const int32_t rightDiffX = rightPoint.x - centerPoint.x;
+        const int32_t rightDiffY = rightPoint.y - centerPoint.y;
+
+        return ( leftDiffX * leftDiffX + leftDiffY * leftDiffY ) < ( rightDiffX * rightDiffX + rightDiffY * rightDiffY );
+    } );
+    for ( MapsIndexes::const_iterator it = freeTiles.begin(); it != freeTiles.end(); ++it ) {
         if ( world.GetTiles( *it ).isWater() ) {
             dst_water = *it;
             break;
@@ -338,7 +412,9 @@ bool ActionSpellSummonBoat( Heroes & hero )
         const s32 boat = boats[i];
         if ( Maps::isValidAbsIndex( boat ) ) {
             if ( Rand::Get( 1, 100 ) <= chance ) {
-                world.GetTiles( boat ).SetObject( MP2::OBJ_ZERO );
+                Maps::Tiles & boatFile = world.GetTiles( boat );
+                boatFile.RemoveObjectSprite();
+                boatFile.SetObject( MP2::OBJ_ZERO );
                 Game::ObjectFadeAnimation::Set( Game::ObjectFadeAnimation::Info( MP2::OBJ_BOAT, 18, dst_water, 0, false ) );
                 return true;
             }
@@ -386,7 +462,8 @@ bool ActionSpellDimensionDoor( Heroes & hero )
         hero.GetPath().Reset();
         hero.GetPath().Show(); // Reset method sets Hero's path to hidden mode with non empty path, we have to set it back
 
-        hero.ActionNewPosition();
+        // No action is being made. Uncomment this code if the logic will be changed
+        // hero.ActionNewPosition();
 
         Interface::Basic::Get().ResetFocus( GameFocus::HEROES );
 
@@ -444,6 +521,7 @@ bool ActionSpellTownPortal( Heroes & hero )
 
     fheroes2::Display & display = fheroes2::Display::instance();
     Cursor & cursor = Cursor::Get();
+    const bool isEvilInterface = Settings::Get().ExtGameEvilInterface();
     LocalEvent & le = LocalEvent::Get();
 
     cursor.Hide();
@@ -458,23 +536,28 @@ bool ActionSpellTownPortal( Heroes & hero )
         return false;
     }
 
-    Dialog::FrameBorder * frameborder = new Dialog::FrameBorder( Size( 280, 200 ) );
+    std::unique_ptr<Dialog::FrameBorder> frameborder( new Dialog::FrameBorder( Size( 280, 250 ) ) );
 
     const Rect & area = frameborder->GetArea();
     int result = Dialog::ZERO;
 
-    CastleIndexListBox listbox( area, result );
+    CastleIndexListBox listbox( area, result, isEvilInterface );
 
-    listbox.RedrawBackground( area );
-    listbox.SetScrollButtonUp( ICN::LISTBOX, 3, 4, fheroes2::Point( area.x + 256, area.y + 55 ) );
-    listbox.SetScrollButtonDn( ICN::LISTBOX, 5, 6, fheroes2::Point( area.x + 256, area.y + 145 ) );
-    listbox.SetScrollSplitter( fheroes2::AGG::GetICN( ICN::LISTBOX, 10 ), Rect( area.x + 260, area.y + 78, 14, 64 ) );
+    const int listId = isEvilInterface ? ICN::LISTBOX_EVIL : ICN::LISTBOX;
+    listbox.SetScrollButtonUp( listId, 3, 4, fheroes2::Point( area.x + 256, area.y + 45 ) );
+    listbox.SetScrollButtonDn( listId, 5, 6, fheroes2::Point( area.x + 256, area.y + 190 ) );
+    listbox.SetScrollBar( fheroes2::AGG::GetICN( listId, 10 ), fheroes2::Rect( area.x + 260, area.y + 68, 14, 119 ) );
     listbox.SetAreaMaxItems( 5 );
-    listbox.SetAreaItems( Rect( area.x + 10, area.y + 60, 250, 100 ) );
+    listbox.SetAreaItems( fheroes2::Rect( area.x + 6, area.y + 49, 250, 160 ) );
     listbox.SetListContent( castles );
+    listbox.RedrawBackground( area );
     listbox.Redraw();
 
-    fheroes2::ButtonGroup btnGroups( fheroes2::Rect( area.x, area.y, area.w, area.h ), Dialog::OK | Dialog::CANCEL );
+    fheroes2::ButtonGroup btnGroups;
+    const int buttonIcnId = isEvilInterface ? ICN::SYSTEME : ICN::SYSTEM;
+
+    btnGroups.createButton( area.x, area.y + 222, buttonIcnId, 1, 2, Dialog::OK );
+    btnGroups.createButton( area.x + 182, area.y + 222, buttonIcnId, 3, 4, Dialog::CANCEL );
     btnGroups.draw();
 
     cursor.Show();
@@ -490,9 +573,7 @@ bool ActionSpellTownPortal( Heroes & hero )
             display.render();
         }
     }
-
-    delete frameborder;
-
+    frameborder.reset();
     // store
     if ( result == Dialog::OK )
         return HeroesTownGate( hero, world.GetCastle( Maps::GetPoint( listbox.GetCurrent() ) ) );
@@ -508,7 +589,10 @@ bool ActionSpellVisions( Heroes & hero )
     if ( monsters.size() ) {
         for ( MapsIndexes::const_iterator it = monsters.begin(); it != monsters.end(); ++it ) {
             const Maps::Tiles & tile = world.GetTiles( *it );
-            MapMonster * map_troop = dynamic_cast<MapMonster *>( world.GetMapObject( tile.GetObjectUID( MP2::OBJ_MONSTER ) ) );
+            const MapMonster * map_troop = NULL;
+            if ( tile.GetObject() == MP2::OBJ_MONSTER )
+                map_troop = dynamic_cast<MapMonster *>( world.GetMapObject( tile.GetObjectUID() ) );
+
             Troop troop = map_troop ? map_troop->QuantityTroop() : tile.QuantityTroop();
             JoinCount join = Army::GetJoinSolution( hero, tile, troop );
 
@@ -559,7 +643,7 @@ bool ActionSpellVisions( Heroes & hero )
     return true;
 }
 
-bool ActionSpellSetGuardian( Heroes & hero, const Spell & spell, int mons )
+bool ActionSpellSetGuardian( Heroes & hero, const Spell & spell )
 {
     Maps::Tiles & tile = world.GetTiles( hero.GetIndex() );
 
@@ -571,10 +655,7 @@ bool ActionSpellSetGuardian( Heroes & hero, const Spell & spell, int mons )
     const u32 count = hero.GetPower() * spell.ExtraValue();
 
     if ( count ) {
-        Maps::TilesAddon * addon = tile.FindObject( MP2::OBJ_MINES );
-
-        if ( addon )
-            addon->tmp = spell();
+        tile.SetQuantity3( spell() );
 
         if ( spell == Spell::HAUNT ) {
             world.CaptureObject( tile.GetIndex(), Color::UNUSED );

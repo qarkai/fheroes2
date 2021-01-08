@@ -27,10 +27,7 @@
 
 #define CELLW 44
 #define CELLH 52
-#define CELLW2 23
-#define CELLH2 26
 #define CELLH_VER_SIDE 32
-#define CELLH2_VER_SIDE 16
 
 namespace Battle
 {
@@ -109,6 +106,7 @@ namespace Battle
         void Swap( void );
         bool isReflect( void ) const;
         bool isValid( void ) const;
+        bool contains( int cellIndex ) const;
 
         static Position GetCorrect( const Unit &, s32 );
 

@@ -23,7 +23,6 @@
 #define H2RECT_H
 
 #include <functional>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -32,10 +31,10 @@
 
 struct Point
 {
-    s16 x, y;
+    int16_t x, y;
 
     Point();
-    Point( s16, s16 );
+    Point( int16_t, int16_t );
 
     bool operator==( const Point & ) const;
     bool operator!=( const Point & ) const;
@@ -60,8 +59,6 @@ struct Size
     Size( u16 width = 0, u16 height = 0 );
     Size( const Point & );
 
-    bool isEmpty( void ) const;
-
     bool operator==( const Size & ) const;
     bool operator!=( const Size & ) const;
 
@@ -75,14 +72,12 @@ struct Size
 struct Rect : Point, Size
 {
     Rect();
-    Rect( s16, s16, u16, u16 );
+    Rect( int16_t, int16_t, u16, u16 );
     Rect( const Point &, u16, u16 );
     Rect( const Point &, const Size & );
-    Rect( const SDL_Rect & );
 
     // TODO: this method must be removed before merging to master
     Rect( const fheroes2::Rect & rect );
-    fheroes2::Rect convert() const;
 
     Rect & operator=( const Point & );
     bool operator==( const Rect & ) const;
@@ -95,9 +90,6 @@ struct Rect : Point, Size
     // rect intersects rect
     bool operator&(const Rect &)const;
 
-    // calculate intersection rectangle
-    Rect operator^( const Rect & other ) const;
-
     // explicit conversion
     const Point & getPosition() const;
 
@@ -105,9 +97,6 @@ struct Rect : Point, Size
     static Rect Get( const Rect &, const Rect &, bool intersect );
     static std::pair<Rect, Point> Fixed4Blit( const Rect &, const Rect & );
 };
-
-SDL_Rect SDLRect( s32, s32, u32, u32 );
-SDL_Rect SDLRect( const Rect & );
 
 struct Points : std::vector<Point>
 {

@@ -92,7 +92,7 @@ void Puzzle::Update( u32 open_obelisk, u32 total_obelisk )
 void Puzzle::ShowMapsDialog( void ) const
 {
     Cursor & cursor = Cursor::Get();
-    fheroes2::Display & display = fheroes2::Display::instance();
+    const fheroes2::Display & display = fheroes2::Display::instance();
     int old_cursor = cursor.Themes();
 
     if ( !Settings::Get().MusicMIDI() )
@@ -143,7 +143,7 @@ void ShowStandardDialog( const Puzzle & pzl, const fheroes2::Image & sf )
     fheroes2::Display & display = fheroes2::Display::instance();
     Cursor & cursor = Cursor::Get();
 
-    Interface::Radar & radar = Interface::Basic::Get().GetRadar();
+    const Interface::Radar & radar = Interface::Basic::Get().GetRadar();
     const Rect & radarPos = radar.GetArea();
     const bool isEvilInterface = Settings::Get().ExtGameEvilInterface();
 
@@ -195,7 +195,7 @@ void ShowExtendedDialog( const Puzzle & pzl, const fheroes2::Image & sf )
     fheroes2::Blit( background, display, blitArea.x, blitArea.y );
     fheroes2::Blit( sf, display, blitArea.x, blitArea.y );
 
-    Interface::Radar & radar = Interface::Basic::Get().GetRadar();
+    const Interface::Radar & radar = Interface::Basic::Get().GetRadar();
     const Rect & radarPos = radar.GetArea();
     const bool isEvilInterface = Settings::Get().ExtGameEvilInterface();
 
@@ -233,18 +233,18 @@ void PuzzlesDraw( const Puzzle & pzl, const fheroes2::Image & sf, s32 dstx, s32 
     int alpha = 250;
     LocalEvent & le = LocalEvent::Get();
 
-    while ( le.HandleEvents() && 0 < alpha ) {
+    while ( le.HandleEvents() && 0 <= alpha ) {
         if ( Game::AnimateInfrequentDelay( Game::PUZZLE_FADE_DELAY ) ) {
             cursor.Hide();
             fheroes2::Blit( sf, display, dstx, dsty );
-            for ( size_t ii = 0; ii < pzl.size(); ++ii ) {
-                const fheroes2::Sprite & piece = fheroes2::AGG::GetICN( ICN::PUZZLE, ii );
+            for ( size_t i = 0; i < pzl.size(); ++i ) {
+                const fheroes2::Sprite & piece = fheroes2::AGG::GetICN( ICN::PUZZLE, static_cast<uint32_t>( i ) );
 
                 int pieceAlpha = 255;
-                if ( pzl.test( ii ) )
+                if ( pzl.test( i ) )
                     pieceAlpha = alpha;
 
-                fheroes2::AlphaBlit( piece, display, dstx + piece.x() - BORDERWIDTH, dsty + piece.y() - BORDERWIDTH, pieceAlpha );
+                fheroes2::AlphaBlit( piece, display, dstx + piece.x() - BORDERWIDTH, dsty + piece.y() - BORDERWIDTH, static_cast<uint8_t>( pieceAlpha ) );
             }
             cursor.Show();
             display.render();

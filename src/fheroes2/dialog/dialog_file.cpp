@@ -44,7 +44,7 @@ int Dialog::FileOptions( void )
     // image box
     const fheroes2::Sprite & box = fheroes2::AGG::GetICN( cpanbkg, 0 );
 
-    Point rb( ( display.width() - box.width() ) / 2, ( display.height() - box.height() ) / 2 );
+    const fheroes2::Point rb( ( display.width() - box.width() - BORDERWIDTH ) / 2, ( display.height() - box.height() ) / 2 );
     fheroes2::ImageRestorer back( display, rb.x, rb.y, box.width(), box.height() );
     fheroes2::Blit( box, display, rb.x, rb.y );
 
@@ -81,30 +81,52 @@ int Dialog::FileOptions( void )
                 break;
             }
         }
-        if ( le.MouseClickLeft( buttonLoad.area() ) ) {
-            if ( ListFiles::IsEmpty( Settings::GetSaveDir(), ".sav", false ) ) {
+        else if ( le.MouseClickLeft( buttonLoad.area() ) ) {
+            if ( ListFiles::IsEmpty( Game::GetSaveDir(), Game::GetSaveFileExtension(), false ) ) {
                 Dialog::Message( _( "Load Game" ), _( "No save files to load." ), Font::BIG, Dialog::OK );
             }
             else {
                 if ( Interface::Basic::Get().EventLoadGame() == Game::LOADGAME ) {
-                    result = Game::LOADGAME;
+                    const int gameType = Settings::Get().GameType();
+
+                    if ( gameType & Game::TYPE_STANDARD )
+                        result = Game::LOADSTANDARD;
+                    else if ( gameType & Game::TYPE_CAMPAIGN )
+                        result = Game::LOADCAMPAIN;
+                    else
+                        result = Game::LOADGAME;
                     break;
                 }
             }
         }
-        if ( le.MouseClickLeft( buttonSave.area() ) ) {
+        else if ( le.MouseClickLeft( buttonSave.area() ) ) {
             result = Interface::Basic::Get().EventSaveGame();
             break;
         }
-        if ( le.MouseClickLeft( buttonQuit.area() ) ) {
-            if ( Interface::Basic::Get().EventExit() == Game::QUITGAME ) {
+        else if ( le.MouseClickLeft( buttonQuit.area() ) ) {
+            if ( Interface::Basic::EventExit() == Game::QUITGAME ) {
                 result = Game::QUITGAME;
                 break;
             }
         }
-        if ( le.MouseClickLeft( buttonCancel.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_EXIT ) ) {
+        else if ( le.MouseClickLeft( buttonCancel.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_EXIT ) ) {
             result = Game::CANCEL;
             break;
+        }
+        else if ( le.MousePressRight( buttonNew.area() ) ) {
+            Dialog::Message( _( "New Game" ), _( "Start a single or multi-player game." ), Font::BIG );
+        }
+        else if ( le.MousePressRight( buttonLoad.area() ) ) {
+            Dialog::Message( _( "Load Game" ), _( "Load a previously saved game." ), Font::BIG );
+        }
+        else if ( le.MousePressRight( buttonSave.area() ) ) {
+            Dialog::Message( _( "Save Game" ), _( "Save the current game." ), Font::BIG );
+        }
+        else if ( le.MousePressRight( buttonQuit.area() ) ) {
+            Dialog::Message( _( "Quit" ), _( "Quit out of Free Heroes of Might and Magic II." ), Font::BIG );
+        }
+        else if ( le.MousePressRight( buttonCancel.area() ) ) {
+            Dialog::Message( _( "Cancel" ), _( "Exit this menu without doing anything." ), Font::BIG );
         }
     }
 

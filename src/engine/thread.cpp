@@ -81,42 +81,6 @@ u32 Thread::GetID( void ) const
     return thread ? SDL_GetThreadID( thread ) : 0;
 }
 
-Mutex::Mutex( bool init )
-    : mutex( init ? SDL_CreateMutex() : NULL )
-{}
-
-Mutex::Mutex( const Mutex & )
-    : mutex( NULL )
-{}
-
-Mutex::~Mutex()
-{
-    if ( mutex )
-        SDL_DestroyMutex( mutex );
-}
-
-Mutex & Mutex::operator=( const Mutex & )
-{
-    return *this;
-}
-
-void Mutex::Create( void )
-{
-    if ( mutex )
-        SDL_DestroyMutex( mutex );
-    mutex = SDL_CreateMutex();
-}
-
-bool Mutex::Lock( void ) const
-{
-    return mutex ? 0 == SDL_mutexP( mutex ) : false;
-}
-
-bool Mutex::Unlock( void ) const
-{
-    return mutex ? 0 == SDL_mutexV( mutex ) : false;
-}
-
 Timer::Timer()
     : id( 0 )
 {}
@@ -140,26 +104,4 @@ void Timer::Remove( void )
 bool Timer::IsValid( void ) const
 {
     return id;
-}
-
-Time::Time() {}
-
-void Time::Start( void )
-{
-    tick2 = tick1 = SDL_GetTicks();
-}
-
-void Time::Stop( void )
-{
-    tick2 = SDL_GetTicks();
-}
-
-u32 Time::Get( void ) const
-{
-    return tick2 > tick1 ? tick2 - tick1 : 0;
-}
-
-void Time::Print( const char * header ) const
-{
-    ERROR( ( header ? header : "time: " ) << Get() << " ms" );
 }

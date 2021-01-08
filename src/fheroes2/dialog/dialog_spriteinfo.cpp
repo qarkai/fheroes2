@@ -25,7 +25,6 @@
 #include "cursor.h"
 #include "dialog.h"
 #include "game.h"
-#include "settings.h"
 #include "text.h"
 #include "ui_button.h"
 
@@ -34,7 +33,7 @@ int Dialog::ArtifactInfo( const std::string & hdr, const std::string & msg, cons
     const fheroes2::Sprite & border = fheroes2::AGG::GetICN( ICN::RESOURCE, 7 );
     const fheroes2::Sprite & artifact = fheroes2::AGG::GetICN( ICN::ARTIFACT, art.IndexSprite64() );
 
-    fheroes2::Image image = border;
+    fheroes2::Sprite image = border;
     fheroes2::Blit( artifact, image, 5, 5 );
 
     std::string ext = msg;
@@ -58,26 +57,26 @@ int Dialog::SpriteInfo( const std::string & header, const std::string & message,
 
     TextBox box1( header, Font::YELLOW_BIG, BOXAREA_WIDTH );
     TextBox box2( message, Font::BIG, BOXAREA_WIDTH );
-    const int spacer = Settings::Get().QVGA() ? 5 : 10;
+    const int spacer = 10;
 
     FrameBox box( box1.h() + spacer + box2.h() + spacer + sprite.height(), buttons );
-    Rect pos = box.GetArea();
+    fheroes2::Rect pos = box.GetArea();
 
     if ( header.size() )
-        box1.Blit( pos );
+        box1.Blit( pos.x, pos.y );
     pos.y += box1.h() + spacer;
 
     if ( message.size() )
-        box2.Blit( pos );
+        box2.Blit( pos.x, pos.y );
     pos.y += box2.h() + spacer;
 
     // blit sprite
-    pos.x = box.GetArea().x + ( pos.w - sprite.width() ) / 2;
+    pos.x = box.GetArea().x + ( pos.width - sprite.width() ) / 2;
     fheroes2::Blit( sprite, display, pos.x, pos.y );
 
     LocalEvent & le = LocalEvent::Get();
 
-    fheroes2::ButtonGroup btnGroups( fheroes2::Rect( box.GetArea().x, box.GetArea().y, box.GetArea().w, box.GetArea().h ), buttons );
+    fheroes2::ButtonGroup btnGroups( box.GetArea(), buttons );
     btnGroups.draw();
 
     cursor.Show();

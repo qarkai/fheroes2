@@ -46,19 +46,19 @@ void Castle::OpenTavern( void )
     Cursor & cursor = Cursor::Get();
     cursor.Hide();
 
-    Text text( tavern, Font::BIG );
+    Text text( tavern, Font::YELLOW_BIG );
     const fheroes2::Sprite & s1 = fheroes2::AGG::GetICN( tavwin, 0 );
     TextBox box1( header, Font::BIG, BOXAREA_WIDTH );
     TextBox box2( message, Font::BIG, BOXAREA_WIDTH );
 
     Dialog::FrameBox box( text.h() + 10 + s1.height() + 13 + box1.h() + 20 + box2.h(), true );
 
-    const Rect & pos = box.GetArea();
-    Point dst_pt( pos.x, pos.y );
+    const fheroes2::Rect & pos = box.GetArea();
+    fheroes2::Point dst_pt( pos.x, pos.y );
 
-    text.Blit( pos.x + ( pos.w - text.w() ) / 2, dst_pt.y );
+    text.Blit( pos.x + ( pos.width - text.w() ) / 2, dst_pt.y );
 
-    dst_pt.x = pos.x + ( pos.w - s1.width() ) / 2;
+    dst_pt.x = pos.x + ( pos.width - s1.width() ) / 2;
     dst_pt.y += 10 + text.h();
     fheroes2::Blit( s1, display, dst_pt.x, dst_pt.y );
 
@@ -78,7 +78,7 @@ void Castle::OpenTavern( void )
 
     // button yes
     const fheroes2::Sprite & s4 = fheroes2::AGG::GetICN( system, 5 );
-    fheroes2::Button buttonYes( pos.x + ( pos.w - s4.width() ) / 2, pos.y + pos.h - s4.height(), system, 5, 6 );
+    fheroes2::Button buttonYes( pos.x + ( pos.width - s4.width() ) / 2, pos.y + pos.height - s4.height(), system, 5, 6 );
 
     buttonYes.draw();
 

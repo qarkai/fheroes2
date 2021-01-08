@@ -44,6 +44,8 @@ Interface::StatusWindow::StatusWindow( Basic & basic )
     , state( STATUS_UNKNOWN )
     , oldState( STATUS_UNKNOWN )
     , lastResource( Resource::UNKNOWN )
+    , countLastResource( 0 )
+    , turn_progress( 0 )
 {}
 
 void Interface::StatusWindow::Reset( void )
@@ -60,17 +62,17 @@ int Interface::StatusWindow::GetState( void ) const
     return state;
 }
 
-u32 Interface::StatusWindow::ResetResourceStatus( u32 tick, void * ptr )
+u32 Interface::StatusWindow::ResetResourceStatus( u32 /*tick*/, void * ptr )
 {
     if ( ptr ) {
         Interface::StatusWindow * status = reinterpret_cast<Interface::StatusWindow *>( ptr );
         if ( STATUS_RESOURCE == status->state ) {
             status->state = status->oldState;
-            Cursor::Get().Hide();
             Interface::Basic::Get().SetRedraw( REDRAW_STATUS );
         }
-        else
+        else {
             status->timerShowLastResource.Remove();
+        }
     }
 
     return 0;
@@ -178,7 +180,7 @@ void Interface::StatusWindow::NextState( void )
 void Interface::StatusWindow::DrawKingdomInfo( int oh ) const
 {
     const Rect & pos = GetArea();
-    Kingdom & myKingdom = world.GetKingdom( Settings::Get().CurrentColor() );
+    const Kingdom & myKingdom = world.GetKingdom( Settings::Get().CurrentColor() );
 
     // sprite all resource
     fheroes2::Blit( fheroes2::AGG::GetICN( ICN::RESSMALL, 0 ), fheroes2::Display::instance(), pos.x + 6, pos.y + 3 + oh );
@@ -216,8 +218,16 @@ void Interface::StatusWindow::DrawDayInfo( int oh ) const
 {
     const Rect & pos = GetArea();
 
-    fheroes2::Blit( fheroes2::AGG::GetICN( Settings::Get().ExtGameEvilInterface() ? ICN::SUNMOONE : ICN::SUNMOON, ( world.GetWeek() - 1 ) % 5 ),
-                    fheroes2::Display::instance(), pos.x, pos.y + 1 + oh );
+    const int dayOfWeek = world.GetDay();
+    const int weekOfMonth = world.GetWeek();
+    const int month = world.GetMonth();
+    const int icnType = Settings::Get().ExtGameEvilInterface() ? ICN::SUNMOONE : ICN::SUNMOON;
+    uint32_t icnId = dayOfWeek > 1 ? 0 : ( ( weekOfMonth - 1 ) % 4 ) + 1;
+    if ( dayOfWeek == 1 && weekOfMonth == 1 && month == 1 ) { // special case
+        icnId = 0;
+    }
+
+    fheroes2::Blit( fheroes2::AGG::GetICN( icnType, icnId ), fheroes2::Display::instance(), pos.x, pos.y + 1 + oh );
 
     std::string message = _( "Month: %{month} Week: %{week}" );
     StringReplace( message, "%{month}", world.GetMonth() );
@@ -355,22 +365,22 @@ void Interface::StatusWindow::DrawBackground( void ) const
         // top
         const uint32_t startY = 11;
         const uint32_t copyHeight = 46;
-        Rect srcrt( 0, 0, icnston.width(), startY );
-        Point dstpt( pos.x, pos.y );
-        fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.w, srcrt.h );
+        fheroes2::Rect srcrt( 0, 0, icnston.width(), startY );
+        fheroes2::Point dstpt( pos.x, pos.y );
+        fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.width, srcrt.height );
 
         // middle
-        srcrt = Rect( 0, startY, icnston.width(), copyHeight );
+        srcrt = fheroes2::Rect( 0, startY, icnston.width(), copyHeight );
         const uint32_t count = ( pos.h - ( icnston.height() - copyHeight ) ) / copyHeight;
         for ( uint32_t i = 0; i < count; ++i ) {
-            dstpt = Point( pos.x, pos.y + copyHeight * i + startY );
-            fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.w, srcrt.h );
+            dstpt = fheroes2::Point( pos.x, pos.y + copyHeight * i + startY );
+            fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.width, srcrt.height );
         }
 
         // botom
-        srcrt = Rect( 0, startY, icnston.width(), icnston.height() - startY );
-        dstpt = Point( pos.x, pos.y + pos.h - ( icnston.height() - startY ) );
-        fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.w, srcrt.h );
+        srcrt = fheroes2::Rect( 0, startY, icnston.width(), icnston.height() - startY );
+        dstpt = fheroes2::Point( pos.x, pos.y + pos.h - ( icnston.height() - startY ) );
+        fheroes2::Blit( icnston, srcrt.x, srcrt.y, display, dstpt.x, dstpt.y, srcrt.width, srcrt.height );
     }
     else {
         fheroes2::Blit( icnston, display, pos.x, pos.y );

@@ -102,8 +102,9 @@ void MapEvent::LoadFromMP2( s32 index, StreamBuf st )
                "event"
                    << ": " << message );
     }
-    else
+    else {
         DEBUG( DBG_GAME, DBG_WARN, "unknown id" );
+    }
 }
 
 void MapEvent::SetVisited( int color )
@@ -116,7 +117,7 @@ void MapEvent::SetVisited( int color )
 
 bool MapEvent::isAllow( int col ) const
 {
-    return col & colors;
+    return ( col & colors ) != 0;
 }
 
 MapSphinx::MapSphinx()
@@ -162,8 +163,9 @@ void MapSphinx::LoadFromMP2( s32 index, StreamBuf st )
                "sphinx"
                    << ": " << message );
     }
-    else
+    else {
         DEBUG( DBG_GAME, DBG_WARN, "unknown id" );
+    }
 }
 
 bool MapSphinx::AnswerCorrect( const std::string & answer )

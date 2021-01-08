@@ -28,7 +28,6 @@
 #include "heroes_base.h"
 #include "luck.h"
 #include "morale.h"
-#include "settings.h"
 #include "speed.h"
 
 Troop::Troop()
@@ -43,7 +42,7 @@ Troop::Troop( const Monster & m, u32 c )
 
 bool Troop::operator==( const Monster & m ) const
 {
-    return static_cast<Monster>( *this ) == m;
+    return Monster::operator==( m );
 }
 
 bool Troop::isMonster( int mons ) const
@@ -74,7 +73,7 @@ void Troop::Set( const Monster & m, u32 c )
 
 void Troop::SetMonster( const Monster & m )
 {
-    id = m();
+    id = m.GetID();
 }
 
 void Troop::SetCount( u32 c )
@@ -118,9 +117,19 @@ double Troop::GetStrength() const
     return Monster::GetMonsterStrength() * count;
 }
 
+double Troop::GetStrengthWithBonus( int bonusAttack, int bonusDefense ) const
+{
+    return Monster::GetMonsterStrength( Monster::GetAttack() + bonusAttack, Monster::GetDefense() + bonusDefense ) * count;
+}
+
 bool Troop::isValid( void ) const
 {
     return Monster::isValid() && count;
+}
+
+bool Troop::isEmpty( void ) const
+{
+    return !isValid();
 }
 
 payment_t Troop::GetCost( void ) const

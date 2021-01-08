@@ -26,6 +26,7 @@
 #include "army_troop.h"
 #include "gamedefs.h"
 #include "interface_itemsbar.h"
+#include "ui_tool.h"
 
 class Army;
 
@@ -34,10 +35,10 @@ class ArmyBar : public Interface::ItemsActionBar<ArmyTroop>
 public:
     ArmyBar( Army *, bool mini, bool ro, bool change = false );
 
-    void RedrawBackground( const Rect &, fheroes2::Image & );
-    void RedrawItem( ArmyTroop &, const Rect &, bool, fheroes2::Image & );
+    virtual void RedrawBackground( const Rect &, fheroes2::Image & ) override;
+    virtual void RedrawItem( ArmyTroop &, const Rect &, bool, fheroes2::Image & ) override;
 
-    void SetBackground( const Size &, const RGBA & );
+    void SetBackground( const Size & sz, const uint8_t fillColor );
     void SetArmy( Army * );
 
     bool isValid( void ) const;
@@ -45,14 +46,19 @@ public:
     void ResetSelected( void );
     void Redraw( fheroes2::Image & dstsf = fheroes2::Display::instance() );
 
-    bool ActionBarSingleClick( const Point &, ArmyTroop &, const Rect & );
-    bool ActionBarSingleClick( const Point &, ArmyTroop &, const Rect &, ArmyTroop &, const Rect & );
-    bool ActionBarDoubleClick( const Point &, ArmyTroop &, const Rect & );
-    bool ActionBarPressRight( const Point &, ArmyTroop &, const Rect & );
-    bool ActionBarPressRight( const Point &, ArmyTroop &, const Rect &, ArmyTroop &, const Rect & );
+    virtual bool ActionBarLeftMouseSingleClick( ArmyTroop & troop ) override;
+    virtual bool ActionBarLeftMouseSingleClick( ArmyTroop & destTroop, ArmyTroop & selectedTroop ) override;
+    virtual bool ActionBarLeftMouseDoubleClick( ArmyTroop & troop ) override;
+    virtual bool ActionBarLeftMouseRelease( ArmyTroop & troop ) override;
+    virtual bool ActionBarLeftMouseRelease( ArmyTroop & destTroop, ArmyTroop & troop ) override;
+    virtual bool ActionBarRightMouseHold( ArmyTroop & troop ) override;
+    virtual bool ActionBarRightMouseSingleClick( ArmyTroop & troop ) override;
+    virtual bool ActionBarRightMouseSingleClick( ArmyTroop & destTroop, ArmyTroop & selectedTroop ) override;
+    virtual bool ActionBarRightMouseRelease( ArmyTroop & troop ) override;
+    virtual bool ActionBarRightMouseRelease( ArmyTroop & destTroop, ArmyTroop & selectedTroop ) override;
 
-    bool ActionBarCursor( const Point &, ArmyTroop &, const Rect & );
-    bool ActionBarCursor( const Point &, ArmyTroop &, const Rect &, ArmyTroop &, const Rect & );
+    virtual bool ActionBarCursor( ArmyTroop & ) override;
+    virtual bool ActionBarCursor( ArmyTroop &, ArmyTroop & ) override;
 
     bool QueueEventProcessing( std::string * = NULL );
     bool QueueEventProcessing( ArmyBar &, std::string * = NULL );
@@ -64,6 +70,7 @@ protected:
     bool use_mini_sprite;
     bool read_only;
     bool can_change;
+    bool _isTroopInfoVisible;
     std::string msg;
 };
 

@@ -106,16 +106,18 @@ namespace fheroes2
         virtual uint8_t * image() override;
         virtual const uint8_t * image() const override;
 
-        BaseRenderEngine * engine();
-
         void release(); // to release all allocated resources. Should be used at the end of the application
 
         // Change whole color representation on the screen. Make sure that palette exists all the time!!!
         // NULL input parameters means to set to default value
         void changePalette( const uint8_t * palette = NULL );
 
+        friend BaseRenderEngine & engine();
+        friend Cursor & cursor();
+
     private:
         BaseRenderEngine * _engine;
+        Cursor * _cursor;
         PreRenderProcessing _preprocessing;
         PostRenderProcessing _postprocessing;
 
@@ -128,23 +130,60 @@ namespace fheroes2
         void _renderFrame(); // prepare and render a frame
     };
 
-    class Cursor : public Sprite
+    class Cursor
     {
     public:
-        virtual ~Cursor();
+        friend Display;
+        virtual ~Cursor() {}
 
-        static Cursor & instance();
+        void show( const bool enable )
+        {
+            _show = enable;
+        }
 
-        void show( bool enable );
-        bool isVisible() const;
+        virtual bool isVisible() const
+        {
+            return _show;
+        }
 
         bool isFocusActive() const;
 
-    private:
-        Cursor();
+        virtual void update( const fheroes2::Image & image, int32_t offsetX, int32_t offsetY )
+        {
+            _image = fheroes2::Sprite( image, offsetX, offsetY );
+        }
 
+        void setPosition( int32_t x, int32_t y )
+        {
+            _image.setPosition( x, y );
+        }
+
+        // Default implementation of Cursor uses software emulation.
+        virtual void enableSoftwareEmulation( const bool ) {}
+
+        bool isSoftwareEmulation() const
+        {
+            return _emulation;
+        }
+
+        void registerUpdater( void ( *cursorUpdater )() )
+        {
+            _cursorUpdater = cursorUpdater;
+        }
+
+    protected:
+        Sprite _image;
+        bool _emulation;
         bool _show;
+        void ( *_cursorUpdater )();
+
+        Cursor()
+            : _emulation( true )
+            , _show( false )
+            , _cursorUpdater( nullptr )
+        {}
     };
 
     BaseRenderEngine & engine();
+    Cursor & cursor();
 }

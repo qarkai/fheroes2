@@ -52,10 +52,8 @@ void ScenarioListBox::RedrawItem( const Maps::FileInfo & info, s32 dstx, s32 dst
     Text text;
     int index = 19 + Color::Count( info.kingdom_colors );
 
-    if ( !Settings::Get().QVGA() ) {
-        dstx = dstx - 10;
-        dsty = dsty + 2;
-    }
+    dstx = dstx - 10;
+    dsty = dsty + 2;
 
     const fheroes2::Sprite & spriteCount = fheroes2::AGG::GetICN( ICN::REQUESTS, index );
     fheroes2::Blit( spriteCount, display, dstx, dsty );
@@ -232,24 +230,25 @@ const Maps::FileInfo * Dialog::SelectScenario( const MapsFileInfoList & all, siz
     fheroes2::Button buttonSelectXLarge( rt.x + 223, rt.y + 22, ICN::REQUESTS, 15, 16 );
     fheroes2::Button buttonSelectAll( rt.x + 285, rt.y + 22, ICN::REQUESTS, 17, 18 );
 
-    if ( small.empty() )
-        buttonSelectSmall.disable();
-    if ( medium.empty() )
-        buttonSelectMedium.disable();
-    if ( large.empty() )
-        buttonSelectLarge.disable();
-    if ( xlarge.empty() )
-        buttonSelectXLarge.disable();
+    buttonSelectAll.press();
+    fheroes2::ButtonBase * currentPressedButton = &buttonSelectAll;
+
+    fheroes2::OptionButtonGroup buttonGroup;
+    buttonGroup.addButton( &buttonSelectSmall );
+    buttonGroup.addButton( &buttonSelectMedium );
+    buttonGroup.addButton( &buttonSelectLarge );
+    buttonGroup.addButton( &buttonSelectXLarge );
+    buttonGroup.addButton( &buttonSelectAll );
 
     ScenarioListBox listbox( rt );
 
     listbox.RedrawBackground( rt );
     listbox.SetScrollButtonUp( ICN::REQUESTS, 5, 6, fheroes2::Point( rt.x + 327, rt.y + 55 ) );
     listbox.SetScrollButtonDn( ICN::REQUESTS, 7, 8, fheroes2::Point( rt.x + 327, rt.y + 217 ) );
-    // FIXME: update Listbox
-    listbox.SetScrollSplitter( fheroes2::AGG::GetICN( ICN::ESCROLL, 3 ), Rect( rt.x + 328, rt.y + 73, 12, 141 ) );
+
+    listbox.SetScrollBar( fheroes2::AGG::GetICN( ICN::ESCROLL, 3 ), fheroes2::Rect( rt.x + 328, rt.y + 73, 12, 141 ) );
     listbox.SetAreaMaxItems( 9 );
-    listbox.SetAreaItems( Rect( rt.x + 55, rt.y + 55, 270, 175 ) );
+    listbox.SetAreaItems( fheroes2::Rect( rt.x + 55, rt.y + 55, 270, 175 ) );
     listbox.SetListContent( const_cast<MapsFileInfoList &>( all ) );
     listbox.SetCurrent( selectedId );
     listbox.Redraw();
@@ -267,11 +266,17 @@ const Maps::FileInfo * Dialog::SelectScenario( const MapsFileInfoList & all, siz
     while ( le.HandleEvents() ) {
         if ( buttonOk.isEnabled() )
             le.MousePressLeft( buttonOk.area() ) ? buttonOk.drawOnPress() : buttonOk.drawOnRelease();
-        le.MousePressLeft( buttonSelectSmall.area() ) && buttonSelectSmall.isEnabled() ? buttonSelectSmall.drawOnPress() : buttonSelectSmall.drawOnRelease();
-        le.MousePressLeft( buttonSelectMedium.area() ) && buttonSelectMedium.isEnabled() ? buttonSelectMedium.drawOnPress() : buttonSelectMedium.drawOnRelease();
-        le.MousePressLeft( buttonSelectLarge.area() ) && buttonSelectLarge.isEnabled() ? buttonSelectLarge.drawOnPress() : buttonSelectLarge.drawOnRelease();
-        le.MousePressLeft( buttonSelectXLarge.area() ) && buttonSelectXLarge.isEnabled() ? buttonSelectXLarge.drawOnPress() : buttonSelectXLarge.drawOnRelease();
-        le.MousePressLeft( buttonSelectAll.area() ) ? buttonSelectAll.drawOnPress() : buttonSelectAll.drawOnRelease();
+
+        if ( le.MousePressLeft( buttonSelectSmall.area() ) )
+            buttonSelectSmall.drawOnPress();
+        if ( le.MousePressLeft( buttonSelectMedium.area() ) )
+            buttonSelectMedium.drawOnPress();
+        if ( le.MousePressLeft( buttonSelectLarge.area() ) )
+            buttonSelectLarge.drawOnPress();
+        if ( le.MousePressLeft( buttonSelectXLarge.area() ) )
+            buttonSelectXLarge.drawOnPress();
+        if ( le.MousePressLeft( buttonSelectAll.area() ) )
+            buttonSelectAll.drawOnPress();
 
         listbox.QueueEventProcessing();
 
@@ -284,44 +289,73 @@ const Maps::FileInfo * Dialog::SelectScenario( const MapsFileInfoList & all, siz
             result = NULL;
             break;
         }
-        else if ( ( le.MouseClickLeft( buttonSelectSmall.area() ) || le.KeyPress( KEY_s ) ) && buttonSelectSmall.isEnabled() ) {
-            listbox.SetListContent( small );
+        else if ( le.MouseClickLeft( buttonSelectSmall.area() ) || le.KeyPress( KEY_s ) /*&& buttonSelectSmall.isEnabled()*/ ) {
+            if ( small.empty() ) {
+                Dialog::Message( "", _( "No maps exist at that size" ), Font::BIG, Dialog::OK );
+                currentPressedButton->drawOnPress();
+            }
+            else {
+                listbox.SetListContent( small );
+                currentPressedButton = &buttonSelectSmall;
+            }
             cursor.Hide();
         }
-        else if ( ( le.MouseClickLeft( buttonSelectMedium.area() ) || le.KeyPress( KEY_m ) ) && buttonSelectMedium.isEnabled() ) {
-            listbox.SetListContent( medium );
+        else if ( le.MouseClickLeft( buttonSelectMedium.area() ) || le.KeyPress( KEY_m ) /*&& buttonSelectMedium.isEnabled()*/ ) {
+            if ( medium.empty() ) {
+                Dialog::Message( "", _( "No maps exist at that size" ), Font::BIG, Dialog::OK );
+                currentPressedButton->drawOnPress();
+            }
+            else {
+                listbox.SetListContent( medium );
+                currentPressedButton = &buttonSelectMedium;
+            }
             cursor.Hide();
         }
-        else if ( ( le.MouseClickLeft( buttonSelectLarge.area() ) || le.KeyPress( KEY_l ) ) && buttonSelectLarge.isEnabled() ) {
-            listbox.SetListContent( large );
+        else if ( le.MouseClickLeft( buttonSelectLarge.area() ) || le.KeyPress( KEY_l ) /*&& buttonSelectLarge.isEnabled()*/ ) {
+            if ( large.empty() ) {
+                Dialog::Message( "", _( "No maps exist at that size" ), Font::BIG, Dialog::OK );
+                currentPressedButton->drawOnPress();
+            }
+            else {
+                listbox.SetListContent( large );
+                currentPressedButton = &buttonSelectLarge;
+            }
             cursor.Hide();
         }
-        else if ( ( le.MouseClickLeft( buttonSelectXLarge.area() ) || le.KeyPress( KEY_x ) ) && buttonSelectXLarge.isEnabled() ) {
-            listbox.SetListContent( xlarge );
+        else if ( le.MouseClickLeft( buttonSelectXLarge.area() ) || le.KeyPress( KEY_x ) /*&& buttonSelectXLarge.isEnabled()*/ ) {
+            if ( xlarge.empty() ) {
+                Dialog::Message( "", _( "No maps exist at that size" ), Font::BIG, Dialog::OK );
+                currentPressedButton->drawOnPress();
+            }
+            else {
+                listbox.SetListContent( xlarge );
+                currentPressedButton = &buttonSelectXLarge;
+            }
             cursor.Hide();
         }
         else if ( le.MouseClickLeft( buttonSelectAll.area() ) || le.KeyPress( KEY_a ) ) {
             listbox.SetListContent( const_cast<MapsFileInfoList &>( all ) );
+            currentPressedButton = &buttonSelectAll;
             cursor.Hide();
         }
 
         // right info
         if ( le.MousePressRight( buttonSelectSmall.area() ) )
-            Dialog::Message( _( "Small Maps" ), _( "View only maps of size small (36x36)." ), Font::BIG );
+            Dialog::Message( _( "Small Maps" ), _( "View only maps of size small (36 x 36)." ), Font::BIG );
         else if ( le.MousePressRight( buttonSelectMedium.area() ) )
-            Dialog::Message( _( "Medium Maps" ), _( "View only maps of size medium (72x72)." ), Font::BIG );
+            Dialog::Message( _( "Medium Maps" ), _( "View only maps of size medium (72 x 72)." ), Font::BIG );
         else if ( le.MousePressRight( buttonSelectLarge.area() ) )
-            Dialog::Message( _( "Large Maps" ), _( "View only maps of size large (108x108)." ), Font::BIG );
+            Dialog::Message( _( "Large Maps" ), _( "View only maps of size large (108 x 108)." ), Font::BIG );
         else if ( le.MousePressRight( buttonSelectXLarge.area() ) )
-            Dialog::Message( _( "Extra Large Maps" ), _( "View only maps of size extra large (144x144)." ), Font::BIG );
+            Dialog::Message( _( "Extra Large Maps" ), _( "View only maps of size extra large (144 x 144)." ), Font::BIG );
         else if ( le.MousePressRight( buttonSelectAll.area() ) )
             Dialog::Message( _( "All Maps" ), _( "View all maps, regardless of size." ), Font::BIG );
         else if ( le.MousePressRight( countPlayers ) || le.MousePressRight( curCountPlayer ) )
             Dialog::Message( _( "Players Icon" ),
-                             _( "Indicates how many players total are in the EditScenario. Any positions not occupied by humans will be occupied by computer players." ),
+                             _( "Indicates how many players total are in the scenario. Any positions not occupied by humans will be occupied by computer players." ),
                              Font::BIG );
         else if ( le.MousePressRight( sizeMaps ) || le.MousePressRight( curMapSize ) )
-            Dialog::Message( _( "Size Icon" ), _( "Indicates whether the maps is small (36x36), medium (72x72), large (108x108), or extra large (144x144)." ),
+            Dialog::Message( _( "Size Icon" ), _( "Indicates whether the maps is small (36 x 36), medium (72 x 72), large (108 x 108), or extra large (144 x 144)." ),
                              Font::BIG );
         else if ( le.MousePressRight( curMapName ) )
             Dialog::Message( _( "Selected Name" ), _( "The name of the currently selected map." ), Font::BIG );
@@ -342,12 +376,12 @@ const Maps::FileInfo * Dialog::SelectScenario( const MapsFileInfoList & all, siz
         else if ( le.MousePressRight( curDifficulty ) )
             Dialog::Message(
                 _( "Selected Map Difficulty" ),
-                _( "The map difficulty of the currently selected map.  The map difficulty is determined by the EditScenario designer. More difficult maps might include more or stronger enemies, fewer resources, or other special conditions making things tougher for the human player." ),
+                _( "The map difficulty of the currently selected map.  The map difficulty is determined by the scenario designer. More difficult maps might include more or stronger enemies, fewer resources, or other special conditions making things tougher for the human player." ),
                 Font::BIG );
         else if ( le.MousePressRight( curDescription ) )
             Dialog::Message( _( "Selected Description" ), _( "The description of the currently selected map." ), Font::BIG );
         else if ( le.MousePressRight( buttonOk.area() ) )
-            Dialog::Message( _( "OK" ), _( "Accept the choice made." ), Font::BIG );
+            Dialog::Message( _( "Okay" ), _( "Accept the choice made." ), Font::BIG );
 
         if ( !cursor.isVisible() ) {
             listbox.Redraw();

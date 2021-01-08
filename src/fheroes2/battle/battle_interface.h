@@ -98,7 +98,7 @@ namespace Battle
 
         enum
         {
-            HERO_X_OFFSET = 32,
+            HERO_X_OFFSET = 30,
             LEFT_HERO_Y_OFFSET = 183,
             RIGHT_HERO_Y_OFFSET = 148,
             CAPTAIN_X_OFFSET = 6,
@@ -130,6 +130,8 @@ namespace Battle
         void SetMessage( const std::string &, bool = false );
         void Redraw( void );
         const std::string & GetMessage( void ) const;
+
+        void clear();
 
     private:
         Text bar1;
@@ -166,7 +168,7 @@ namespace Battle
     public:
         PopupDamageInfo();
 
-        void SetInfo( const Cell *, const Unit *, const Unit * );
+        void SetInfo( const Cell * c, const Unit * a, const Unit * b, const Point & offset );
         void Reset();
         void Redraw( int, int );
 
@@ -194,7 +196,7 @@ namespace Battle
 
         void SetStatus( const std::string &, bool = false );
         void SetArmiesOrder( const Units * );
-        void FadeArena( void );
+        void FadeArena( bool clearMessageLog );
 
         void RedrawActionAttackPart1( Unit &, Unit &, const TargetsInfo & );
         void RedrawActionAttackPart2( Unit &, TargetsInfo & );
@@ -207,7 +209,7 @@ namespace Battle
         void RedrawActionMorale( Unit &, bool );
         void RedrawActionLuck( Unit & );
         void RedrawActionTowerPart1( Tower &, Unit & );
-        void RedrawActionTowerPart2( Tower &, TargetInfo & );
+        void RedrawActionTowerPart2( TargetInfo & );
         void RedrawActionCatapult( int );
         void RedrawActionTeleportSpell( Unit &, s32 );
         void RedrawActionEarthQuakeSpell( const std::vector<int> & );
@@ -231,13 +233,13 @@ namespace Battle
 
         void RedrawBorder( void );
         void RedrawCover( void );
-        void RedrawCoverStatic( fheroes2::Image & );
+        void RedrawCoverStatic();
         void RedrawCoverBoard( const Settings &, const Board & );
-        void RedrawLowObjects( s32, fheroes2::Image & );
+        void RedrawLowObjects( s32 );
         void RedrawHighObjects( s32 );
-        void RedrawCastle1( const Castle &, fheroes2::Image & );
+        void RedrawCastle1( const Castle & );
         void RedrawCastle2( const Castle &, s32 );
-        void RedrawCastle3( const Castle & );
+        void RedrawCastleMainTower( const Castle & );
         void RedrawKilled( void );
         void RedrawInterface( void );
         void RedrawOpponents( void );
@@ -254,7 +256,7 @@ namespace Battle
         void RedrawActionStoneSpell( Unit & target );
         void RedrawActionColdRingSpell( s32, const TargetsInfo & );
         void RedrawActionElementalStormSpell( const TargetsInfo & );
-        void RedrawActionArmageddonSpell( const TargetsInfo & );
+        void RedrawActionArmageddonSpell();
         void RedrawActionHolyShoutSpell( const TargetsInfo & targets, int strength );
         void RedrawActionResurrectSpell( Unit &, const Spell & );
         void RedrawActionDeathWaveSpell( const TargetsInfo & targets, int strength );
@@ -267,7 +269,7 @@ namespace Battle
         void AnimateUnitWithDelay( Unit & unit, uint32_t delay );
         void RedrawTroopDefaultDelay( Unit & unit );
         void RedrawTroopWithFrameAnimation( Unit & b, int icn, int m82, CreatueSpellAnimation animation );
-        void RedrawTargetsWithFrameAnimation( s32, const TargetsInfo &, int, int );
+        void RedrawTargetsWithFrameAnimation( int32_t dst, const TargetsInfo & targets, int icn, int m82, int repeatCount = 0 );
         void RedrawTargetsWithFrameAnimation( const TargetsInfo &, int, int, bool );
 
         bool IdleTroopsAnimation( void );
@@ -299,7 +301,6 @@ namespace Battle
         fheroes2::Image sf_hexagon;
         fheroes2::Image sf_shadow;
         fheroes2::Image sf_cursor;
-        fheroes2::Image sf_cover;
 
         int icn_cbkg;
         int icn_frng;

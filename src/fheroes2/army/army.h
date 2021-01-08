@@ -65,9 +65,9 @@ public:
     u32 GetCount( void ) const;
     bool isValid( void ) const;
     bool HasMonster( const Monster & ) const;
-    bool hasColorCycling() const;
 
     bool AllTroopsIsRace( int ) const;
+    bool AllTroopsAreUndead() const;
     u32 GetUniqueCount( void ) const;
 
     bool JoinTroop( const Troop & );
@@ -77,10 +77,12 @@ public:
     void JoinTroops( Troops & );
     bool CanJoinTroops( const Troops & ) const;
 
+    void MergeTroops();
     Troops GetOptimized( void ) const;
 
     virtual u32 GetAttack( void ) const;
     virtual u32 GetDefense( void ) const;
+    virtual double GetStrength() const;
 
     u32 GetHitPoints( void ) const;
     u32 GetDamageMin( void ) const;
@@ -93,13 +95,15 @@ public:
     Troop * GetWeakestTroop( void );
     Troop * GetSlowestTroop( void );
 
+    void SortStrongest();
     void ArrangeForBattle( bool = false );
 
     void JoinStrongest( Troops &, bool );
     void KeepOnlyWeakest( Troops &, bool );
 
-    void DrawMons32LineWithScoute( s32, s32, u32, u32, u32, u32, bool ) const;
+    void DrawMons32Line( int32_t, int32_t, uint32_t, uint32_t, uint32_t, uint32_t, bool, bool ) const;
     void SplitTroopIntoFreeSlots( const Troop &, u32 slots );
+    void AssignToFirstFreeSlot( const Troop &, const uint32_t splitCount );
 };
 
 enum
@@ -140,21 +144,29 @@ public:
 
     static void DrawMons32Line( const Troops &, s32, s32, u32, u32 = 0, u32 = 0 );
     static void DrawMons32LineWithScoute( const Troops &, s32, s32, u32, u32, u32, u32 );
-    static void DrawMonsterLines( const Troops & troops, s32 posX, s32 posY, u32 lineWidth, u32 scout, bool compact = true );
+    static void DrawMonsterLines( const Troops & troops, int32_t posX, int32_t posY, uint32_t lineWidth, uint32_t drawPower, bool compact = true,
+                                  bool isScouteView = true );
 
-    Army( HeroBase * s = NULL );
+    Army( HeroBase * s = nullptr );
     Army( const Maps::Tiles & );
+    Army( const Army & ) = delete;
+    Army( Army && ) = delete;
+    Army & operator=( const Army & ) = delete;
+    Army & operator=( Army && ) = delete;
     ~Army();
 
     void Reset( bool = false ); // reset: soft or hard
+    void setFromTile( const Maps::Tiles & tile );
 
     int GetRace( void ) const;
     int GetColor( void ) const;
     int GetControl( void ) const;
     u32 GetAttack( void ) const;
     u32 GetDefense( void ) const;
+
     double GetStrength() const;
-    bool isStrongerThan( const Army & target ) const;
+    double getReinforcementValue( const Troops & reinforcement ) const;
+    bool isStrongerThan( const Army & target, double safetyRatio = 1.0 ) const;
 
     void SetColor( int );
 
@@ -191,12 +203,6 @@ protected:
     HeroBase * commander;
     bool combat_format;
     int color;
-
-private:
-    Army & operator=( const Army & )
-    {
-        return *this;
-    }
 };
 
 StreamBase & operator<<( StreamBase &, const Army & );

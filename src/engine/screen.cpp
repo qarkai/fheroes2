@@ -19,10 +19,12 @@
  ***************************************************************************/
 
 #include "screen.h"
-#include "../../tools/palette_h2.h"
+#include "palette_h2.h"
 
 #include <SDL_version.h>
 #if SDL_VERSION_ATLEAST( 2, 0, 0 )
+#include <SDL_hints.h>
+#include <SDL_mouse.h>
 #include <SDL_render.h>
 #include <SDL_video.h>
 #else
@@ -113,6 +115,128 @@ namespace
 namespace
 {
 #if SDL_VERSION_ATLEAST( 2, 0, 0 )
+    class RenderCursor : public fheroes2::Cursor
+    {
+    public:
+        virtual ~RenderCursor()
+        {
+            clear();
+        }
+
+        virtual bool isVisible() const override
+        {
+            if ( _emulation )
+                return fheroes2::Cursor::isVisible();
+            else
+                return fheroes2::Cursor::isVisible() && ( SDL_ShowCursor( -1 ) == 1 );
+        }
+
+        virtual void update( const fheroes2::Image & image, int32_t offsetX, int32_t offsetY ) override
+        {
+            if ( _emulation ) {
+                SDL_ShowCursor( 0 );
+                fheroes2::Cursor::update( image, offsetX, offsetY );
+                return;
+            }
+
+            SDL_Surface * surface = SDL_CreateRGBSurface( 0, image.width(), image.height(), 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000 );
+            if ( surface == NULL )
+                return;
+
+            const uint32_t width = image.width();
+            const uint32_t height = image.height();
+
+            uint32_t * out = static_cast<uint32_t *>( surface->pixels );
+            const uint32_t * outEnd = out + width * height;
+            const uint8_t * in = image.image();
+            const uint8_t * transform = image.transform();
+
+            if ( surface->format->Amask > 0 ) {
+                for ( ; out != outEnd; ++out, ++in, ++transform ) {
+                    if ( *transform == 0 ) {
+                        const uint8_t * value = currentPalette + *in * 3;
+                        *out = SDL_MapRGBA( surface->format, *( value ), *( value + 1 ), *( value + 2 ), 255 );
+                    }
+                }
+            }
+            else {
+                for ( ; out != outEnd; ++out, ++in, ++transform ) {
+                    if ( *transform == 0 ) {
+                        const uint8_t * value = currentPalette + *in * 3;
+                        *out = SDL_MapRGB( surface->format, *( value ), *( value + 1 ), *( value + 2 ) );
+                    }
+                    else {
+                        *out = SDL_MapRGB( surface->format, 0, 0, 0 );
+                    }
+                }
+            }
+
+            SDL_Cursor * tempCursor = SDL_CreateColorCursor( surface, offsetX, offsetY );
+            SDL_SetCursor( tempCursor );
+            SDL_ShowCursor( 1 );
+            SDL_FreeSurface( surface );
+
+            clear();
+            std::swap( _cursor, tempCursor );
+        }
+
+        virtual void enableSoftwareEmulation( const bool enable ) override
+        {
+            if ( enable == _emulation )
+                return;
+
+            if ( enable ) {
+                clear();
+                _emulation = true;
+            }
+            else {
+                _emulation = false;
+            }
+
+            if ( _cursorUpdater != nullptr )
+                _cursorUpdater();
+        }
+
+        static RenderCursor * create()
+        {
+            return new RenderCursor;
+        }
+
+    protected:
+        RenderCursor()
+            : _cursor( NULL )
+        {
+            // SDL 2 handles mouse properly without any emulation.
+            _emulation = false;
+        }
+
+    private:
+        SDL_Cursor * _cursor;
+
+        void clear()
+        {
+            if ( _cursor != NULL ) {
+                SDL_FreeCursor( _cursor );
+                _cursor = NULL;
+            }
+        }
+    };
+#else
+    // SDL 1 doesn't support hardware level cursor.
+    class RenderCursor : public fheroes2::Cursor
+    {
+    public:
+        static RenderCursor * create()
+        {
+            return new RenderCursor;
+        }
+    };
+#endif
+}
+
+namespace
+{
+#if SDL_VERSION_ATLEAST( 2, 0, 0 )
     class RenderEngine : public fheroes2::BaseRenderEngine
     {
     public:
@@ -154,20 +278,26 @@ namespace
 
         virtual std::vector<std::pair<int, int> > getAvailableResolutions() const override
         {
-            std::set<std::pair<int, int> > resolutionSet;
+            static std::vector<std::pair<int, int> > filteredResolutions;
 
-            const int displayCount = SDL_GetNumVideoDisplays();
-            if ( displayCount > 0 ) {
-                const int displayModeCount = SDL_GetNumDisplayModes( 0 );
-                for ( int i = 0; i < displayModeCount; ++i ) {
-                    SDL_DisplayMode videoMode;
-                    if ( SDL_GetDisplayMode( 0, i, &videoMode ) == 0 ) {
-                        resolutionSet.insert( std::make_pair( videoMode.w, videoMode.h ) );
+            if ( filteredResolutions.empty() ) {
+                std::set<std::pair<int, int> > resolutionSet;
+
+                const int displayCount = SDL_GetNumVideoDisplays();
+                if ( displayCount > 0 ) {
+                    const int displayModeCount = SDL_GetNumDisplayModes( 0 );
+                    for ( int i = 0; i < displayModeCount; ++i ) {
+                        SDL_DisplayMode videoMode;
+                        if ( SDL_GetDisplayMode( 0, i, &videoMode ) == 0 ) {
+                            resolutionSet.insert( std::make_pair( videoMode.w, videoMode.h ) );
+                        }
                     }
                 }
+
+                filteredResolutions = FilterResolutions( resolutionSet );
             }
 
-            return FilterResolutions( resolutionSet );
+            return filteredResolutions;
         }
 
         virtual void setTitle( const std::string & title ) override
@@ -266,8 +396,8 @@ namespace
             if ( _surface == NULL )
                 return;
 
-            const uint32_t width = display.width();
-            const uint32_t height = display.height();
+            const int32_t width = display.width();
+            const int32_t height = display.height();
 
             if ( SDL_MUSTLOCK( _surface ) )
                 SDL_LockSurface( _surface );
@@ -283,7 +413,7 @@ namespace
             }
             else if ( _surface->format->BitsPerPixel == 8 ) {
                 if ( _surface->pixels != display.image() ) {
-                    memcpy( _surface->pixels, display.image(), width * height );
+                    memcpy( _surface->pixels, display.image(), static_cast<size_t>( width * height ) );
                 }
             }
 
@@ -299,7 +429,7 @@ namespace
             else {
                 SDL_UpdateTexture( _texture, NULL, _surface->pixels, _surface->pitch );
                 if ( SDL_SetRenderTarget( _renderer, NULL ) == 0 ) {
-                    if ( SDL_RenderCopy( _renderer, _texture, NULL, NULL ) == 0 ) {
+                    if ( SDL_RenderClear( _renderer ) == 0 && SDL_RenderCopy( _renderer, _texture, NULL, NULL ) == 0 ) {
                         SDL_RenderPresent( _renderer );
                     }
                 }
@@ -340,7 +470,19 @@ namespace
                 return false;
             }
 
-            _surface = SDL_CreateRGBSurface( 0, width_, height_, 32, 0, 0, 0, 0 );
+            bool isPaletteModeSupported = false;
+
+            SDL_RendererInfo rendererInfo;
+            if ( SDL_GetRenderDriverInfo( 0, &rendererInfo ) == 0 ) {
+                for ( uint32_t i = 0; i < rendererInfo.num_texture_formats; ++i ) {
+                    if ( rendererInfo.texture_formats[i] == SDL_PIXELFORMAT_INDEX8 ) {
+                        isPaletteModeSupported = true;
+                        break;
+                    }
+                }
+            }
+
+            _surface = SDL_CreateRGBSurface( 0, width_, height_, isPaletteModeSupported ? 8 : 32, 0, 0, 0, 0 );
             if ( _surface == NULL ) {
                 clear();
                 return false;
@@ -352,7 +494,11 @@ namespace
             }
 
             _createPalette();
-
+            SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "linear" );
+            if ( SDL_RenderSetLogicalSize( _renderer, width_, height_ ) ) {
+                clear();
+                return false;
+            }
             _texture = SDL_CreateTextureFromSurface( _renderer, _surface );
             if ( _texture == NULL ) {
                 clear();
@@ -417,13 +563,7 @@ namespace
 
         int renderFlags() const
         {
-#if defined( __MINGW32CE__ ) || defined( __SYMBIAN32__ )
-            return SDL_RENDERER_SOFTWARE;
-#elif defined( __WIN32__ ) || defined( ANDROID )
             return SDL_RENDERER_ACCELERATED;
-#else
-            return SDL_RENDERER_ACCELERATED;
-#endif
         }
 
         void _createPalette()
@@ -437,7 +577,9 @@ namespace
                 if ( !SDL_MUSTLOCK( _surface ) ) {
                     // copy the image from display buffer to SDL surface
                     fheroes2::Display & display = fheroes2::Display::instance();
-                    memcpy( _surface->pixels, display.image(), display.width() * display.height() );
+                    if ( _surface->w == display.width() && _surface->h == display.height() ) {
+                        memcpy( _surface->pixels, display.image(), static_cast<size_t>( display.width() * display.height() ) );
+                    }
 
                     linkRenderSurface( static_cast<uint8_t *>( _surface->pixels ) );
                 }
@@ -460,12 +602,20 @@ namespace
                 return;
             }
 
+            fheroes2::Display & display = fheroes2::Display::instance();
+            if ( _surface->format->BitsPerPixel == 8 && _surface->pixels == display.image() ) {
+                if ( display.width() == _surface->w && display.height() == _surface->h ) {
+                    linkRenderSurface( NULL );
+                    memcpy( display.image(), _surface->pixels, static_cast<size_t>( display.width() * display.height() ) );
+                }
+            }
+
             const uint32_t flags = _surface->flags;
             clear();
 
-            _surface = SDL_SetVideoMode( 0, 0, 8, flags ^ SDL_FULLSCREEN );
+            _surface = SDL_SetVideoMode( 0, 0, _bitDepth, flags ^ SDL_FULLSCREEN );
             if ( _surface == NULL ) {
-                _surface = SDL_SetVideoMode( 0, 0, 8, flags );
+                _surface = SDL_SetVideoMode( 0, 0, _bitDepth, flags );
             }
 
             _createPalette();
@@ -481,16 +631,21 @@ namespace
 
         virtual std::vector<std::pair<int, int> > getAvailableResolutions() const override
         {
-            std::set<std::pair<int, int> > resolutionSet;
+            static std::vector<std::pair<int, int> > filteredResolutions;
 
-            SDL_Rect ** modes = SDL_ListModes( NULL, SDL_FULLSCREEN | SDL_HWSURFACE );
-            if ( modes != NULL && modes != reinterpret_cast<SDL_Rect **>( -1 ) ) {
-                for ( int i = 0; modes[i]; ++i ) {
-                    resolutionSet.insert( std::make_pair( modes[i]->w, modes[i]->h ) );
+            if ( filteredResolutions.empty() ) {
+                std::set<std::pair<int, int> > resolutionSet;
+                SDL_Rect ** modes = SDL_ListModes( NULL, SDL_FULLSCREEN | SDL_HWSURFACE );
+                if ( modes != NULL && modes != reinterpret_cast<SDL_Rect **>( -1 ) ) {
+                    for ( int i = 0; modes[i]; ++i ) {
+                        resolutionSet.insert( std::make_pair( modes[i]->w, modes[i]->h ) );
+                    }
                 }
+
+                filteredResolutions = FilterResolutions( resolutionSet );
             }
 
-            return FilterResolutions( resolutionSet );
+            return filteredResolutions;
         }
 
         virtual void setTitle( const std::string & title ) override
@@ -545,6 +700,7 @@ namespace
     protected:
         RenderEngine()
             : _surface( NULL )
+            , _bitDepth( 8 )
         {}
 
         virtual void render( const fheroes2::Display & display ) override
@@ -552,8 +708,8 @@ namespace
             if ( _surface == NULL ) // nothing to render on
                 return;
 
-            const uint32_t width = display.width();
-            const uint32_t height = display.height();
+            const int32_t width = display.width();
+            const int32_t height = display.height();
 
             if ( SDL_MUSTLOCK( _surface ) )
                 SDL_LockSurface( _surface );
@@ -569,7 +725,7 @@ namespace
             }
             else if ( _surface->format->BitsPerPixel == 8 ) {
                 if ( _surface->pixels != display.image() ) {
-                    memcpy( _surface->pixels, display.image(), width * height );
+                    memcpy( _surface->pixels, display.image(), static_cast<size_t>( width * height ) );
                 }
             }
 
@@ -607,7 +763,7 @@ namespace
             if ( isFullScreen )
                 flags |= SDL_FULLSCREEN;
 
-            _surface = SDL_SetVideoMode( width_, height_, 8, flags );
+            _surface = SDL_SetVideoMode( width_, height_, _bitDepth, flags );
 
             if ( _surface == NULL )
                 return false;
@@ -667,12 +823,11 @@ namespace
         SDL_Surface * _surface;
         std::vector<uint32_t> _palette32Bit;
         std::vector<SDL_Color> _palette8Bit;
+        int _bitDepth;
 
         int renderFlags() const
         {
-#if defined( __MINGW32CE__ ) || defined( __SYMBIAN32__ )
-            return SDL_SWSURFACE;
-#elif defined( __WIN32__ ) || defined( ANDROID )
+#if defined( __WIN32__ ) || defined( ANDROID )
             return SDL_HWSURFACE | SDL_HWPALETTE;
 #else
             return SDL_SWSURFACE;
@@ -690,7 +845,9 @@ namespace
                 if ( !SDL_MUSTLOCK( _surface ) ) {
                     // copy the image from display buffer to SDL surface
                     fheroes2::Display & display = fheroes2::Display::instance();
-                    memcpy( _surface->pixels, display.image(), display.width() * display.height() );
+                    if ( _surface->w == display.width() && _surface->h == display.height() ) {
+                        memcpy( _surface->pixels, display.image(), static_cast<size_t>( display.width() * display.height() ) );
+                    }
 
                     linkRenderSurface( static_cast<uint8_t *>( _surface->pixels ) );
                 }
@@ -709,13 +866,17 @@ namespace fheroes2
 
     Display::Display()
         : _engine( RenderEngine::create() )
+        , _cursor( RenderCursor::create() )
         , _preprocessing( NULL )
         , _postprocessing( NULL )
         , _renderSurface( NULL )
-    {}
+    {
+        disableTransformLayer();
+    }
 
     Display::~Display()
     {
+        delete _cursor;
         delete _engine;
     }
 
@@ -750,10 +911,10 @@ namespace fheroes2
 
     void Display::render()
     {
-        const Cursor & cursor = Cursor::instance();
-        if ( cursor.isVisible() ) {
-            const Sprite backup = Crop( *this, cursor.x(), cursor.y(), cursor.width(), cursor.height() );
-            Blit( cursor, *this, cursor.x(), cursor.y() );
+        if ( _cursor->isVisible() && _cursor->isSoftwareEmulation() && !_cursor->_image.empty() ) {
+            const Sprite & cursorImage = _cursor->_image;
+            const Sprite backup = Crop( *this, cursorImage.x(), cursorImage.y(), cursorImage.width(), cursorImage.height() );
+            Blit( cursorImage, *this, cursorImage.x(), cursorImage.y() );
 
             _renderFrame();
 
@@ -805,11 +966,6 @@ namespace fheroes2
         _renderSurface = surface;
     }
 
-    BaseRenderEngine * Display::engine()
-    {
-        return _engine;
-    }
-
     void Display::release()
     {
         _engine->clear();
@@ -826,28 +982,6 @@ namespace fheroes2
         _engine->updatePalette( StandardPaletteIndexes() );
     }
 
-    Cursor::Cursor()
-        : _show( true )
-    {}
-
-    Cursor::~Cursor() {}
-
-    Cursor & Cursor::instance()
-    {
-        static Cursor cursor;
-        return cursor;
-    }
-
-    void Cursor::show( bool enable )
-    {
-        _show = enable;
-    }
-
-    bool Cursor::isVisible() const
-    {
-        return _show;
-    }
-
     bool Cursor::isFocusActive() const
     {
         return engine().isMouseCursorActive();
@@ -855,6 +989,11 @@ namespace fheroes2
 
     BaseRenderEngine & engine()
     {
-        return *( Display::instance().engine() );
+        return *( Display::instance()._engine );
+    }
+
+    Cursor & cursor()
+    {
+        return *( Display::instance()._cursor );
     }
 }

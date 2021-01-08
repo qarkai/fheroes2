@@ -88,12 +88,14 @@ namespace AI
 
     void Base::HeroesClearTask( const Heroes & ) {}
 
+    void Base::revealFog( const Maps::Tiles & ) {}
+
     std::string Base::HeroesString( const Heroes & )
     {
         return "";
     }
 
-    void Base::HeroesActionComplete( Heroes &, int ) {}
+    void Base::HeroesActionComplete( Heroes & ) {}
 
     void Base::HeroesLevelUp( Heroes & ) {}
 

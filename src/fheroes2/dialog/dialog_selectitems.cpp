@@ -39,14 +39,14 @@ public:
         SetScrollButtonUp( ICN::LISTBOX, 3, 4, fheroes2::Point( rt.x + rt.w - 24, rt.y + 25 ) );
         SetScrollButtonDn( ICN::LISTBOX, 5, 6, fheroes2::Point( rt.x + rt.w - 24, rt.y + rt.h - 55 ) );
 
-        SetScrollSplitter( fheroes2::AGG::GetICN( ICN::LISTBOX, 10 ), Rect( rt.x + rt.w - 19, rt.y + 48, 14, rt.h - 106 ) );
+        SetScrollBar( fheroes2::AGG::GetICN( ICN::LISTBOX, 10 ), fheroes2::Rect( rt.x + rt.w - 20, rt.y + 48, 14, rt.h - 107 ) );
         SetAreaMaxItems( 5 );
-        SetAreaItems( Rect( rt.x + 10, rt.y + 30, rt.w - 30, rt.h - 70 ) );
+        SetAreaItems( fheroes2::Rect( rt.x + 10, rt.y + 30, rt.w - 30, rt.h - 70 ) );
     };
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
-        Dialog::FrameBorder::RenderOther( fheroes2::AGG::GetICN( ICN::CELLWIN, 1 ), Rect( dst.x, dst.y + 25, rtAreaItems.w + 5, rtAreaItems.h + 10 ) );
+        Dialog::FrameBorder::RenderOther( fheroes2::AGG::GetICN( ICN::CELLWIN, 1 ), fheroes2::Rect( dst.x, dst.y + 25, rtAreaItems.width + 5, rtAreaItems.height + 10 ) );
 
         // scroll
         fheroes2::Display & display = fheroes2::Display::instance();
@@ -56,18 +56,18 @@ public:
             fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 8 ), display, dst.x + area.w - 24, dst.y + 44 + ( ii * 19 ) );
 
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::LISTBOX, 9 ), display, dst.x + area.w - 24, dst.y + area.h - 74 );
-    };
+    }
 
-    void ActionListDoubleClick( int & index )
+    virtual void ActionListDoubleClick( int & /*index*/ ) override
     {
         ok = true;
-    };
+    }
 
-    void RedrawItem( const int &, s32, s32, bool ){};
-    void ActionCurrentUp( void ){};
-    void ActionCurrentDn( void ){};
-    void ActionListSingleClick( int & ){};
-    void ActionListPressRight( int & ){};
+    virtual void RedrawItem( const int &, s32, s32, bool ) override {}
+    virtual void ActionCurrentUp( void ) override {}
+    virtual void ActionCurrentDn( void ) override {}
+    virtual void ActionListSingleClick( int & ) override {}
+    virtual void ActionListPressRight( int & ) override {}
 
     Rect area;
     bool ok;
@@ -79,28 +79,28 @@ public:
     SelectEnumMonster( const Rect & rt )
         : SelectEnum( rt ){};
 
-    void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current )
+    virtual void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current ) override
     {
         Monster mons( index );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::MONS32, mons.GetSpriteIndex() ), fheroes2::Display::instance(), dstx + 5, dsty + 3 );
 
         Text text( mons.GetName(), ( current ? Font::YELLOW_BIG : Font::BIG ) );
         text.Blit( dstx + 50, dsty + 10 );
-    };
+    }
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
         Text text( "Select Monster:", Font::YELLOW_BIG );
         text.Blit( dst.x + ( area.w - text.w() ) / 2, dst.y );
 
         SelectEnum::RedrawBackground( dst );
-    };
+    }
 
-    void ActionListPressRight( int & index )
+    virtual void ActionListPressRight( int & index ) override
     {
         Troop troop( Monster( index ), 1 );
         Dialog::ArmyInfo( troop, 0 );
-    };
+    }
 };
 
 class SelectEnumHeroes : public SelectEnum
@@ -110,11 +110,11 @@ public:
         : SelectEnum( rt )
     {
         SetAreaMaxItems( 6 );
-    };
+    }
 
-    void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current )
+    virtual void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current ) override
     {
-        fheroes2::Image port = Heroes::GetPortrait( index, PORT_SMALL );
+        const fheroes2::Sprite & port = Heroes::GetPortrait( index, PORT_SMALL );
 
         if ( !port.empty() )
             fheroes2::Blit( port, fheroes2::Display::instance(), dstx + 5, dsty + 3 );
@@ -123,37 +123,38 @@ public:
         text.Blit( dstx + 50, dsty + 5 );
     };
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
         Text text( "Select Hero:", Font::YELLOW_BIG );
         text.Blit( dst.x + ( area.w - text.w() ) / 2, dst.y );
 
         SelectEnum::RedrawBackground( dst );
-    };
+    }
 };
 
 class SelectEnumArtifact : public SelectEnum
 {
 public:
     SelectEnumArtifact( const Rect & rt )
-        : SelectEnum( rt ){};
+        : SelectEnum( rt )
+    {}
 
-    void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current )
+    virtual void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current ) override
     {
         Artifact art( index );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::ARTFX, art.IndexSprite32() ), fheroes2::Display::instance(), dstx + 5, dsty + 3 );
 
         Text text( art.GetName(), ( current ? Font::YELLOW_BIG : Font::BIG ) );
         text.Blit( dstx + 50, dsty + 10 );
-    };
+    }
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
         Text text( "Select Artifact:", Font::YELLOW_BIG );
         text.Blit( dst.x + ( area.w - text.w() ) / 2, dst.y );
 
         SelectEnum::RedrawBackground( dst );
-    };
+    }
 };
 
 class SelectEnumSpell : public SelectEnum
@@ -163,24 +164,24 @@ public:
         : SelectEnum( rt )
     {
         SetAreaMaxItems( 4 );
-    };
+    }
 
-    void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current )
+    virtual void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current ) override
     {
         Spell spell( index );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::SPELLS, spell.IndexSprite() ), fheroes2::Display::instance(), dstx + 5, dsty + 3 );
 
         Text text( spell.GetName(), ( current ? Font::YELLOW_BIG : Font::BIG ) );
         text.Blit( dstx + 80, dsty + 10 );
-    };
+    }
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
         Text text( "Select Spell:", Font::YELLOW_BIG );
         text.Blit( dst.x + ( area.w - text.w() ) / 2, dst.y );
 
         SelectEnum::RedrawBackground( dst );
-    };
+    }
 };
 
 class SelectEnumSecSkill : public SelectEnum
@@ -190,24 +191,24 @@ public:
         : SelectEnum( rt )
     {
         SetAreaMaxItems( 5 );
-    };
+    }
 
-    void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current )
+    virtual void RedrawItem( const int & index, s32 dstx, s32 dsty, bool current ) override
     {
         Skill::Secondary skill( 1 + index / 3, 1 + ( index % 3 ) );
         fheroes2::Blit( fheroes2::AGG::GetICN( ICN::MINISS, skill.GetIndexSprite2() ), fheroes2::Display::instance(), dstx + 5, dsty + 3 );
         std::string str = skill.GetName();
         Text text( str, ( current ? Font::YELLOW_BIG : Font::BIG ) );
         text.Blit( dstx + 50, dsty + 10 );
-    };
+    }
 
-    void RedrawBackground( const Point & dst )
+    virtual void RedrawBackground( const Point & dst ) override
     {
         Text text( "Select Skill:", Font::YELLOW_BIG );
         text.Blit( dst.x + ( area.w - text.w() ) / 2, dst.y );
 
         SelectEnum::RedrawBackground( dst );
-    };
+    }
 };
 
 Skill::Secondary Dialog::SelectSecondarySkill( void )
@@ -221,8 +222,8 @@ Skill::Secondary Dialog::SelectSecondarySkill( void )
     cursor.Hide();
     cursor.SetThemes( cursor.POINTER );
 
-    for ( size_t ii = 0; ii < MAXSECONDARYSKILL * 3; ++ii )
-        skills[ii] = ii;
+    for ( int i = 0; i < MAXSECONDARYSKILL * 3; ++i )
+        skills[i] = i;
 
     Dialog::FrameBorder frameborder( Size( 310, 280 ), fheroes2::AGG::GetICN( ICN::TEXTBAK2, 0 ) );
     const Rect & area = frameborder.GetArea();
@@ -272,8 +273,8 @@ Spell Dialog::SelectSpell( int cur )
     cursor.Hide();
     cursor.SetThemes( cursor.POINTER );
 
-    for ( size_t ii = 0; ii < spells.size(); ++ii )
-        spells[ii] = ii + 1;
+    for ( size_t i = 0; i < spells.size(); ++i )
+        spells[i] = static_cast<int>( i + 1 ); // safe to do this as the number of spells can't be more than 2 billion
 
     Dialog::FrameBorder frameborder( Size( 340, 280 ), fheroes2::AGG::GetICN( ICN::TEXTBAK2, 0 ) );
     const Rect & area = frameborder.GetArea();
@@ -317,8 +318,8 @@ Artifact Dialog::SelectArtifact( int cur )
     cursor.Hide();
     cursor.SetThemes( cursor.POINTER );
 
-    for ( size_t ii = 0; ii < artifacts.size(); ++ii )
-        artifacts[ii] = ii;
+    for ( size_t i = 0; i < artifacts.size(); ++i )
+        artifacts[i] = static_cast<int>( i ); // safe to do this as the number of artifacts can't be more than 2 billion
 
     Dialog::FrameBorder frameborder( Size( 370, 280 ), fheroes2::AGG::GetICN( ICN::TEXTBAK2, 0 ) );
     const Rect & area = frameborder.GetArea();
@@ -362,8 +363,8 @@ Monster Dialog::SelectMonster( int id )
     cursor.Hide();
     cursor.SetThemes( cursor.POINTER );
 
-    for ( size_t ii = 0; ii < monsters.size(); ++ii )
-        monsters[ii] = ii + 1; // skip Monser::UNKNOWN
+    for ( size_t i = 0; i < monsters.size(); ++i )
+        monsters[i] = static_cast<int>( i + 1 ); // skip Monser::UNKNOWN, safe to do this as the monsters of spells can't be more than 2 billion
 
     Dialog::FrameBorder frameborder( Size( 260, 280 ), fheroes2::AGG::GetICN( ICN::TEXTBAK2, 0 ) );
     const Rect & area = frameborder.GetArea();
@@ -407,8 +408,8 @@ int Dialog::SelectHeroes( int cur )
     cursor.Hide();
     cursor.SetThemes( cursor.POINTER );
 
-    for ( size_t ii = 0; ii < heroes.size(); ++ii )
-        heroes[ii] = ii;
+    for ( size_t i = 0; i < heroes.size(); ++i )
+        heroes[i] = static_cast<int>( i ); // safe to do this as the heroes of spells can't be more than 2 billion
 
     Dialog::FrameBorder frameborder( Size( 240, 280 ), fheroes2::AGG::GetICN( ICN::TEXTBAK2, 0 ) );
     const Rect & area = frameborder.GetArea();

@@ -177,29 +177,23 @@ void HGSData::RedrawList( int32_t ox, int32_t oy )
     }
 }
 
-int Game::HighScores( bool fill )
+int Game::HighScores()
 {
-    fheroes2::Display & display = fheroes2::Display::instance();
-    Cursor & cursor = Cursor::Get();
-    const Settings & conf = Settings::Get();
-
-    cursor.Hide();
-    if ( fill && ( display.width() != display.DEFAULT_WIDTH || display.height() != display.DEFAULT_HEIGHT ) ) { // draw only for bigger resolutions
-        fheroes2::Copy( fheroes2::AGG::GetICN( ICN::HEROES, 0 ), display );
-    }
-
 #ifdef WITH_DEBUG
     if ( IS_DEVEL() && world.CountDay() ) {
-        std::string msg = std::string( "Devepoper mode, not save! \n \n Your result: " ) + GetString( GetGameOverScores() );
+        std::string msg = std::string( "Developer mode, not save! \n \n Your result: " ) + GetString( GetGameOverScores() );
         Dialog::Message( "High Scores", msg, Font::BIG, Dialog::OK );
         return MAINMENU;
     }
 #endif
 
+    Cursor & cursor = Cursor::Get();
+    cursor.Hide();
+
     HGSData hgs;
 
     std::ostringstream stream;
-    stream << System::ConcatePath( conf.GetSaveDir(), "fheroes2.hgs" );
+    stream << System::ConcatePath( GetSaveDir(), "fheroes2.hgs" );
 
     cursor.SetThemes( cursor.POINTER );
     Mixer::Pause();
@@ -209,12 +203,12 @@ int Game::HighScores( bool fill )
     const fheroes2::Sprite & back = fheroes2::AGG::GetICN( ICN::HSBKG, 0 );
 
     cursor.Hide();
-    const Point top( ( display.width() - back.width() ) / 2, ( display.height() - back.height() ) / 2 );
+
+    fheroes2::Display & display = fheroes2::Display::instance();
+    const fheroes2::Point top( ( display.width() - back.width() ) / 2, ( display.height() - back.height() ) / 2 );
     Dialog::FrameBorder border( Size( display.DEFAULT_WIDTH, display.DEFAULT_HEIGHT ) );
 
     hgs.RedrawList( top.x, top.y );
-
-    LocalEvent & le = LocalEvent::Get();
 
     fheroes2::Button buttonCampain( top.x + 8, top.y + 315, ICN::HISCORE, 0, 1 );
     fheroes2::Button buttonExit( top.x + back.width() - 36, top.y + 315, ICN::HISCORE, 4, 5 );
@@ -246,6 +240,8 @@ int Game::HighScores( bool fill )
         display.render();
         gameResult.Reset();
     }
+
+    LocalEvent & le = LocalEvent::Get();
 
     // highscores loop
     while ( le.HandleEvents() ) {

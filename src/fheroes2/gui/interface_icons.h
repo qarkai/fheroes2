@@ -42,19 +42,21 @@ namespace Interface
     {
     public:
         IconsBar( u32 count, const fheroes2::Image & sf )
-            : iconsCount( count )
-            , marker( sf )
+            : marker( sf )
+            , iconsCount( count )
             , show( true )
         {}
 
         void SetShow( bool f )
         {
             show = f;
-        };
+        }
+
         bool IsShow( void ) const
         {
             return show;
-        };
+        }
+
         void RedrawBackground( const Point & );
 
         u32 CountIcons( void ) const
@@ -71,8 +73,8 @@ namespace Interface
         static bool IsVisible( void );
 
     protected:
-        u32 iconsCount;
         const fheroes2::Image & marker;
+        u32 iconsCount;
         bool show;
     };
 
@@ -136,8 +138,8 @@ namespace Interface
 
         u32 CountIcons( void ) const;
 
-        void Select( const Heroes & );
-        void Select( const Castle & );
+        void Select( Heroes * const );
+        void Select( Castle * const );
 
         bool IsSelected( icons_t ) const;
         void ResetIcons( icons_t = ICON_ANY );

@@ -33,17 +33,16 @@
 #include "engine.h"
 #include "error.h"
 #include "game.h"
+#include "game_interface.h"
 #include "game_video.h"
 #include "gamedefs.h"
 #include "screen.h"
 #include "settings.h"
 #include "system.h"
-#include "test.h"
 #include "zzlib.h"
 
-void LoadZLogo( void );
 void SetVideoDriver( const std::string & );
-void SetTimidityEnvPath( const Settings & );
+void SetTimidityEnvPath();
 void SetLangEnvPath( const Settings & );
 void InitHomeDir( void );
 bool ReadConfigs( void );
@@ -71,7 +70,6 @@ std::string GetCaption( void )
 int main( int argc, char ** argv )
 {
     Settings & conf = Settings::Get();
-    int test = 0;
 
     DEBUG( DBG_ALL, DBG_INFO, "Free Heroes of Might and Magic II, " + conf.GetVersion() );
 
@@ -83,13 +81,9 @@ int main( int argc, char ** argv )
     // getopt
     {
         int opt;
-        while ( ( opt = System::GetCommandOptions( argc, argv, "ht:d:" ) ) != -1 )
+        while ( ( opt = System::GetCommandOptions( argc, argv, "hd:" ) ) != -1 )
             switch ( opt ) {
 #ifndef BUILD_RELEASE
-            case 't':
-                test = GetInt( System::GetOptionsArgument() );
-                break;
-
             case 'd':
                 conf.SetDebug( System::GetOptionsArgument() ? GetInt( System::GetOptionsArgument() ) : 0 );
                 break;
@@ -107,11 +101,14 @@ int main( int argc, char ** argv )
         SetVideoDriver( conf.SelectVideoDriver() );
 
     // random init
-    Rand::Init();
     if ( conf.Music() )
-        SetTimidityEnvPath( conf );
+        SetTimidityEnvPath();
 
     u32 subsystem = INIT_VIDEO | INIT_TIMER;
+
+#if SDL_VERSION_ATLEAST( 2, 0, 0 )
+    subsystem |= INIT_GAMECONTROLLER;
+#endif
 
     if ( conf.Sound() || conf.Music() )
         subsystem |= INIT_AUDIO;
@@ -148,12 +145,14 @@ int main( int argc, char ** argv )
             display.resize( conf.VideoMode().w, conf.VideoMode().h );
             fheroes2::engine().setTitle( GetCaption() );
 
-            // display.SetVideoMode( conf.VideoMode().w, conf.VideoMode().h, conf.FullScreen(), conf.KeepAspectRatio(), conf.ChangeFullscreenResolution() );
-            Display::Get().HideCursor();
+            SDL_ShowCursor( SDL_DISABLE ); // hide system cursor
 
             // Ensure the mouse position is updated to prevent bad initial values.
-            LocalEvent::Get().RegisterCycling();
+            LocalEvent::Get().RegisterCycling( fheroes2::PreRenderSystemInfo, fheroes2::PostRenderSystemInfo );
             LocalEvent::Get().GetMouseCursor();
+
+            // Update mouse cursor when switching between software emulation and OS mouse modes.
+            fheroes2::cursor().registerUpdater( Cursor::Refresh );
 
 #ifdef WITH_ZLIB
             const fheroes2::Image & appIcon = CreateImageFromZlib( 32, 32, iconImageLayer, sizeof( iconImageLayer ), iconTransformLayer, sizeof( iconTransformLayer ) );
@@ -171,9 +170,6 @@ int main( int argc, char ** argv )
 
             atexit( &AGG::Quit );
 
-#ifdef WITH_ZLIB
-            LoadZLogo();
-#endif
             // load BIN data
             Bin_Info::InitBinInfo();
 
@@ -183,12 +179,9 @@ int main( int argc, char ** argv )
             // init game data
             Game::Init();
 
-            // goto main menu
-            int rs = ( test ? Game::TESTING : Game::MAINMENU );
+            Video::ShowVideo( "H2XINTRO.SMK", false );
 
-            Video::ShowVideo( "heroes2/anim/H2XINTRO.smk", false );
-
-            while ( rs != Game::QUITGAME ) {
+            for ( int rs = Game::MAINMENU; rs != Game::QUITGAME; ) {
                 switch ( rs ) {
                 case Game::MAINMENU:
                     rs = Game::MainMenu( isFirstGameRun );
@@ -201,7 +194,7 @@ int main( int argc, char ** argv )
                     rs = Game::LoadGame();
                     break;
                 case Game::HIGHSCORES:
-                    rs = Game::HighScores( true );
+                    rs = Game::HighScores();
                     break;
                 case Game::CREDITS:
                     rs = Game::Credits();
@@ -235,6 +228,12 @@ int main( int argc, char ** argv )
                 case Game::LOADMULTI:
                     rs = Game::LoadMulti();
                     break;
+                case Game::LOADHOTSEAT:
+                    rs = Game::LoadHotseat();
+                    break;
+                case Game::LOADNETWORK:
+                    rs = Game::LoadNetwork();
+                    break;
                 case Game::SCENARIOINFO:
                     rs = Game::ScenarioInfo();
                     break;
@@ -244,9 +243,6 @@ int main( int argc, char ** argv )
                 case Game::STARTGAME:
                     rs = Game::StartGame();
                     break;
-                case Game::TESTING:
-                    rs = Game::Testing( test );
-                    break;
 
                 default:
                     break;
@@ -254,7 +250,7 @@ int main( int argc, char ** argv )
             }
         }
 #ifndef ANDROID
-        catch ( Error::Exception & ) {
+        catch ( const Error::Exception & ) {
             VERBOSE( std::endl << conf.String() );
         }
 #endif
@@ -263,38 +259,10 @@ int main( int argc, char ** argv )
     return EXIT_SUCCESS;
 }
 
-void LoadZLogo( void )
-{
-    /*
-#ifdef BUILD_RELEASE
-    std::string file = Settings::GetLastFile( "image", "sdl_logo.png" );
-    // SDL logo
-    if ( Settings::Get().ExtGameShowSDL() && !file.empty() ) {
-        Display & display = Display::Get();
-        Surface sf;
-
-        if ( sf.Load( file ) ) {
-            Surface black( display.GetSize(), false );
-            black.Fill( RGBA( 0, 0, 0, 255 ) );
-
-            // scale logo
-            if ( Settings::Get().QVGA() )
-                sf = Sprite::ScaleQVGASurface( sf );
-
-            const Point offset( ( display.w() - sf.w() ) / 2, ( display.h() - sf.h() ) / 2 );
-
-            display.Rise( sf, black, offset, 250, 500 );
-            display.Fade( sf, black, offset, 10, 500 );
-        }
-    }
-#endif
-    */
-}
-
 bool ReadConfigs( void )
 {
     Settings & conf = Settings::Get();
-    const ListFiles & files = conf.GetListFiles( "", "fheroes2.cfg" );
+    const ListFiles & files = Settings::GetListFiles( "", "fheroes2.cfg" );
 
     bool isValidConfigurationFile = false;
     for ( ListFiles::const_iterator it = files.begin(); it != files.end(); ++it ) {
@@ -340,7 +308,7 @@ void SetVideoDriver( const std::string & driver )
     System::SetEnvironment( "SDL_VIDEODRIVER", driver.c_str() );
 }
 
-void SetTimidityEnvPath( const Settings & conf )
+void SetTimidityEnvPath()
 {
     const std::string prefix_timidity = System::ConcatePath( "files", "timidity" );
     const std::string result = Settings::GetLastFile( prefix_timidity, "timidity.cfg" );
@@ -367,6 +335,8 @@ void SetLangEnvPath( const Settings & conf )
         else
             ERROR( "translation not found: " << mofile );
     }
+#else
+    (void)conf;
 #endif
     Translation::setStripContext( '|' );
 }

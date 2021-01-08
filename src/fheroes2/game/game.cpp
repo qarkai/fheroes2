@@ -21,6 +21,7 @@
  ***************************************************************************/
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <map>
 
@@ -32,6 +33,7 @@
 #include "cursor.h"
 #include "difficulty.h"
 #include "game.h"
+#include "game_credits.h"
 #include "game_interface.h"
 #include "game_static.h"
 #include "ground.h"
@@ -46,7 +48,6 @@
 #include "skill.h"
 #include "spell.h"
 #include "system.h"
-#include "test.h"
 #include "tinyconfig.h"
 #include "tools.h"
 #include "world.h"
@@ -57,7 +58,7 @@ namespace Game
     void AnimateDelaysInitialize( void );
     void KeyboardGlobalFilter( int, int );
     void UpdateGlobalDefines( const std::string & );
-    void LoadExternalResource( const Settings & );
+    void LoadExternalResource();
 
     void HotKeysDefaults( void );
     void HotKeysLoad( const std::string & );
@@ -69,6 +70,8 @@ namespace Game
     std::string last_name;
     int save_version = CURRENT_FORMAT_VERSION;
     std::vector<int> reserved_vols( LOOPXX_COUNT, 0 );
+    std::string lastMapFileName;
+    std::vector<Player> savedPlayers;
 
     namespace ObjectFadeAnimation
     {
@@ -87,8 +90,8 @@ namespace Game
             , isFadeOut( fadeOut )
         {
             const fheroes2::Image & tileImage = world.GetTiles( tile_ ).GetTileSurface();
-            surfaceSize.w = tileImage.width();
-            surfaceSize.h = tileImage.height();
+            surfaceSize.width = tileImage.width();
+            surfaceSize.height = tileImage.height();
 
             index = ICN::AnimationFrame( MP2::GetICNObject( object ), index_, 0 );
             if ( 0 == index ) {
@@ -97,6 +100,43 @@ namespace Game
         }
 
         Info removeInfo;
+    }
+}
+
+void Game::LoadPlayers( const std::string & mapFileName, Players & players )
+{
+    if ( lastMapFileName != mapFileName || savedPlayers.size() != players.size() ) {
+        return;
+    }
+
+    const int newHumanCount = std::count_if( players.begin(), players.end(), []( const Player * player ) { return player->GetControl() == CONTROL_HUMAN; } );
+    const int savedHumanCount = std::count_if( savedPlayers.begin(), savedPlayers.end(), []( const Player & player ) { return player.GetControl() == CONTROL_HUMAN; } );
+
+    if ( newHumanCount != savedHumanCount ) {
+        return;
+    }
+
+    players.clear();
+    for ( const Player & p : savedPlayers ) {
+        Player * player = new Player( p.GetColor() );
+        player->SetRace( p.GetRace() );
+        player->SetControl( p.GetControl() );
+        player->SetFriends( p.GetFriends() );
+        players.push_back( player );
+        Players::Set( Color::GetIndex( p.GetColor() ), player );
+    }
+}
+
+void Game::SavePlayers( const std::string & mapFileName, const Players & players )
+{
+    lastMapFileName = mapFileName;
+    savedPlayers.clear();
+    for ( const Player * p : players ) {
+        Player player( p->GetColor() );
+        player.SetRace( p->GetRace() );
+        player.SetControl( p->GetControl() );
+        player.SetFriends( p->GetFriends() );
+        savedPlayers.push_back( player );
     }
 }
 
@@ -120,41 +160,9 @@ void Game::SetLastSavename( const std::string & name )
     last_name = name;
 }
 
-int Game::Testing( int t )
-{
-#ifndef BUILD_RELEASE
-    Test::Run( t );
-    return Game::QUITGAME;
-#else
-    return Game::MAINMENU;
-#endif
-}
-
 int Game::Credits( void )
 {
-    std::string str;
-    str.reserve( 200 );
-
-    str.append( "version: " );
-    str.append( Settings::Get().GetVersion() );
-    str.append( "\n \n" );
-    str.append( "This program is distributed under the terms of the GPL v2." );
-    str.append( "\n" );
-    str.append( "AI engine: " );
-    str.append( AI::Get().Type() );
-    str.append( ", license: " );
-    str.append( AI::Get().License() );
-    str.append( "\n \n" );
-    str.append( "Site project:\n" );
-    str.append( "https://github.com/ihhub/fheroes2" );
-    str.append( "\n \n" );
-    str.append( "Author of original project on SourceForge:\n" );
-    str.append( "Andrey Afletdinov, maintainer\n" );
-    str.append( "email: fheroes2 at gmail.com\n" );
-
-    Dialog::Message( "Free Heroes of Might and Magic II Engine", str, Font::SMALL, Dialog::OK );
-
-    // VERBOSE("Credits: under construction.");
+    ShowCredits();
 
     return Game::MAINMENU;
 }
@@ -164,22 +172,22 @@ bool Game::ChangeMusicDisabled( void )
     return disable_change_music;
 }
 
-void Game::DisableChangeMusic( bool f )
+void Game::DisableChangeMusic( bool /*f*/ )
 {
     // disable_change_music = f;
 }
 
 void Game::Init( void )
 {
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
     LocalEvent & le = LocalEvent::Get();
 
     // update all global defines
     if ( conf.UseAltResource() )
-        LoadExternalResource( conf );
+        LoadExternalResource();
 
     // default events
-    le.SetStateDefaults();
+    LocalEvent::SetStateDefaults();
 
     // set global events
     le.SetGlobalFilterMouseEvents( Cursor::Redraw );
@@ -267,7 +275,7 @@ u32 Game::GetMixerChannelFromObject( const Maps::Tiles & tile )
 
 u32 Game::GetRating( void )
 {
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
     u32 rating = 50;
 
     switch ( conf.MapsDifficulty() ) {
@@ -307,7 +315,7 @@ u32 Game::GetRating( void )
 
 u32 Game::GetGameOverScores( void )
 {
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
     u32 k_size = 0;
 
@@ -348,15 +356,15 @@ u32 Game::GetGameOverScores( void )
     return GetRating() * ( 200 - nk ) / 100;
 }
 
-void Game::ShowLoadMapsText( void )
+void Game::ShowMapLoadingText( void )
 {
     fheroes2::Display & display = fheroes2::Display::instance();
-    const Rect pos( 0, display.height() / 2, display.width(), display.height() / 2 );
-    TextBox text( _( "Maps Loading..." ), Font::BIG, pos.w );
+    const fheroes2::Rect pos( 0, display.height() / 2, display.width(), display.height() / 2 );
+    TextBox text( _( "Map is loading..." ), Font::BIG, pos.width );
 
     // blit test
     display.fill( 0 );
-    text.Blit( pos );
+    text.Blit( pos.x, pos.y );
     display.render();
 }
 
@@ -397,6 +405,8 @@ void Game::UpdateGlobalDefines( const std::string & spec )
     }
     else
         VERBOSE( spec << ": " << doc.ErrorDesc() );
+#else
+    (void)spec;
 #endif
 }
 
@@ -405,7 +415,7 @@ u32 Game::GetWhirlpoolPercent( void )
     return GameStatic::GetLostOnWhirlpoolPercent();
 }
 
-void Game::LoadExternalResource( const Settings & conf )
+void Game::LoadExternalResource()
 {
     std::string spec;
     const std::string prefix_stats = System::ConcatePath( "files", "stats" );
@@ -415,12 +425,6 @@ void Game::LoadExternalResource( const Settings & conf )
 
     if ( System::IsFile( spec ) )
         Game::UpdateGlobalDefines( spec );
-
-    // battle.xml
-    spec = Settings::GetLastFile( prefix_stats, "battle.xml" );
-
-    if ( System::IsFile( spec ) )
-        Battle::UpdateMonsterAttributes( spec );
 
     // monsters.xml
     spec = Settings::GetLastFile( prefix_stats, "monsters.xml" );
@@ -486,7 +490,7 @@ int Game::GetActualKingdomColors( void )
     return Settings::Get().GetPlayers().GetActualColors();
 }
 
-std::string Game::CountScoute( u32 count, int scoute, bool shorts )
+std::string Game::CountScoute( uint32_t count, int scoute, bool shorts )
 {
     double infelicity = 0;
     std::string res;
@@ -509,15 +513,15 @@ std::string Game::CountScoute( u32 count, int scoute, bool shorts )
     }
 
     if ( res.empty() ) {
-        u32 min = Rand::Get( static_cast<u32>( std::floor( count - infelicity + 0.5 ) ), static_cast<u32>( std::floor( count + infelicity + 0.5 ) ) );
-        u32 max = 0;
+        uint32_t min = Rand::Get( static_cast<uint32_t>( std::floor( count - infelicity + 0.5 ) ), static_cast<uint32_t>( std::floor( count + infelicity + 0.5 ) ) );
+        uint32_t max = 0;
 
         if ( min > count ) {
             max = min;
-            min = static_cast<u32>( std::floor( count - infelicity + 0.5 ) );
+            min = static_cast<uint32_t>( std::floor( count - infelicity + 0.5 ) );
         }
         else
-            max = static_cast<u32>( std::floor( count + infelicity + 0.5 ) );
+            max = static_cast<uint32_t>( std::floor( count + infelicity + 0.5 ) );
 
         res = GetString( min );
 
@@ -528,6 +532,12 @@ std::string Game::CountScoute( u32 count, int scoute, bool shorts )
     }
 
     return res;
+}
+
+std::string Game::CountThievesGuild( uint32_t monsterCount, int guildCount )
+{
+    assert( guildCount > 0 );
+    return guildCount == 1 ? "???" : Army::SizeString( monsterCount );
 }
 
 void Game::PlayPickupSound( void )

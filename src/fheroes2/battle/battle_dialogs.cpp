@@ -42,6 +42,12 @@
 
 namespace
 {
+    // DialogBattleSummary text related values
+    const int bsTextWidth = 270;
+    const int bsTextXOffset = 25;
+    const int bsTextYOffset = 175;
+    const int bsTextIndent = 30;
+
     class LoopedAnimation
     {
     public:
@@ -143,19 +149,19 @@ namespace
 
 namespace Battle
 {
-    void GetSummaryParams( int res1, int res2, const HeroBase & hero, u32 exp, LoopedAnimationSequence & sequence, std::string & msg );
-    void RedrawBattleSettings( const std::vector<Rect> & areas );
+    void GetSummaryParams( int res1, int res2, const HeroBase & hero, u32 exp, LoopedAnimationSequence & sequence, std::string & title, std::string & msg );
+    void RedrawBattleSettings( const std::vector<fheroes2::Rect> & areas );
     void RedrawOnOffSetting( const Rect & area, const std::string & name, uint32_t index, bool isSet );
 }
 
-void Battle::RedrawBattleSettings( const std::vector<Rect> & areas )
+void Battle::RedrawBattleSettings( const std::vector<fheroes2::Rect> & areas )
 {
     fheroes2::Display & display = fheroes2::Display::instance();
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
     // Speed setting
     const Text speedTitle( _( "Speed" ), Font::SMALL );
-    speedTitle.Blit( areas[0].x + ( areas[0].w - speedTitle.w() ) / 2, areas[0].y - 13 );
+    speedTitle.Blit( areas[0].x + ( areas[0].width - speedTitle.w() ) / 2, areas[0].y - 13 );
 
     int speed = Settings::Get().BattleSpeed();
     std::string str = _( "Speed: %{speed}" );
@@ -179,13 +185,13 @@ void Battle::RedrawOnOffSetting( const Rect & area, const std::string & name, ui
     const fheroes2::Sprite & sprite = fheroes2::AGG::GetICN( ICN::CSPANEL, isSet ? index + 1 : index );
     const int textOffset = 2;
 
-    Text text( name, Font::SMALL );
-    text.Blit( area.x + ( area.w - text.w() ) / 2, area.y - text.h() - textOffset );
+    TextBox upperText( name, Font::SMALL, area.w );
+    upperText.Blit( area.x + ( area.w - upperText.w() ) / 2, area.y - upperText.h() - textOffset );
 
     fheroes2::Blit( sprite, display, area.x, area.y );
 
-    text.Set( isSet ? _( "On" ) : _( "Off" ) );
-    text.Blit( area.x + ( area.w - text.w() ) / 2, area.y + area.h + textOffset );
+    const Text lowerText( isSet ? _( "On" ) : _( "Off" ), Font::SMALL );
+    lowerText.Blit( area.x + ( area.w - lowerText.w() ) / 2, area.y + area.h + textOffset );
 }
 
 void Battle::DialogBattleSettings( void )
@@ -200,13 +206,13 @@ void Battle::DialogBattleSettings( void )
     const fheroes2::Sprite & dialog = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::CSPANBKE : ICN::CSPANBKG ), 0 );
     const fheroes2::Sprite & dialogShadow = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::CSPANBKE : ICN::CSPANBKG ), 1 );
 
-    const Point dialogOffset( ( display.width() - dialog.width() ) / 2, ( display.height() - dialog.height() ) / 2 );
-    const Point shadowOffset( dialogOffset.x - BORDERWIDTH, dialogOffset.y );
+    const fheroes2::Point dialogOffset( ( display.width() - dialog.width() ) / 2, ( display.height() - dialog.height() ) / 2 );
+    const fheroes2::Point shadowOffset( dialogOffset.x - BORDERWIDTH, dialogOffset.y );
 
     fheroes2::ImageRestorer back( display, shadowOffset.x, shadowOffset.y, dialog.width() + BORDERWIDTH, dialog.height() + BORDERWIDTH );
-    const Rect pos_rt( dialogOffset.x, dialogOffset.y, dialog.width(), dialog.height() );
+    const fheroes2::Rect pos_rt( dialogOffset.x, dialogOffset.y, dialog.width(), dialog.height() );
 
-    fheroes2::Fill( display, pos_rt.x, pos_rt.y, pos_rt.w, pos_rt.h, 0 );
+    fheroes2::Fill( display, pos_rt.x, pos_rt.y, pos_rt.width, pos_rt.height, 0 );
     fheroes2::Blit( dialogShadow, display, pos_rt.x - BORDERWIDTH, pos_rt.y + BORDERWIDTH );
     fheroes2::Blit( dialog, display, pos_rt.x, pos_rt.y );
 
@@ -214,13 +220,13 @@ void Battle::DialogBattleSettings( void )
     const int32_t panelWidth = panelSprite.width();
     const int32_t panelHeight = panelSprite.height();
 
-    std::vector<Rect> optionAreas;
-    optionAreas.push_back( Rect( pos_rt.x + 36, pos_rt.y + 47, panelWidth, panelHeight ) ); // speed
-    optionAreas.push_back( Rect( pos_rt.x + 128, pos_rt.y + 47, panelWidth, panelHeight ) ); // info
-    optionAreas.push_back( Rect( pos_rt.x + 220, pos_rt.y + 47, panelWidth, panelHeight ) ); // auto spell cast
-    optionAreas.push_back( Rect( pos_rt.x + 36, pos_rt.y + 157, panelWidth, panelHeight ) ); // grid
-    optionAreas.push_back( Rect( pos_rt.x + 128, pos_rt.y + 157, panelWidth, panelHeight ) ); // move shadow
-    optionAreas.push_back( Rect( pos_rt.x + 220, pos_rt.y + 157, panelWidth, panelHeight ) ); // cursor shadow
+    std::vector<fheroes2::Rect> optionAreas;
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 36, pos_rt.y + 47, panelWidth, panelHeight ) ); // speed
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 128, pos_rt.y + 47, panelWidth, panelHeight ) ); // info
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 220, pos_rt.y + 47, panelWidth, panelHeight ) ); // auto spell cast
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 36, pos_rt.y + 157, panelWidth, panelHeight ) ); // grid
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 128, pos_rt.y + 157, panelWidth, panelHeight ) ); // move shadow
+    optionAreas.push_back( fheroes2::Rect( pos_rt.x + 220, pos_rt.y + 157, panelWidth, panelHeight ) ); // cursor shadow
 
     fheroes2::Button btn_ok( pos_rt.x + 113, pos_rt.y + 252, ( conf.ExtGameEvilInterface() ? ICN::CSPANBTE : ICN::CSPANBTN ), 0, 1 );
     btn_ok.draw();
@@ -271,20 +277,19 @@ void Battle::DialogBattleSettings( void )
     }
 }
 
-void Battle::GetSummaryParams( int res1, int res2, const HeroBase & hero, u32 exp, LoopedAnimationSequence & sequence, std::string & msg )
+void Battle::GetSummaryParams( int res1, int res2, const HeroBase & hero, u32 exp, LoopedAnimationSequence & sequence, std::string & title, std::string & msg )
 {
     if ( res1 & RESULT_WINS ) {
         sequence.push( ICN::WINCMBT, true );
         if ( res2 & RESULT_SURRENDER )
-            msg.append( _( "The enemy has surrendered!" ) );
+            title.append( _( "The enemy has surrendered!" ) );
         else if ( res2 & RESULT_RETREAT )
-            msg.append( _( "The enemy has fled!" ) );
+            title.append( _( "The enemy has fled!" ) );
         else
-            msg.append( _( "A glorious victory!" ) );
+            title.append( _( "A glorious victory!" ) );
 
         if ( hero.isHeroes() ) {
-            msg.append( "\n" );
-            msg.append( _( "For valor in combat, %{name} receives %{exp} experience" ) );
+            msg.append( _( "For valor in combat, %{name} receives %{exp} experience." ) );
             StringReplace( msg, "%{name}", hero.GetName() );
             StringReplace( msg, "%{exp}", exp );
         }
@@ -310,12 +315,12 @@ void Battle::GetSummaryParams( int res1, int res2, const HeroBase & hero, u32 ex
     }
 }
 
-void Battle::Arena::DialogBattleSummary( const Result & res ) const
+void Battle::Arena::DialogBattleSummary( const Result & res, const bool transferArtifacts ) const
 {
     fheroes2::Display & display = fheroes2::Display::instance();
     Cursor & cursor = Cursor::Get();
     LocalEvent & le = LocalEvent::Get();
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
     const Troops killed1 = army1->GetKilledTroops();
     const Troops killed2 = army2->GetKilledTroops();
@@ -323,25 +328,26 @@ void Battle::Arena::DialogBattleSummary( const Result & res ) const
     cursor.SetThemes( Cursor::POINTER );
 
     std::string msg;
+    std::string title;
     LoopedAnimationSequence sequence;
 
     if ( ( res.army1 & RESULT_WINS ) && army1->GetCommander() && army1->GetCommander()->isControlHuman() ) {
-        GetSummaryParams( res.army1, res.army2, *army1->GetCommander(), res.exp1, sequence, msg );
+        GetSummaryParams( res.army1, res.army2, *army1->GetCommander(), res.exp1, sequence, title, msg );
         if ( conf.Music() )
             AGG::PlayMusic( MUS::BATTLEWIN, false );
     }
     else if ( ( res.army2 & RESULT_WINS ) && army2->GetCommander() && army2->GetCommander()->isControlHuman() ) {
-        GetSummaryParams( res.army2, res.army1, *army2->GetCommander(), res.exp2, sequence, msg );
+        GetSummaryParams( res.army2, res.army1, *army2->GetCommander(), res.exp2, sequence, title, msg );
         if ( conf.Music() )
             AGG::PlayMusic( MUS::BATTLEWIN, false );
     }
     else if ( army1->GetCommander() && army1->GetCommander()->isControlHuman() ) {
-        GetSummaryParams( res.army1, res.army2, *army1->GetCommander(), res.exp1, sequence, msg );
+        GetSummaryParams( res.army1, res.army2, *army1->GetCommander(), res.exp1, sequence, title, msg );
         if ( conf.Music() )
             AGG::PlayMusic( MUS::BATTLELOSE, false );
     }
     else if ( army2->GetCommander() && army2->GetCommander()->isControlHuman() ) {
-        GetSummaryParams( res.army2, res.army1, *army2->GetCommander(), res.exp2, sequence, msg );
+        GetSummaryParams( res.army2, res.army1, *army2->GetCommander(), res.exp2, sequence, title, msg );
         if ( conf.Music() )
             AGG::PlayMusic( MUS::BATTLELOSE, false );
     }
@@ -369,13 +375,13 @@ void Battle::Arena::DialogBattleSummary( const Result & res ) const
     const fheroes2::Sprite & dialog = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::WINLOSEE : ICN::WINLOSE ), 0 );
     const fheroes2::Sprite & dialogShadow = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::WINLOSEE : ICN::WINLOSE ), 1 );
 
-    const Point dialogOffset( ( display.width() - dialog.width() ) / 2, ( display.height() - dialog.height() ) / 2 );
-    const Point shadowOffset( dialogOffset.x - BORDERWIDTH, dialogOffset.y );
+    const fheroes2::Point dialogOffset( ( display.width() - dialog.width() ) / 2, ( display.height() - dialog.height() ) / 2 );
+    const fheroes2::Point shadowOffset( dialogOffset.x - BORDERWIDTH, dialogOffset.y );
 
-    fheroes2::ImageRestorer back( display, shadowOffset.x, shadowOffset.y, dialog.width() + BORDERWIDTH, dialog.height() + BORDERWIDTH );
-    const Rect pos_rt( dialogOffset.x, dialogOffset.y, dialog.width(), dialog.height() );
+    fheroes2::ImageRestorer back( display, shadowOffset.x, shadowOffset.y, dialog.width() + BORDERWIDTH, dialog.height() + BORDERWIDTH - 1 );
+    const fheroes2::Rect pos_rt( dialogOffset.x, dialogOffset.y, dialog.width(), dialog.height() );
 
-    fheroes2::Blit( dialogShadow, display, pos_rt.x - BORDERWIDTH, pos_rt.y + BORDERWIDTH );
+    fheroes2::Blit( dialogShadow, display, pos_rt.x - BORDERWIDTH, pos_rt.y + BORDERWIDTH - 1 );
     fheroes2::Blit( dialog, display, pos_rt.x, pos_rt.y );
 
     const int anime_ox = 47;
@@ -387,35 +393,44 @@ void Battle::Arena::DialogBattleSummary( const Result & res ) const
     fheroes2::Blit( sequenceBase, display, pos_rt.x + anime_ox + sequenceBase.x(), pos_rt.y + anime_oy + sequenceBase.y() );
     fheroes2::Blit( sequenceStart, display, pos_rt.x + anime_ox + sequenceStart.x(), pos_rt.y + anime_oy + sequenceStart.y() );
 
-    fheroes2::Button btn_ok( pos_rt.x + 121, pos_rt.y + ( conf.QVGA() ? 176 : 410 ), ( conf.ExtGameEvilInterface() ? ICN::WINCMBBE : ICN::WINCMBTB ), 0, 1 );
+    fheroes2::Button btn_ok( pos_rt.x + 121, pos_rt.y + 410, ( conf.ExtGameEvilInterface() ? ICN::WINCMBBE : ICN::WINCMBTB ), 0, 1 );
 
-    TextBox box( msg, Font::BIG, 270 );
-    box.Blit( pos_rt.x + 25, pos_rt.y + ( conf.QVGA() ? 20 : 175 ) );
+    int32_t messageYOffset = 0;
+    if ( !title.empty() ) {
+        TextBox box( title, Font::YELLOW_BIG, bsTextWidth );
+        box.Blit( pos_rt.x + bsTextXOffset, pos_rt.y + bsTextYOffset );
+        messageYOffset = bsTextIndent;
+    }
+
+    if ( !msg.empty() ) {
+        TextBox box( msg, Font::BIG, bsTextWidth );
+        box.Blit( pos_rt.x + bsTextXOffset, pos_rt.y + bsTextYOffset + messageYOffset );
+    }
 
     // battlefield casualties
     Text text( _( "Battlefield Casualties" ), Font::SMALL );
-    text.Blit( pos_rt.x + ( pos_rt.w - text.w() ) / 2, pos_rt.y + ( conf.QVGA() ? 58 : 270 ) );
+    text.Blit( pos_rt.x + ( pos_rt.width - text.w() ) / 2, pos_rt.y + 270 );
 
     // attacker
     text.Set( _( "Attacker" ), Font::SMALL );
-    text.Blit( pos_rt.x + ( pos_rt.w - text.w() ) / 2, pos_rt.y + ( conf.QVGA() ? 70 : 285 ) );
+    text.Blit( pos_rt.x + ( pos_rt.width - text.w() ) / 2, pos_rt.y + 285 );
 
     if ( killed1.isValid() )
-        Army::DrawMons32Line( killed1, pos_rt.x + 25, pos_rt.y + ( conf.QVGA() ? 83 : 303 ), 270 );
+        Army::DrawMons32Line( killed1, pos_rt.x + 25, pos_rt.y + 303, 270 );
     else {
         text.Set( "None", Font::SMALL );
-        text.Blit( pos_rt.x + ( pos_rt.w - text.w() ) / 2, pos_rt.y + ( conf.QVGA() ? 80 : 300 ) );
+        text.Blit( pos_rt.x + ( pos_rt.width - text.w() ) / 2, pos_rt.y + 300 );
     }
 
     // defender
     text.Set( _( "Defender" ), Font::SMALL );
-    text.Blit( pos_rt.x + ( pos_rt.w - text.w() ) / 2, pos_rt.y + ( conf.QVGA() ? 120 : 345 ) );
+    text.Blit( pos_rt.x + ( pos_rt.width - text.w() ) / 2, pos_rt.y + 345 );
 
     if ( killed2.isValid() )
-        Army::DrawMons32Line( killed2, pos_rt.x + 25, pos_rt.y + ( conf.QVGA() ? 138 : 363 ), 270 );
+        Army::DrawMons32Line( killed2, pos_rt.x + 25, pos_rt.y + 363, 270 );
     else {
         text.Set( "None", Font::SMALL );
-        text.Blit( pos_rt.x + ( pos_rt.w - text.w() ) / 2, pos_rt.y + ( conf.QVGA() ? 135 : 360 ) );
+        text.Blit( pos_rt.x + ( pos_rt.width - text.w() ) / 2, pos_rt.y + 360 );
     }
 
     btn_ok.draw();
@@ -440,6 +455,76 @@ void Battle::Arena::DialogBattleSummary( const Result & res ) const
             display.render();
         }
     }
+
+    if ( transferArtifacts ) {
+        HeroBase * hero1 = ( res.army1 & RESULT_WINS ? army1->GetCommander() : ( res.army2 & RESULT_WINS ? army2->GetCommander() : NULL ) );
+        HeroBase * hero2 = ( res.army1 & RESULT_LOSS ? army1->GetCommander() : ( res.army2 & RESULT_LOSS ? army2->GetCommander() : NULL ) );
+
+        // Can't transfer artifacts
+        if ( hero1 == nullptr || hero2 == nullptr )
+            return;
+
+        BagArtifacts & bag1 = hero1->GetBagArtifacts();
+        BagArtifacts & bag2 = hero2->GetBagArtifacts();
+
+        for ( size_t i = 0; i < bag2.size(); ++i ) {
+            Artifact & art = bag2[i];
+
+            if ( art.isUltimate() ) {
+                art = Artifact::UNKNOWN;
+                continue;
+            }
+
+            if ( art() == Artifact::UNKNOWN || art() == Artifact::MAGIC_BOOK ) {
+                continue;
+            }
+
+            BagArtifacts::iterator it = std::find( bag1.begin(), bag1.end(), Artifact( Artifact::UNKNOWN ) );
+            if ( bag1.end() != it ) {
+                *it = art;
+
+                back.restore();
+                back.update( shadowOffset.x, shadowOffset.y, dialog.width() + BORDERWIDTH, dialog.height() + BORDERWIDTH - 1 );
+                fheroes2::Blit( dialogShadow, display, pos_rt.x - BORDERWIDTH, pos_rt.y + BORDERWIDTH - 1 );
+                fheroes2::Blit( dialog, display, pos_rt.x, pos_rt.y );
+
+                Game::PlayPickupSound();
+
+                TextBox box( _( "You have captured an enemy artifact!" ), Font::YELLOW_BIG, bsTextWidth );
+                box.Blit( pos_rt.x + bsTextXOffset, pos_rt.y + bsTextYOffset );
+
+                const fheroes2::Sprite & border = fheroes2::AGG::GetICN( ICN::RESOURCE, 7 );
+                const fheroes2::Sprite & artifact = fheroes2::AGG::GetICN( ICN::ARTIFACT, art.IndexSprite64() );
+
+                fheroes2::Image image = border;
+                fheroes2::Blit( artifact, image, 5, 5 );
+
+                fheroes2::Blit( image, display, pos_rt.x + 119, pos_rt.y + 310 );
+
+                TextBox artName( art.GetName(), Font::SMALL, bsTextWidth );
+                artName.Blit( pos_rt.x + bsTextXOffset, pos_rt.y + 310 + image.height() + 5 );
+
+                while ( le.HandleEvents() ) {
+                    le.MousePressLeft( btn_ok.area() ) ? btn_ok.drawOnPress() : btn_ok.drawOnRelease();
+
+                    // exit
+                    if ( HotKeyCloseWindow || le.MouseClickLeft( btn_ok.area() ) )
+                        break;
+
+                    // animation
+                    if ( Game::AnimateInfrequentDelay( Game::BATTLE_DIALOG_DELAY ) && !sequence.nextFrame() ) {
+                        const fheroes2::Sprite & base = fheroes2::AGG::GetICN( sequence.id(), 0 );
+                        const fheroes2::Sprite & sequenceCurrent = fheroes2::AGG::GetICN( sequence.id(), sequence.frameId() );
+
+                        fheroes2::Blit( base, display, pos_rt.x + anime_ox + sequenceBase.x(), pos_rt.y + anime_oy + sequenceBase.y() );
+                        fheroes2::Blit( sequenceCurrent, display, pos_rt.x + anime_ox + sequenceCurrent.x(), pos_rt.y + anime_oy + sequenceCurrent.y() );
+                        display.render();
+                    }
+                }
+            }
+            art = Artifact::UNKNOWN;
+        }
+    }
 }
 
 int Battle::Arena::DialogBattleHero( const HeroBase & hero, bool buttons ) const
@@ -447,32 +532,31 @@ int Battle::Arena::DialogBattleHero( const HeroBase & hero, bool buttons ) const
     fheroes2::Display & display = fheroes2::Display::instance();
     Cursor & cursor = Cursor::Get();
     LocalEvent & le = LocalEvent::Get();
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
     cursor.SetThemes( Cursor::POINTER );
 
     const bool readonly = current_color != hero.GetColor() || !buttons;
     const fheroes2::Sprite & dialog = fheroes2::AGG::GetICN( ( conf.ExtGameEvilInterface() ? ICN::VGENBKGE : ICN::VGENBKG ), 0 );
 
-    Rect pos_rt;
-    pos_rt.x = ( display.width() - dialog.width() ) / 2;
-    pos_rt.y = ( display.height() - dialog.height() ) / 2;
-    pos_rt.w = dialog.width();
-    pos_rt.h = dialog.height();
+    const fheroes2::Point dialogShadow( 15, 15 );
 
-    fheroes2::ImageRestorer back( display, pos_rt.x, pos_rt.y, pos_rt.w, pos_rt.h );
+    fheroes2::Rect pos_rt( ( display.width() - dialog.width() - dialogShadow.x ) / 2, ( display.height() - dialog.height() - dialogShadow.y ) / 2, dialog.width(),
+                           dialog.height() );
+
+    fheroes2::ImageRestorer back( display, pos_rt.x, pos_rt.y, pos_rt.width, pos_rt.height );
 
     fheroes2::Blit( dialog, display, pos_rt.x, pos_rt.y );
 
     // first 15 pixels in the dialog is left shadow, skip
     pos_rt.x += 15;
-    pos_rt.w -= 15;
+    pos_rt.width -= 15;
 
     hero.PortraitRedraw( pos_rt.x + 12, pos_rt.y + 42, PORT_BIG, display );
     int col = ( Color::NONE == hero.GetColor() ? 1 : Color::GetIndex( hero.GetColor() ) + 1 );
     fheroes2::Blit( fheroes2::AGG::GetICN( ICN::VIEWGEN, col ), display, pos_rt.x + 133, pos_rt.y + 36 );
 
-    Point tp( pos_rt );
+    fheroes2::Point tp( pos_rt.x, pos_rt.y );
 
     std::string str;
     Text text;
@@ -481,44 +565,44 @@ int Battle::Arena::DialogBattleHero( const HeroBase & hero, bool buttons ) const
     StringReplace( str, "%{name}", hero.GetName() );
     StringReplace( str, "%{race}", Race::String( hero.GetRace() ) );
     text.Set( str );
-    tp.x = pos_rt.x + ( pos_rt.w - text.w() ) / 2;
+    tp.x = pos_rt.x + ( pos_rt.width - text.w() ) / 2;
     tp.y = pos_rt.y + 11;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Attack" ) + std::string( ": " ) + GetString( hero.GetAttack() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 40;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Defense" ) + std::string( ": " ) + GetString( hero.GetDefense() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 51;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Spell Power" ) + std::string( ": " ) + GetString( hero.GetPower() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 62;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Knowledge" ) + std::string( ": " ) + GetString( hero.GetKnowledge() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 73;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Morale" ) + std::string( ": " ) + Morale::String( hero.GetMorale() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 84;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Luck" ) + std::string( ": " ) + Luck::String( hero.GetLuck() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 95;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
     str = _( "Spell Points" ) + std::string( ": " ) + GetString( hero.GetSpellPoints() ) + "/" + GetString( hero.GetMaxSpellPoints() );
     text.Set( str );
     tp.x = pos_rt.x + 190 - text.w() / 2;
     tp.y = pos_rt.y + 117;
-    text.Blit( tp );
+    text.Blit( tp.x, tp.y );
 
     fheroes2::Button btnCast( pos_rt.x + 15, pos_rt.y + 148, ICN::VIEWGEN, 9, 10 );
     fheroes2::Button btnRetreat( pos_rt.x + 74, pos_rt.y + 148, ICN::VIEWGEN, 11, 12 );
@@ -563,7 +647,7 @@ int Battle::Arena::DialogBattleHero( const HeroBase & hero, bool buttons ) const
 
         if ( le.MousePressRight( btnCast.area() ) )
             Dialog::Message( _( "Cast Spell" ),
-                             _( "Cast a magical spell. You may only cast one spell per combat round. The round is reset when every creature has had a turn" ),
+                             _( "Cast a magical spell. You may only cast one spell per combat round. The round is reset when every creature has had a turn." ),
                              Font::BIG );
         else if ( le.MousePressRight( btnRetreat.area() ) )
             Dialog::Message(
@@ -594,28 +678,24 @@ bool Battle::DialogBattleSurrender( const HeroBase & hero, u32 cost, const Kingd
     fheroes2::Display & display = fheroes2::Display::instance();
     Cursor & cursor = Cursor::Get();
     LocalEvent & le = LocalEvent::Get();
-    Settings & conf = Settings::Get();
+    const Settings & conf = Settings::Get();
 
     cursor.Hide();
     cursor.SetThemes( Cursor::POINTER );
 
     const fheroes2::Sprite & dialog = fheroes2::AGG::GetICN( conf.ExtGameEvilInterface() ? ICN::SURDRBKE : ICN::SURDRBKG, 0 );
 
-    Rect pos_rt;
-    pos_rt.x = ( display.width() - dialog.width() + 16 ) / 2;
-    pos_rt.y = ( display.height() - dialog.height() + 16 ) / 2;
-    pos_rt.w = dialog.width();
-    pos_rt.h = dialog.height();
+    fheroes2::Rect pos_rt( ( display.width() - dialog.width() + 16 ) / 2, ( display.height() - dialog.height() + 16 ) / 2, dialog.width(), dialog.height() );
 
-    fheroes2::ImageRestorer back( display, pos_rt.x, pos_rt.y, pos_rt.w, pos_rt.h );
+    fheroes2::ImageRestorer back( display, pos_rt.x, pos_rt.y, pos_rt.width, pos_rt.height );
 
     fheroes2::Blit( dialog, display, pos_rt.x, pos_rt.y );
 
     const int icn = conf.ExtGameEvilInterface() ? ICN::SURRENDE : ICN::SURRENDR;
 
-    fheroes2::Button btnAccept( pos_rt.x + 90, pos_rt.y + 150, icn, 0, 1 );
-    fheroes2::Button btnDecline( pos_rt.x + 295, pos_rt.y + 150, icn, 2, 3 );
-    fheroes2::Button btnMarket( pos_rt.x + ( pos_rt.w - 16 ) / 2, pos_rt.y + 145, ( conf.ExtGameEvilInterface() ? ICN::ADVEBTNS : ICN::ADVBTNS ), 4, 5 );
+    fheroes2::Button btnAccept( pos_rt.x + 91, pos_rt.y + 152, icn, 0, 1 );
+    fheroes2::Button btnDecline( pos_rt.x + 295, pos_rt.y + 152, icn, 2, 3 );
+    fheroes2::Button btnMarket( pos_rt.x + ( pos_rt.width - 16 ) / 2, pos_rt.y + 145, ( conf.ExtGameEvilInterface() ? ICN::ADVEBTNS : ICN::ADVBTNS ), 4, 5 );
     Rect marketRect = btnAccept.area();
 
     if ( !kingdom.AllowPayment( payment_t( Resource::GOLD, cost ) ) ) {
@@ -638,8 +718,8 @@ bool Battle::DialogBattleSurrender( const HeroBase & hero, u32 cost, const Kingd
     btnDecline.draw();
 
     const fheroes2::Sprite & window = fheroes2::AGG::GetICN( icn, 4 );
-    fheroes2::Blit( window, display, pos_rt.x + 54, pos_rt.y + 30 );
-    hero.PortraitRedraw( pos_rt.x + 58, pos_rt.y + 38, PORT_BIG, display );
+    fheroes2::Blit( window, display, pos_rt.x + 55, pos_rt.y + 32 );
+    hero.PortraitRedraw( pos_rt.x + 60, pos_rt.y + 38, PORT_BIG, display );
 
     std::string str = _( "%{name} states:" );
     StringReplace( str, "%{name}", hero.GetName() );
