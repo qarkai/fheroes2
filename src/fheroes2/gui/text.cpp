@@ -95,24 +95,23 @@ int TextAscii::charWidth( const uint8_t character, const int ft )
     if ( character < 0x21 || character > fheroes2::AGG::ASCIILastSupportedCharacter( ft ) ) {
         if ( isSmallFont( ft ) )
             return 4;
-        else if ( isLargeFont( ft ) )
+        if ( isLargeFont( ft ) )
             return 12;
-        else
-            return 6;
+
+        return 6;
     }
-    else {
-        return fheroes2::AGG::GetLetter( character, ft ).width();
-    }
+
+    return fheroes2::AGG::GetLetter( character, ft ).width();
 }
 
 int TextAscii::fontHeight( const int f )
 {
     if ( isSmallFont( f ) )
         return 8 + 2 + 1;
-    else if ( isLargeFont( f ) )
+    if ( isLargeFont( f ) )
         return 26 + 6 + 1;
-    else
-        return 13 + 3 + 1;
+
+    return 13 + 3 + 1;
 }
 
 int TextAscii::w( size_t s, size_t c ) const
