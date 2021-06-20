@@ -37,6 +37,16 @@ namespace
     {
         return font == Font::WHITE_LARGE;
     }
+
+    int getFontWidth( int font )
+    {
+        if ( isSmallFont( font ) )
+            return 4;
+        if ( isLargeFont( font ) )
+            return 12;
+
+        return 6;
+    }
 }
 
 class TextAscii
@@ -92,16 +102,10 @@ size_t TextAscii::size() const
 
 int TextAscii::charWidth( const uint8_t character, const int ft )
 {
-    if ( character < 0x21 || character > fheroes2::AGG::ASCIILastSupportedCharacter( ft ) ) {
-        if ( isSmallFont( ft ) )
-            return 4;
-        if ( isLargeFont( ft ) )
-            return 12;
+    if ( 0x21 <= character && character <= fheroes2::AGG::ASCIILastSupportedCharacter( ft ) )
+        return fheroes2::AGG::GetLetter( character, ft ).width();
 
-        return 6;
-    }
-
-    return fheroes2::AGG::GetLetter( character, ft ).width();
+    return getFontWidth( ft );
 }
 
 int TextAscii::fontHeight( const int f )

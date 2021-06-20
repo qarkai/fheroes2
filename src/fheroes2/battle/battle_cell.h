@@ -85,6 +85,8 @@ namespace Battle
         void SetUnit( Unit * );
 
     private:
+        bool isPassable( const Unit & b, int direction ) const;
+
         s32 index;
         fheroes2::Rect pos;
         int object;
