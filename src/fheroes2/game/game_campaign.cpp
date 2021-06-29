@@ -652,7 +652,8 @@ fheroes2::GameMode Game::SelectCampaignScenario( const fheroes2::GameMode prevMo
         if ( le.MouseClickLeft( buttonCancel.area() ) ) {
             return prevMode;
         }
-        else if ( ( buttonOk.isEnabled() && le.MouseClickLeft( buttonOk.area() ) ) || ( buttonRestart.isEnabled() && le.MouseClickLeft( buttonRestart.area() ) ) ) {
+
+        if ( ( buttonOk.isEnabled() && le.MouseClickLeft( buttonOk.area() ) ) || ( buttonRestart.isEnabled() && le.MouseClickLeft( buttonRestart.area() ) ) ) {
             const Maps::FileInfo mapInfo = scenario.loadMap();
             conf.SetCurrentFileInfo( mapInfo );
 
@@ -688,7 +689,8 @@ fheroes2::GameMode Game::SelectCampaignScenario( const fheroes2::GameMode prevMo
 
             return fheroes2::GameMode::START_GAME;
         }
-        else if ( le.MouseClickLeft( buttonViewIntro.area() ) ) {
+
+        if ( le.MouseClickLeft( buttonViewIntro.area() ) ) {
             fheroes2::ImageRestorer restorer( display, top.x, top.y, backgroundImage.width(), backgroundImage.height() );
             playPreviosScenarioVideo();
             playCurrentScenarioVideo();

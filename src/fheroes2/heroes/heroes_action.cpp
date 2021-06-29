@@ -1963,7 +1963,7 @@ void ActionToTeleports( Heroes & hero, s32 index_from )
         if ( hero.isFreeman() ) {
             return;
         }
-        else if ( !other_hero->isFreeman() ) {
+        if ( !other_hero->isFreeman() ) {
             DEBUG_LOG( DBG_GAME, DBG_WARN, "is busy..." );
             return;
         }

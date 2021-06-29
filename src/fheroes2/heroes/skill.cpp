@@ -679,31 +679,31 @@ int Skill::SecondaryGetWeightSkillFromRace( int race, int skill )
     if ( ptr ) {
         if ( skill == Secondary::PATHFINDING )
             return ptr->mature_secondary.pathfinding;
-        else if ( skill == Secondary::ARCHERY )
+        if ( skill == Secondary::ARCHERY )
             return ptr->mature_secondary.archery;
-        else if ( skill == Secondary::LOGISTICS )
+        if ( skill == Secondary::LOGISTICS )
             return ptr->mature_secondary.logistics;
-        else if ( skill == Secondary::SCOUTING )
+        if ( skill == Secondary::SCOUTING )
             return ptr->mature_secondary.scouting;
-        else if ( skill == Secondary::DIPLOMACY )
+        if ( skill == Secondary::DIPLOMACY )
             return ptr->mature_secondary.diplomacy;
-        else if ( skill == Secondary::NAVIGATION )
+        if ( skill == Secondary::NAVIGATION )
             return ptr->mature_secondary.navigation;
-        else if ( skill == Secondary::LEADERSHIP )
+        if ( skill == Secondary::LEADERSHIP )
             return ptr->mature_secondary.leadership;
-        else if ( skill == Secondary::WISDOM )
+        if ( skill == Secondary::WISDOM )
             return ptr->mature_secondary.wisdom;
-        else if ( skill == Secondary::MYSTICISM )
+        if ( skill == Secondary::MYSTICISM )
             return ptr->mature_secondary.mysticism;
-        else if ( skill == Secondary::LUCK )
+        if ( skill == Secondary::LUCK )
             return ptr->mature_secondary.luck;
-        else if ( skill == Secondary::BALLISTICS )
+        if ( skill == Secondary::BALLISTICS )
             return ptr->mature_secondary.ballistics;
-        else if ( skill == Secondary::EAGLEEYE )
+        if ( skill == Secondary::EAGLEEYE )
             return ptr->mature_secondary.eagleeye;
-        else if ( skill == Secondary::NECROMANCY )
+        if ( skill == Secondary::NECROMANCY )
             return ptr->mature_secondary.necromancy;
-        else if ( skill == Secondary::ESTATES )
+        if ( skill == Secondary::ESTATES )
             return ptr->mature_secondary.estates;
     }
 

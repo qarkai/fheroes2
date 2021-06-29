@@ -437,43 +437,43 @@ u32 Castle::OpenTown( void )
         // click left
         if ( le.MouseCursor( dwelling1.GetArea() ) && dwelling1.QueueEventProcessing( buttonExit ) )
             return dwelling1.getBuilding();
-        else if ( le.MouseCursor( dwelling2.GetArea() ) && dwelling2.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( dwelling2.GetArea() ) && dwelling2.QueueEventProcessing( buttonExit ) )
             return dwelling2.getBuilding();
-        else if ( le.MouseCursor( dwelling3.GetArea() ) && dwelling3.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( dwelling3.GetArea() ) && dwelling3.QueueEventProcessing( buttonExit ) )
             return dwelling3.getBuilding();
-        else if ( le.MouseCursor( dwelling4.GetArea() ) && dwelling4.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( dwelling4.GetArea() ) && dwelling4.QueueEventProcessing( buttonExit ) )
             return dwelling4.getBuilding();
-        else if ( le.MouseCursor( dwelling5.GetArea() ) && dwelling5.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( dwelling5.GetArea() ) && dwelling5.QueueEventProcessing( buttonExit ) )
             return dwelling5.getBuilding();
-        else if ( le.MouseCursor( dwelling6.GetArea() ) && dwelling6.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( dwelling6.GetArea() ) && dwelling6.QueueEventProcessing( buttonExit ) )
             return dwelling6.getBuilding();
-        else if ( le.MouseCursor( buildingMageGuild.GetArea() ) && buildingMageGuild.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingMageGuild.GetArea() ) && buildingMageGuild.QueueEventProcessing( buttonExit ) )
             return buildingMageGuild.getBuilding();
-        else if ( !isSkipTavernInteraction && le.MouseCursor( buildingTavern.GetArea() ) && buildingTavern.QueueEventProcessing( buttonExit ) )
+        if ( !isSkipTavernInteraction && le.MouseCursor( buildingTavern.GetArea() ) && buildingTavern.QueueEventProcessing( buttonExit ) )
             return ( Race::NECR == race ? BUILD_SHRINE : BUILD_TAVERN );
-        else if ( le.MouseCursor( buildingThievesGuild.GetArea() ) && buildingThievesGuild.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingThievesGuild.GetArea() ) && buildingThievesGuild.QueueEventProcessing( buttonExit ) )
             return BUILD_THIEVESGUILD;
-        else if ( le.MouseCursor( buildingShipyard.GetArea() ) && buildingShipyard.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingShipyard.GetArea() ) && buildingShipyard.QueueEventProcessing( buttonExit ) )
             return BUILD_SHIPYARD;
-        else if ( le.MouseCursor( buildingStatue.GetArea() ) && buildingStatue.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingStatue.GetArea() ) && buildingStatue.QueueEventProcessing( buttonExit ) )
             return BUILD_STATUE;
-        else if ( le.MouseCursor( buildingMarketplace.GetArea() ) && buildingMarketplace.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingMarketplace.GetArea() ) && buildingMarketplace.QueueEventProcessing( buttonExit ) )
             return BUILD_MARKETPLACE;
-        else if ( le.MouseCursor( buildingWell.GetArea() ) && buildingWell.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingWell.GetArea() ) && buildingWell.QueueEventProcessing( buttonExit ) )
             return BUILD_WELL;
-        else if ( le.MouseCursor( buildingWel2.GetArea() ) && buildingWel2.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingWel2.GetArea() ) && buildingWel2.QueueEventProcessing( buttonExit ) )
             return BUILD_WEL2;
-        else if ( le.MouseCursor( buildingSpec.GetArea() ) && buildingSpec.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingSpec.GetArea() ) && buildingSpec.QueueEventProcessing( buttonExit ) )
             return BUILD_SPEC;
-        else if ( le.MouseCursor( buildingLTurret.GetArea() ) && buildingLTurret.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingLTurret.GetArea() ) && buildingLTurret.QueueEventProcessing( buttonExit ) )
             return BUILD_LEFTTURRET;
-        else if ( le.MouseCursor( buildingRTurret.GetArea() ) && buildingRTurret.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingRTurret.GetArea() ) && buildingRTurret.QueueEventProcessing( buttonExit ) )
             return BUILD_RIGHTTURRET;
-        else if ( le.MouseCursor( buildingMoat.GetArea() ) && buildingMoat.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingMoat.GetArea() ) && buildingMoat.QueueEventProcessing( buttonExit ) )
             return BUILD_MOAT;
-        else if ( le.MouseCursor( buildingCaptain.GetArea() ) && buildingCaptain.QueueEventProcessing( buttonExit ) )
+        if ( le.MouseCursor( buildingCaptain.GetArea() ) && buildingCaptain.QueueEventProcessing( buttonExit ) )
             return BUILD_CAPTAIN;
-        else if ( hero1 && le.MouseClickLeft( rectHero1 ) ) {
+        if ( hero1 && le.MouseClickLeft( rectHero1 ) ) {
             fheroes2::ButtonRestorer exitRestorer( buttonExit );
             if ( Dialog::OK == DialogBuyHero( hero1 ) ) {
                 RecruitHero( hero1 );

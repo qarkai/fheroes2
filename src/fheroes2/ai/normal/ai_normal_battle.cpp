@@ -684,36 +684,35 @@ namespace AI
                     actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
                     break;
                 }
-                else {
-                    int targetCell = -1;
-                    const Indexes & around = Board::GetAroundIndexes( *targetUnit );
-                    for ( const int cell : around ) {
-                        if ( arena.hexIsPassable( cell ) ) {
-                            targetCell = cell;
-                            break;
-                        }
-                    }
 
-                    if ( targetCell != -1 ) {
-                        DEBUG_LOG( DBG_BATTLE, DBG_INFO, currentUnit.GetName() << " is under Berserk spell, moving to " << targetCell );
-
-                        const int32_t reachableCell = Board::FindNearestReachableCell( currentUnit, targetCell );
-
-                        DEBUG_LOG( DBG_BATTLE, DBG_INFO, "Nearest reachable cell is " << reachableCell );
-
-                        if ( currentUnit.GetHeadIndex() != reachableCell ) {
-                            actions.emplace_back( MSG_BATTLE_MOVE, currentUnitUID, reachableCell );
-                        }
-
-                        // Attack only if target unit is reachable and can be attacked
-                        if ( Board::CanAttackUnitFromPosition( currentUnit, *targetUnit, reachableCell ) ) {
-                            actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
-
-                            DEBUG_LOG( DBG_BATTLE, DBG_INFO, currentUnit.GetName() << " melee offense, focus enemy " << targetUnit->GetName() );
-                        }
-
+                int targetCell = -1;
+                const Indexes & around = Board::GetAroundIndexes( *targetUnit );
+                for ( const int cell : around ) {
+                    if ( arena.hexIsPassable( cell ) ) {
+                        targetCell = cell;
                         break;
                     }
+                }
+
+                if ( targetCell != -1 ) {
+                    DEBUG_LOG( DBG_BATTLE, DBG_INFO, currentUnit.GetName() << " is under Berserk spell, moving to " << targetCell );
+
+                    const int32_t reachableCell = Board::FindNearestReachableCell( currentUnit, targetCell );
+
+                    DEBUG_LOG( DBG_BATTLE, DBG_INFO, "Nearest reachable cell is " << reachableCell );
+
+                    if ( currentUnit.GetHeadIndex() != reachableCell ) {
+                        actions.emplace_back( MSG_BATTLE_MOVE, currentUnitUID, reachableCell );
+                    }
+
+                    // Attack only if target unit is reachable and can be attacked
+                    if ( Board::CanAttackUnitFromPosition( currentUnit, *targetUnit, reachableCell ) ) {
+                        actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
+
+                        DEBUG_LOG( DBG_BATTLE, DBG_INFO, currentUnit.GetName() << " melee offense, focus enemy " << targetUnit->GetName() );
+                    }
+
+                    break;
                 }
             }
         }

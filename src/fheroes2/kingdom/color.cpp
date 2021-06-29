@@ -100,15 +100,15 @@ int Color::GetFirst( int colors )
 {
     if ( colors & BLUE )
         return BLUE;
-    else if ( colors & GREEN )
+    if ( colors & GREEN )
         return GREEN;
-    else if ( colors & RED )
+    if ( colors & RED )
         return RED;
-    else if ( colors & YELLOW )
+    if ( colors & YELLOW )
         return YELLOW;
-    else if ( colors & ORANGE )
+    if ( colors & ORANGE )
         return ORANGE;
-    else if ( colors & PURPLE )
+    if ( colors & PURPLE )
         return PURPLE;
 
     return NONE;

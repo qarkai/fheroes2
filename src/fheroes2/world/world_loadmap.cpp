@@ -362,9 +362,8 @@ bool World::LoadMapMP2( const std::string & filename )
 
         if ( 0 == h && 0 == l )
             break;
-        else {
-            countblock = 256 * h + l - 1;
-        }
+
+        countblock = 256 * h + l - 1;
     }
 
     // castle or heroes or (events, rumors, etc)

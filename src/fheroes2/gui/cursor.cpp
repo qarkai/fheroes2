@@ -177,7 +177,8 @@ int Cursor::DistanceThemes( const int theme, uint32_t distance )
 {
     if ( 0 == distance )
         return POINTER;
-    else if ( distance > 8 )
+
+    if ( distance > 8 )
         distance = 8;
 
     switch ( theme ) {

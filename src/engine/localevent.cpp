@@ -594,7 +594,7 @@ bool PressIntKey( u32 max, u32 & result )
         result /= 10;
         return true;
     }
-    else if ( le.KeyPress() && KEY_0 <= le.KeyValue() && KEY_9 >= le.KeyValue() ) {
+    if ( le.KeyPress() && KEY_0 <= le.KeyValue() && KEY_9 >= le.KeyValue() ) {
         if ( max > result ) {
             result *= 10;
             switch ( le.KeyValue() ) {

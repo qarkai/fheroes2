@@ -1217,12 +1217,7 @@ uint32_t World::CheckKingdomWins( const Kingdom & kingdom ) const
             const Campaign::ScenarioVictoryCondition victoryCondition = scenarios[scenarioId].getVictoryCondition();
             if ( victoryCondition == Campaign::ScenarioVictoryCondition::CAPTURE_DRAGON_CITY ) {
                 const bool visited = kingdom.isVisited( MP2::OBJ_DRAGONCITY ) || kingdom.isVisited( MP2::OBJN_DRAGONCITY );
-                if ( visited ) {
-                    return GameOver::WINS_SIDE;
-                }
-                else {
-                    return GameOver::COND_NONE;
-                }
+                return visited ? GameOver::WINS_SIDE : GameOver::COND_NONE;
             }
         }
     }

@@ -193,9 +193,10 @@ int DialogSelectSecondary( const std::string & name, const std::string & primary
 
         if ( le.MouseClickLeft( button_learn1.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_LEFT ) )
             return sec1.Skill();
-        else if ( le.MouseClickLeft( button_learn2.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_RIGHT ) )
+        if ( le.MouseClickLeft( button_learn2.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_RIGHT ) )
             return sec2.Skill();
-        else if ( le.MouseClickLeft( button_hero.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_READY ) ) {
+
+        if ( le.MouseClickLeft( button_hero.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_READY ) ) {
             LocalEvent::GetClean();
             hero.OpenDialog( false, true, true, true );
             display.render();

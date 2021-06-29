@@ -72,21 +72,19 @@ namespace
 
             ++_counter;
             uint32_t nextId = ICN::AnimationFrame( _icnId, 1, _counter );
-            if ( nextId < _frameId ) {
-                if ( _loop ) {
-                    _counter = 0;
-                    nextId = ICN::AnimationFrame( _icnId, 1, _counter );
-                    std::swap( nextId, _frameId );
-                    return nextId;
-                }
-                else {
-                    _finished = true;
-                }
-            }
-            else {
+            if ( nextId >= _frameId ) {
                 std::swap( nextId, _frameId );
                 return nextId;
             }
+
+            if ( _loop ) {
+                _counter = 0;
+                nextId = ICN::AnimationFrame( _icnId, 1, _counter );
+                std::swap( nextId, _frameId );
+                return nextId;
+            }
+
+            _finished = true;
 
             return _frameId;
         }

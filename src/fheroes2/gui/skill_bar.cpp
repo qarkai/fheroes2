@@ -234,7 +234,8 @@ bool SecondarySkillsBar::ActionBarLeftMouseSingleClick( Skill::Secondary & skill
         Dialog::SecondarySkillInfo( skill, _hero, true );
         return true;
     }
-    else if ( can_change ) {
+
+    if ( can_change ) {
         Skill::Secondary alt = Dialog::SelectSecondarySkill();
 
         if ( alt.isValid() ) {

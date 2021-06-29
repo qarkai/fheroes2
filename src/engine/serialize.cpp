@@ -385,7 +385,10 @@ void StreamBuf::put8( const uint8_t v )
 
 u8 StreamBuf::get8()
 {
-    return sizeg() ? *itget++ : 0u;
+    if ( sizeg() )
+        return *itget++;
+    else
+        return 0u;
 }
 
 u16 StreamBuf::getBE16()

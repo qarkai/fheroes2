@@ -635,7 +635,7 @@ void Heroes::ScholarAction( Heroes & hero1, Heroes & hero2 )
         DEBUG_LOG( DBG_GAME, DBG_INFO, "spell_book disabled" );
         return;
     }
-    else if ( !Settings::Get().ExtWorldEyeEagleAsScholar() ) {
+    if ( !Settings::Get().ExtWorldEyeEagleAsScholar() ) {
         DEBUG_LOG( DBG_GAME, DBG_WARN, "EyeEagleAsScholar settings disabled" );
         return;
     }

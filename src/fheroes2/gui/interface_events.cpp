@@ -371,8 +371,8 @@ fheroes2::GameMode Interface::Basic::EventDigArtifact()
                 // check if the game is over due to conditions related to the ultimate artifact
                 return GameOver::Result::Get().LocalCheckGameOver();
             }
-            else
-                Dialog::Message( "", _( "Try searching on clear ground." ), Font::BIG, Dialog::OK );
+
+            Dialog::Message( "", _( "Try searching on clear ground." ), Font::BIG, Dialog::OK );
         }
         else {
             Dialog::Message( "", _( "Digging for artifacts requires a whole day, try again tomorrow." ), Font::BIG, Dialog::OK );

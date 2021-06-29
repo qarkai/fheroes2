@@ -250,9 +250,8 @@ std::list<Route::Step> PlayerWorldPathfinder::buildPath( int targetIndex ) const
             DEBUG_LOG( DBG_GAME, DBG_WARN, "Circular path found! " << node._from << " to " << currentNode );
             break;
         }
-        else {
-            currentNode = node._from;
-        }
+
+        currentNode = node._from;
     }
 
     // Check a corner case when a path is blocked by something else and the destination is not reachable anymore.
@@ -565,9 +564,8 @@ std::list<Route::Step> AIWorldPathfinder::buildPath( int targetIndex, bool isPla
             DEBUG_LOG( DBG_GAME, DBG_WARN, "Circular path found! " << node._from << " to " << currentNode );
             break;
         }
-        else {
-            currentNode = node._from;
-        }
+
+        currentNode = node._from;
     }
 
     // Cut the path to the last valid tile/obstacle if not in planning mode

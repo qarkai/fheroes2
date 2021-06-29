@@ -244,9 +244,7 @@ fheroes2::GameMode Game::MainMenu( bool isFirstGameRun )
                 //    display.Fade();
                 break;
             }
-            else {
-                continue;
-            }
+            continue;
         }
 
         bool redrawScreen = false;
@@ -283,13 +281,13 @@ fheroes2::GameMode Game::MainMenu( bool isFirstGameRun )
 
         if ( HotKeyPressEvent( EVENT_BUTTON_NEWGAME ) || le.MouseClickLeft( buttonNewGame.area() ) )
             return fheroes2::GameMode::NEW_GAME;
-        else if ( HotKeyPressEvent( EVENT_BUTTON_LOADGAME ) || le.MouseClickLeft( buttonLoadGame.area() ) )
+        if ( HotKeyPressEvent( EVENT_BUTTON_LOADGAME ) || le.MouseClickLeft( buttonLoadGame.area() ) )
             return fheroes2::GameMode::LOAD_GAME;
-        else if ( HotKeyPressEvent( EVENT_BUTTON_HIGHSCORES ) || le.MouseClickLeft( buttonHighScores.area() ) )
+        if ( HotKeyPressEvent( EVENT_BUTTON_HIGHSCORES ) || le.MouseClickLeft( buttonHighScores.area() ) )
             return fheroes2::GameMode::HIGHSCORES;
-        else if ( HotKeyPressEvent( EVENT_BUTTON_CREDITS ) || le.MouseClickLeft( buttonCredits.area() ) )
+        if ( HotKeyPressEvent( EVENT_BUTTON_CREDITS ) || le.MouseClickLeft( buttonCredits.area() ) )
             return fheroes2::GameMode::CREDITS;
-        else if ( HotKeyPressEvent( EVENT_DEFAULT_EXIT ) || le.MouseClickLeft( buttonQuit.area() ) ) {
+        if ( HotKeyPressEvent( EVENT_DEFAULT_EXIT ) || le.MouseClickLeft( buttonQuit.area() ) ) {
             if ( Interface::Basic::EventExit() == fheroes2::GameMode::QUIT_GAME ) {
                 // if ( conf.ExtGameUseFade() )
                 //     display.Fade();

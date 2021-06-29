@@ -916,7 +916,7 @@ namespace AI
                     }
                     return;
                 }
-                else if ( !other_hero->isFreeman() ) {
+                if ( !other_hero->isFreeman() ) {
                     DEBUG_LOG( DBG_GAME, DBG_WARN, other_hero->String() + " hero is blocking teleporter exit" );
                     return;
                 }

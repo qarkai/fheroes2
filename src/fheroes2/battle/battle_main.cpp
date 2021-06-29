@@ -43,6 +43,19 @@ namespace Battle
     void PickupArtifactsAction( HeroBase &, HeroBase & );
     void EagleEyeSkillAction( HeroBase &, const SpellStorage &, bool );
     void NecromancySkillAction( HeroBase & hero, const uint32_t, const bool isControlHuman, const Battle::Arena & arena );
+    uint32_t BattleResult( uint32_t army )
+    {
+        if ( RESULT_SURRENDER & army )
+            return RESULT_SURRENDER;
+        if ( RESULT_RETREAT & army )
+            return RESULT_RETREAT;
+        if ( RESULT_LOSS & army )
+            return RESULT_LOSS;
+        if ( RESULT_WINS & army )
+            return RESULT_WINS;
+
+        return 0;
+    }
 }
 
 Battle::Result Battle::Loader( Army & army1, Army & army2, s32 mapsindex )
@@ -331,30 +344,12 @@ void Battle::NecromancySkillAction( HeroBase & hero, const uint32_t enemyTroopsK
 
 u32 Battle::Result::AttackerResult( void ) const
 {
-    if ( RESULT_SURRENDER & army1 )
-        return RESULT_SURRENDER;
-    else if ( RESULT_RETREAT & army1 )
-        return RESULT_RETREAT;
-    else if ( RESULT_LOSS & army1 )
-        return RESULT_LOSS;
-    else if ( RESULT_WINS & army1 )
-        return RESULT_WINS;
-
-    return 0;
+    return BattleResult( army1 );
 }
 
 u32 Battle::Result::DefenderResult( void ) const
 {
-    if ( RESULT_SURRENDER & army2 )
-        return RESULT_SURRENDER;
-    else if ( RESULT_RETREAT & army2 )
-        return RESULT_RETREAT;
-    else if ( RESULT_LOSS & army2 )
-        return RESULT_LOSS;
-    else if ( RESULT_WINS & army2 )
-        return RESULT_WINS;
-
-    return 0;
+    return BattleResult( army2 );
 }
 
 u32 Battle::Result::GetExperienceAttacker( void ) const

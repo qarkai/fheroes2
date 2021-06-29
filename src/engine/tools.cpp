@@ -125,25 +125,23 @@ int GetInt( const std::string & str )
     {
         std::string lower = StringLower( str );
 
-        if ( lower == "on" )
+        if ( lower == "on" || lower == "one" )
             return 1;
-        else if ( lower == "one" )
-            return 1;
-        else if ( lower == "two" )
+        if ( lower == "two" )
             return 2;
-        else if ( lower == "three" )
+        if ( lower == "three" )
             return 3;
-        else if ( lower == "four" )
+        if ( lower == "four" )
             return 4;
-        else if ( lower == "five" )
+        if ( lower == "five" )
             return 5;
-        else if ( lower == "six" )
+        if ( lower == "six" )
             return 6;
-        else if ( lower == "seven" )
+        if ( lower == "seven" )
             return 7;
-        else if ( lower == "eight" )
+        if ( lower == "eight" )
             return 8;
-        else if ( lower == "nine" )
+        if ( lower == "nine" )
             return 9;
     }
 

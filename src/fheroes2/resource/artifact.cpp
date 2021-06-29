@@ -499,13 +499,13 @@ int Artifact::getArtifactValue() const
     if ( level & ART_LEVEL1 ) {
         return 1;
     }
-    else if ( level & ART_LEVEL2 ) {
+    if ( level & ART_LEVEL2 ) {
         return 2;
     }
-    else if ( level & ART_LEVEL3 ) {
+    if ( level & ART_LEVEL3 ) {
         return 3;
     }
-    else if ( level & ART_ULTIMATE ) {
+    if ( level & ART_ULTIMATE ) {
         return 5;
     }
 
@@ -595,17 +595,17 @@ Artifact Artifact::FromMP2IndexSprite( u32 index )
 {
     if ( 0xA2 > index )
         return Artifact( ( index - 1 ) / 2 );
-    else if ( Settings::Get().isPriceOfLoyaltySupported() && 0xAB < index && 0xCE > index )
+    if ( Settings::Get().isPriceOfLoyaltySupported() && 0xAB < index && 0xCE > index )
         return Artifact( ( index - 1 ) / 2 );
-    else if ( 0xA3 == index )
+    if ( 0xA3 == index )
         return Artifact( Rand( ART_LEVEL123 ) );
-    else if ( 0xA4 == index )
+    if ( 0xA4 == index )
         return Artifact( Rand( ART_ULTIMATE ) );
-    else if ( 0xA7 == index )
+    if ( 0xA7 == index )
         return Artifact( Rand( ART_LEVEL1 ) );
-    else if ( 0xA9 == index )
+    if ( 0xA9 == index )
         return Artifact( Rand( ART_LEVEL2 ) );
-    else if ( 0xAB == index )
+    if ( 0xAB == index )
         return Rand( ART_LEVEL3 );
 
     DEBUG_LOG( DBG_GAME, DBG_WARN, "unknown index: " << static_cast<int>( index ) );

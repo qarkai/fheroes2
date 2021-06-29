@@ -809,7 +809,7 @@ bool Battle::Arena::isDisableCastSpell( const Spell & spell, std::string * msg )
             *msg = _( "That spell will affect no one!" );
             return true;
         }
-        else if ( spell.isSummon() ) {
+        if ( spell.isSummon() ) {
             const Unit * elem = GetCurrentForce().FindMode( CAP_SUMMONELEM );
             bool affect = true;
 

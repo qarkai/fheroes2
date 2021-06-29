@@ -282,12 +282,11 @@ Spell SpellBook::Open( const HeroBase & hero, const Filter displayableSpells, bo
                             curspell = *spell;
                             break;
                         }
-                        else {
-                            StringReplace( str, "%{mana}", ( *spell ).SpellPoint( &hero ) );
-                            StringReplace( str, "%{point}", hero.GetSpellPoints() );
-                            Dialog::Message( "", str, Font::BIG, Dialog::OK );
-                            display.render();
-                        }
+
+                        StringReplace( str, "%{mana}", ( *spell ).SpellPoint( &hero ) );
+                        StringReplace( str, "%{point}", hero.GetSpellPoints() );
+                        Dialog::Message( "", str, Font::BIG, Dialog::OK );
+                        display.render();
                     }
                     else {
                         Dialog::SpellInfo( *spell, true );

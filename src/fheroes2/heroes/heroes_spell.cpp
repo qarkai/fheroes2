@@ -199,7 +199,8 @@ bool Heroes::ActionSpellCast( const Spell & spell )
         Dialog::Message( "", _( "Your hero is too tired to cast this spell today. Try again tomorrow." ), Font::BIG, Dialog::OK );
         return false;
     }
-    else if ( spell == Spell::NONE || spell.isCombat() || !CanCastSpell( spell, &error ) ) {
+
+    if ( spell == Spell::NONE || spell.isCombat() || !CanCastSpell( spell, &error ) ) {
         if ( !error.empty() )
             Dialog::Message( "Error", error, Font::BIG, Dialog::OK );
         return false;
@@ -258,9 +259,8 @@ bool Heroes::ActionSpellCast( const Spell & spell )
     if ( apply ) {
         DEBUG_LOG( DBG_GAME, DBG_INFO, GetName() << " cast spell: " << spell.GetName() );
         SpellCasted( spell );
-        return true;
     }
-    return false;
+    return apply;
 }
 
 bool HeroesTownGate( Heroes & hero, const Castle * castle )
@@ -484,7 +484,7 @@ bool ActionSpellTownGate( Heroes & hero )
         Dialog::Message( "", _( "No available towns.\nSpell Failed!!!" ), Font::BIG, Dialog::OK );
         return false;
     }
-    else if ( castle->GetHeroes().Guest() && castle->GetHeroes().Guest() != &hero ) {
+    if ( castle->GetHeroes().Guest() && castle->GetHeroes().Guest() != &hero ) {
         Dialog::Message( "", _( "Nearest town occupied.\nSpell Failed!!!" ), Font::BIG, Dialog::OK );
         return false;
     }

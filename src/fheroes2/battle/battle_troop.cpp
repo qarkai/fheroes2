@@ -470,7 +470,7 @@ u32 Battle::Unit::GetSpeed( bool skip_standing_check ) const
         spell = Spell::HASTE;
         return spell.ExtraValue() ? speed + spell.ExtraValue() : Speed::GetOriginalFast( speed );
     }
-    else if ( Modes( SP_SLOW ) ) {
+    if ( Modes( SP_SLOW ) ) {
         spell = Spell::SLOW;
         return spell.ExtraValue() ? speed - spell.ExtraValue() : Speed::GetOriginalSlow( speed );
     }
@@ -1711,7 +1711,7 @@ int Battle::Unit::GetCurrentColor() const
 {
     if ( Modes( SP_BERSERKER ) )
         return -1; // be aware of unknown color
-    else if ( Modes( SP_HYPNOTIZE ) )
+    if ( Modes( SP_HYPNOTIZE ) )
         return GetArena()->GetOppositeColor( GetArmyColor() );
 
     // default

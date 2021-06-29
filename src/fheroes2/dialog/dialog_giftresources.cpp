@@ -43,10 +43,7 @@ int32_t GetIndexClickRects( const std::vector<fheroes2::Rect> & rects )
 
     for ( size_t i = 0; i < rects.size(); ++i ) {
         if ( rects[i] & position ) {
-            if ( le.MouseClickLeft() )
-                return static_cast<int32_t>( i );
-            else
-                return -1;
+            return le.MouseClickLeft() ? static_cast<int32_t>( i ) : -1;
         }
     }
 

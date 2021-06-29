@@ -211,15 +211,15 @@ bool StatsHeroesList::ActionListCursor( HeroRow & row, const fheroes2::Point & c
             row.artifactsBar->ResetSelected();
         return true;
     }
-    else if ( ( row.artifactsBar->GetArea() & cursorPos ) && row.artifactsBar->QueueEventProcessing() ) {
+    if ( ( row.artifactsBar->GetArea() & cursorPos ) && row.artifactsBar->QueueEventProcessing() ) {
         if ( row.armyBar->isSelected() )
             row.armyBar->ResetSelected();
         return true;
     }
-    else if ( ( row.primskillsBar->GetArea() & cursorPos ) && row.primskillsBar->QueueEventProcessing() ) {
+    if ( ( row.primskillsBar->GetArea() & cursorPos ) && row.primskillsBar->QueueEventProcessing() ) {
         return true;
     }
-    else if ( ( row.secskillsBar->GetArea() & cursorPos ) && row.secskillsBar->QueueEventProcessing() ) {
+    if ( ( row.secskillsBar->GetArea() & cursorPos ) && row.secskillsBar->QueueEventProcessing() ) {
         return true;
     }
 
@@ -454,13 +454,13 @@ bool StatsCastlesList::ActionListCursor( CstlRow & row, const fheroes2::Point & 
             row.armyBarGuest->ResetSelected();
         return true;
     }
-    else if ( row.armyBarGuest && ( row.armyBarGuest->GetArea() & cursorPos )
-              && ( row.armyBarGuard ? row.armyBarGuest->QueueEventProcessing( *row.armyBarGuard ) : row.armyBarGuest->QueueEventProcessing() ) ) {
+    if ( row.armyBarGuest && ( row.armyBarGuest->GetArea() & cursorPos )
+         && ( row.armyBarGuard ? row.armyBarGuest->QueueEventProcessing( *row.armyBarGuard ) : row.armyBarGuest->QueueEventProcessing() ) ) {
         if ( row.armyBarGuard && row.armyBarGuard->isSelected() )
             row.armyBarGuard->ResetSelected();
         return true;
     }
-    else if ( row.dwellingsBar && ( row.dwellingsBar->GetArea() & cursorPos ) && row.dwellingsBar->QueueEventProcessing() ) {
+    if ( row.dwellingsBar && ( row.dwellingsBar->GetArea() & cursorPos ) && row.dwellingsBar->QueueEventProcessing() ) {
         if ( row.armyBarGuest && row.armyBarGuest->isSelected() )
             row.armyBarGuest->ResetSelected();
         if ( row.armyBarGuard && row.armyBarGuard->isSelected() )

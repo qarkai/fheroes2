@@ -426,10 +426,10 @@ bool HeroBase::CanCastSpell( const Spell & spell, std::string * res ) const
                     if ( spell.MovePoint() <= move_point ) {
                         if ( kingdom.AllowPayment( spell.GetCost() ) )
                             return true;
-                        else
-                            os << "resource"
-                               << " "
-                               << "failed";
+
+                        os << "resource"
+                           << " "
+                           << "failed";
                     }
                     else
                         os << "move points"

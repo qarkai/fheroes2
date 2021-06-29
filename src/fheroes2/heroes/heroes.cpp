@@ -1277,7 +1277,7 @@ uint32_t Heroes::UpdateMovementPoints( const uint32_t movePoints, const int skil
     if ( skillValue == 33 ) {
         return movePoints * 4 / 3;
     }
-    else if ( skillValue == 66 ) {
+    if ( skillValue == 66 ) {
         return movePoints * 5 / 3;
     }
 
@@ -1331,9 +1331,8 @@ int Heroes::GetRangeRouteDays( s32 dst ) const
 
         return 8;
     }
-    else {
-        DEBUG_LOG( DBG_GAME, DBG_TRACE, "unreachable point: " << dst );
-    }
+
+    DEBUG_LOG( DBG_GAME, DBG_TRACE, "unreachable point: " << dst );
 
     return 0;
 }

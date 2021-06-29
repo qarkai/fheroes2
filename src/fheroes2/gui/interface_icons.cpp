@@ -434,7 +434,7 @@ bool Interface::IconsPanel::IsSelected( icons_t type ) const
 {
     if ( type & ICON_HEROES )
         return heroesIcons.isSelected();
-    else if ( type & ICON_CASTLES )
+    if ( type & ICON_CASTLES )
         return castleIcons.isSelected();
 
     return false;

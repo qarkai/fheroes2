@@ -126,9 +126,8 @@ public:
             vcur += vcur + step <= vmax ? step : vmax - vcur;
             return true;
         }
-        else
-            // down
-            if ( ( le.MouseWheelDn() || le.MouseClickLeft( btnDn.area() ) || timedBtnDn.isDelayPassed() ) && vmin < vcur ) {
+        // down
+        if ( ( le.MouseWheelDn() || le.MouseClickLeft( btnDn.area() ) || timedBtnDn.isDelayPassed() ) && vmin < vcur ) {
             vcur -= vmin + vcur >= step ? step : vcur;
             return true;
         }
@@ -283,11 +282,12 @@ bool Dialog::InputString( const std::string & header, std::string & res, const s
 
         if ( Game::HotKeyPressEvent( Game::EVENT_DEFAULT_READY ) || ( buttonOk.isEnabled() && le.MouseClickLeft( buttonOk.area() ) ) )
             break;
-        else if ( Game::HotKeyPressEvent( Game::EVENT_DEFAULT_EXIT ) || le.MouseClickLeft( buttonCancel.area() ) ) {
+        if ( Game::HotKeyPressEvent( Game::EVENT_DEFAULT_EXIT ) || le.MouseClickLeft( buttonCancel.area() ) ) {
             res.clear();
             break;
         }
-        else if ( le.KeyPress() ) {
+
+        if ( le.KeyPress() ) {
             charInsertPos = InsertKeySym( res, charInsertPos, le.KeyValue(), le.KeyMod() );
             redraw = true;
         }

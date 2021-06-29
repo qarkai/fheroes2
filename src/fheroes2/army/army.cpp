@@ -67,19 +67,19 @@ armysize_t ArmyGetSize( u32 count )
 {
     if ( ARMY_LEGION <= count )
         return ARMY_LEGION;
-    else if ( ARMY_ZOUNDS <= count )
+    if ( ARMY_ZOUNDS <= count )
         return ARMY_ZOUNDS;
-    else if ( ARMY_SWARM <= count )
+    if ( ARMY_SWARM <= count )
         return ARMY_SWARM;
-    else if ( ARMY_THRONG <= count )
+    if ( ARMY_THRONG <= count )
         return ARMY_THRONG;
-    else if ( ARMY_HORDE <= count )
+    if ( ARMY_HORDE <= count )
         return ARMY_HORDE;
-    else if ( ARMY_LOTS <= count )
+    if ( ARMY_LOTS <= count )
         return ARMY_LOTS;
-    else if ( ARMY_PACK <= count )
+    if ( ARMY_PACK <= count )
         return ARMY_PACK;
-    else if ( ARMY_SEVERAL <= count )
+    if ( ARMY_SEVERAL <= count )
         return ARMY_SEVERAL;
 
     return ARMY_FEW;

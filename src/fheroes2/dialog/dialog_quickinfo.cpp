@@ -153,22 +153,20 @@ std::string ShowMonsterInfo( const Maps::Tiles & tile, bool isVisibleFromCrystal
 {
     const Troop & troop = tile.QuantityTroop();
 
-    if ( isVisibleFromCrystalBall || ( extendedScoutingOption && basicScoutingLevel > Skill::Level::NONE ) ) {
-        std::string str = "%{count} %{monster}";
-        const int scoutingLevel = isVisibleFromCrystalBall ? static_cast<int>( Skill::Level::EXPERT ) : basicScoutingLevel;
-        StringReplace( str, "%{count}", Game::CountScoute( troop.GetCount(), scoutingLevel ) );
-        if ( troop.GetCount() == 1 && scoutingLevel == Skill::Level::EXPERT ) {
-            StringReplace( str, "%{monster}", StringLower( troop.GetName() ) );
-        }
-        else {
-            StringReplace( str, "%{monster}", StringLower( troop.GetMultiName() ) );
-        }
+    if ( !isVisibleFromCrystalBall && ( !extendedScoutingOption || basicScoutingLevel == Skill::Level::NONE ) )
+        return Army::TroopSizeString( troop );
 
-        return str;
+    std::string str = "%{count} %{monster}";
+    const int scoutingLevel = isVisibleFromCrystalBall ? static_cast<int>( Skill::Level::EXPERT ) : basicScoutingLevel;
+    StringReplace( str, "%{count}", Game::CountScoute( troop.GetCount(), scoutingLevel ) );
+    if ( troop.GetCount() == 1 && scoutingLevel == Skill::Level::EXPERT ) {
+        StringReplace( str, "%{monster}", StringLower( troop.GetName() ) );
     }
     else {
-        return Army::TroopSizeString( troop );
+        StringReplace( str, "%{monster}", StringLower( troop.GetMultiName() ) );
     }
+
+    return str;
 }
 
 std::string ShowArtifactInfo( const Maps::Tiles & tile, bool extendedScoutingOption, uint32_t scoutingLevel )
@@ -435,7 +433,8 @@ uint32_t GetHeroScoutingLevelForTile( const Heroes * hero, uint32_t dst )
             return Skill::Level::NONE;
         }
     }
-    else if ( Settings::Get().ExtWorldScouteExtended() ) {
+
+    if ( Settings::Get().ExtWorldScouteExtended() ) {
         uint32_t dist = static_cast<uint32_t>( hero->GetScoute() );
         if ( hero->Modes( Heroes::VISIONS ) && dist < hero->GetVisionsDistance() )
             dist = hero->GetVisionsDistance();

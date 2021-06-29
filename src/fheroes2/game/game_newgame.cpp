@@ -94,13 +94,12 @@ fheroes2::GameMode Game::NewHotSeat()
         world.NewMaps( 10, 10 );
         return StartBattleOnly();
     }
-    else {
-        conf.SetGameType( Game::TYPE_HOTSEAT );
-        const u32 select = SelectCountPlayers();
-        if ( select ) {
-            conf.SetPreferablyCountPlayers( select );
-            return fheroes2::GameMode::SELECT_SCENARIO;
-        }
+
+    conf.SetGameType( Game::TYPE_HOTSEAT );
+    const u32 select = SelectCountPlayers();
+    if ( select ) {
+        conf.SetPreferablyCountPlayers( select );
+        return fheroes2::GameMode::SELECT_SCENARIO;
     }
     return fheroes2::GameMode::MAIN_MENU;
 }
@@ -248,17 +247,17 @@ fheroes2::GameMode Game::NewPriceOfLoyaltyCampaign()
             gameChoice = fheroes2::GameMode::SELECT_CAMPAIGN_SCENARIO;
             break;
         }
-        else if ( le.MouseClickLeft( voyageHomeRoi ) ) {
+        if ( le.MouseClickLeft( voyageHomeRoi ) ) {
             campaignSaveData.setCampaignID( Campaign::VOYAGE_HOME_CAMPAIGN );
             gameChoice = fheroes2::GameMode::SELECT_CAMPAIGN_SCENARIO;
             break;
         }
-        else if ( le.MouseClickLeft( wizardsIsleRoi ) ) {
+        if ( le.MouseClickLeft( wizardsIsleRoi ) ) {
             campaignSaveData.setCampaignID( Campaign::WIZARDS_ISLE_CAMPAIGN );
             gameChoice = fheroes2::GameMode::SELECT_CAMPAIGN_SCENARIO;
             break;
         }
-        else if ( le.MouseClickLeft( descendantsRoi ) ) {
+        if ( le.MouseClickLeft( descendantsRoi ) ) {
             campaignSaveData.setCampaignID( Campaign::DESCENDANTS_CAMPAIGN );
             gameChoice = fheroes2::GameMode::SELECT_CAMPAIGN_SCENARIO;
             break;

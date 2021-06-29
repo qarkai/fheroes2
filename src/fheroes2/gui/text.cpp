@@ -102,10 +102,12 @@ size_t TextAscii::size() const
 
 int TextAscii::charWidth( const uint8_t character, const int ft )
 {
-    if ( 0x21 <= character && character <= fheroes2::AGG::ASCIILastSupportedCharacter( ft ) )
+    if ( character < 0x21 || character > fheroes2::AGG::ASCIILastSupportedCharacter( ft ) ) {
+        return getFontWidth( ft );
+    }
+    else {
         return fheroes2::AGG::GetLetter( character, ft ).width();
-
-    return getFontWidth( ft );
+    }
 }
 
 int TextAscii::fontHeight( const int f )

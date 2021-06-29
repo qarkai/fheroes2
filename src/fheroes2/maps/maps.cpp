@@ -172,25 +172,25 @@ int Maps::GetDirection( int from, int to )
     if ( diff == ( -width - 1 ) ) {
         return Direction::TOP_LEFT;
     }
-    else if ( diff == -width ) {
+    if ( diff == -width ) {
         return Direction::TOP;
     }
-    else if ( diff == ( -width + 1 ) ) {
+    if ( diff == ( -width + 1 ) ) {
         return Direction::TOP_RIGHT;
     }
-    else if ( diff == -1 ) {
+    if ( diff == -1 ) {
         return Direction::LEFT;
     }
-    else if ( diff == 1 ) {
+    if ( diff == 1 ) {
         return Direction::RIGHT;
     }
-    else if ( diff == width - 1 ) {
+    if ( diff == width - 1 ) {
         return Direction::BOTTOM_LEFT;
     }
-    else if ( diff == width ) {
+    if ( diff == width ) {
         return Direction::BOTTOM;
     }
-    else if ( diff == width + 1 ) {
+    if ( diff == width + 1 ) {
         return Direction::BOTTOM_RIGHT;
     }
 

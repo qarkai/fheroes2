@@ -562,20 +562,20 @@ bool Spell::isApplyWithoutFocusObject( void ) const
 {
     if ( isMassActions() || isSummon() )
         return true;
-    else
-        switch ( id ) {
-        case DEATHRIPPLE:
-        case DEATHWAVE:
-        case EARTHQUAKE:
-        case HOLYWORD:
-        case HOLYSHOUT:
-        case ARMAGEDDON:
-        case ELEMENTALSTORM:
-            return true;
 
-        default:
-            break;
-        }
+    switch ( id ) {
+    case DEATHRIPPLE:
+    case DEATHWAVE:
+    case EARTHQUAKE:
+    case HOLYWORD:
+    case HOLYSHOUT:
+    case ARMAGEDDON:
+    case ELEMENTALSTORM:
+        return true;
+
+    default:
+        break;
+    }
 
     return false;
 }

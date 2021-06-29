@@ -329,9 +329,9 @@ std::string Game::GetSaveFileExtension( const int gameType )
 {
     if ( gameType & Game::TYPE_STANDARD )
         return ".sav";
-    else if ( gameType & Game::TYPE_CAMPAIGN )
+    if ( gameType & Game::TYPE_CAMPAIGN )
         return ".savc";
-    else if ( gameType & Game::TYPE_HOTSEAT )
+    if ( gameType & Game::TYPE_HOTSEAT )
         return ".savh";
 
     return ".savm";

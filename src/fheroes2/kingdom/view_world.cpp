@@ -512,7 +512,8 @@ void ViewWorld::ViewWorldWindow( const int color, const ViewWorldMode mode, Inte
         if ( le.MouseClickLeft( buttonExit.area() ) || Game::HotKeyPressEvent( Game::EVENT_DEFAULT_EXIT ) ) {
             break;
         }
-        else if ( le.MouseClickLeft( buttonZoom.area() ) ) {
+        
+        if ( le.MouseClickLeft( buttonZoom.area() ) ) {
             changed = currentROI.zoomOut( true );
         }
         else if ( le.MouseCursor( radar.GetRect() ) ) {

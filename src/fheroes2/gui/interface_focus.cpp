@@ -154,7 +154,7 @@ int Interface::GetFocusType( void )
 
         if ( focus.GetHeroes() )
             return GameFocus::HEROES;
-        else if ( focus.GetCastle() )
+        if ( focus.GetCastle() )
             return GameFocus::CASTLE;
     }
 
@@ -184,7 +184,7 @@ fheroes2::Point Interface::GetFocusCenter( void )
 
         if ( focus.GetHeroes() )
             return focus.GetHeroes()->GetCenter();
-        else if ( focus.GetCastle() )
+        if ( focus.GetCastle() )
             return focus.GetCastle()->GetCenter();
     }
 
