@@ -546,10 +546,10 @@ int Battle::Board::GetDirection( s32 index1, s32 index2 )
     if ( isValidIndex( index1 ) && isValidIndex( index2 ) ) {
         if ( index1 == index2 )
             return CENTER;
-        else
-            for ( direction_t dir = TOP_LEFT; dir < CENTER; ++dir )
-                if ( isValidDirection( index1, dir ) && index2 == GetIndexDirection( index1, dir ) )
-                    return dir;
+
+        for ( direction_t dir = TOP_LEFT; dir < CENTER; ++dir )
+            if ( isValidDirection( index1, dir ) && index2 == GetIndexDirection( index1, dir ) )
+                return dir;
     }
 
     return UNKNOWN;
@@ -990,7 +990,7 @@ Battle::Cell * Battle::Board::GetCell( s32 position, int dir )
         Board * board = Arena::GetBoard();
         if ( dir == CENTER )
             return &board->at( position );
-        else if ( Board::isValidDirection( position, dir ) )
+        if ( Board::isValidDirection( position, dir ) )
             return &board->at( GetIndexDirection( position, dir ) );
     }
 

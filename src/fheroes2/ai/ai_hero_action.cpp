@@ -241,7 +241,7 @@ namespace AI
             if ( hero.GetColor() == castle->GetColor() ) {
                 return castle->GetHeroes().Guest() == nullptr;
             }
-            else if ( !hero.isFriends( castle->GetColor() ) ) {
+            if ( !hero.isFriends( castle->GetColor() ) ) {
                 return hero.GetArmy().GetStrength() > castle->GetGarrisonStrength( &hero ) * ARMY_STRENGTH_ADVANTAGE_MEDUIM;
             }
         }
@@ -927,7 +927,7 @@ namespace AI
                     }
                     return;
                 }
-                else if ( !other_hero->isFreeman() ) {
+                if ( !other_hero->isFreeman() ) {
                     DEBUG_LOG( DBG_GAME, DBG_WARN, other_hero->String() + " hero is blocking teleporter exit" );
                     return;
                 }
@@ -1664,7 +1664,7 @@ namespace AI
                 else
                     return true;
             }
-            else if ( tile.QuantityIsValid() )
+            if ( tile.QuantityIsValid() )
                 return true;
             break;
 
@@ -1681,25 +1681,25 @@ namespace AI
 
             if ( hero.isShipMaster() )
                 return false;
-            else
-                // 1,2,3 - 2000g, 2500g+3res, 3000g+5res
-                if ( 1 <= variants && 3 >= variants ) {
+
+            // 1,2,3 - 2000g, 2500g+3res, 3000g+5res
+            if ( 1 <= variants && 3 >= variants ) {
                 return kingdom.AllowPayment( tile.QuantityFunds() );
             }
-            else
-                // 4,5 - need have skill wisard or leadership,
-                if ( 3 < variants && 6 > variants ) {
+
+            // 4,5 - need have skill wisard or leadership,
+            if ( 3 < variants && 6 > variants ) {
                 return hero.HasSecondarySkill( tile.QuantitySkill().Skill() );
             }
-            else
-                // 6 - 50 rogues, 7 - 1 gin, 8,9,10,11,12,13 - 1 monster level4
-                if ( 5 < variants && 14 > variants ) {
+
+            // 6 - 50 rogues, 7 - 1 gin, 8,9,10,11,12,13 - 1 monster level4
+            if ( 5 < variants && 14 > variants ) {
                 Army enemy( tile );
                 return army.isStrongerThan( enemy, ARMY_STRENGTH_ADVANTAGE_LARGE );
             }
-            else
-                // other
-                return true;
+
+            // other
+            return true;
         }
 
         case MP2::OBJ_OBSERVATIONTOWER:
@@ -1908,11 +1908,11 @@ namespace AI
 
                 if ( hero.GetColor() == hero2->GetColor() && !hero.hasMetWithHero( hero2->GetID() ) )
                     return !otherHeroInCastle;
-                else if ( hero.isFriends( hero2->GetColor() ) )
+                if ( hero.isFriends( hero2->GetColor() ) )
                     return false;
-                else if ( otherHeroInCastle )
+                if ( otherHeroInCastle )
                     return AIShouldVisitCastle( hero, index );
-                else if ( army.isStrongerThan( hero2->GetArmy(), ARMY_STRENGTH_ADVANTAGE_SMALL ) )
+                if ( army.isStrongerThan( hero2->GetArmy(), ARMY_STRENGTH_ADVANTAGE_SMALL ) )
                     return true;
             }
             break;

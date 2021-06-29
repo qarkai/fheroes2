@@ -229,10 +229,10 @@ void Battle::Cell::SetUnit( Unit * val )
     troop = val;
 }
 
-bool Battle::Cell::isPassable( const Unit & b, int dir ) const
+bool Battle::Cell::isPassable( const Unit & monster, int dir ) const
 {
     const Cell * cell = Board::GetCell( index, dir );
-    return cell && ( cell->isPassable1( true ) || cell->index == b.GetTailIndex() || cell->index == b.GetHeadIndex() );
+    return cell && ( cell->isPassable1( true ) || cell->index == monster.GetTailIndex() || cell->index == monster.GetHeadIndex() );
 }
 
 bool Battle::Cell::isPassable4( const Unit & b, const Cell & from ) const

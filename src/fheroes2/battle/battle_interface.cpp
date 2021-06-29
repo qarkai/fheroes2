@@ -2009,32 +2009,30 @@ int Battle::Interface::GetBattleCursor( std::string & statusMsg ) const
                 StringReplace( statusMsg, "%{monster}", b_enemy->GetMultiName() );
                 return Cursor::WAR_INFO;
             }
-            else {
-                if ( _currentUnit->isArchers() && !_currentUnit->isHandFighting() ) {
-                    statusMsg = _( "Shoot %{monster}" );
-                    statusMsg.append( " " );
-                    statusMsg.append( _n( "(1 shot left)", "(%{count} shots left)", _currentUnit->GetShots() ) );
-                    StringReplace( statusMsg, "%{monster}", b_enemy->GetMultiName() );
-                    StringReplace( statusMsg, "%{count}", _currentUnit->GetShots() );
 
-                    return arena.IsShootingPenalty( *_currentUnit, *b_enemy ) ? Cursor::WAR_BROKENARROW : Cursor::WAR_ARROW;
-                }
-                else {
-                    const int dir = cell->GetTriangleDirection( GetMouseCursor() );
-                    const int cursor = GetSwordCursorDirection( dir );
+            if ( _currentUnit->isArchers() && !_currentUnit->isHandFighting() ) {
+                statusMsg = _( "Shoot %{monster}" );
+                statusMsg.append( " " );
+                statusMsg.append( _n( "(1 shot left)", "(%{count} shots left)", _currentUnit->GetShots() ) );
+                StringReplace( statusMsg, "%{monster}", b_enemy->GetMultiName() );
+                StringReplace( statusMsg, "%{count}", _currentUnit->GetShots() );
 
-                    if ( cursor && Board::isValidDirection( index_pos, dir ) ) {
-                        const s32 from = Board::GetIndexDirection( index_pos, dir );
+                return arena.IsShootingPenalty( *_currentUnit, *b_enemy ) ? Cursor::WAR_BROKENARROW : Cursor::WAR_ARROW;
+            }
 
-                        // if free cell or it is b_current
-                        if ( UNKNOWN != Board::GetCell( from )->GetDirection() || from == _currentUnit->GetHeadIndex()
-                             || ( _currentUnit->isWide() && from == _currentUnit->GetTailIndex() ) ) {
-                            statusMsg = _( "Attack %{monster}" );
-                            StringReplace( statusMsg, "%{monster}", b_enemy->GetName() );
+            const int dir = cell->GetTriangleDirection( GetMouseCursor() );
+            const int cursor = GetSwordCursorDirection( dir );
 
-                            return cursor;
-                        }
-                    }
+            if ( cursor && Board::isValidDirection( index_pos, dir ) ) {
+                const s32 from = Board::GetIndexDirection( index_pos, dir );
+
+                // if free cell or it is b_current
+                if ( UNKNOWN != Board::GetCell( from )->GetDirection() || from == _currentUnit->GetHeadIndex()
+                     || ( _currentUnit->isWide() && from == _currentUnit->GetTailIndex() ) ) {
+                    statusMsg = _( "Attack %{monster}" );
+                    StringReplace( statusMsg, "%{monster}", b_enemy->GetName() );
+
+                    return cursor;
                 }
             }
         }
@@ -2086,13 +2084,15 @@ int Battle::Interface::GetBattleSpellCursor( std::string & statusMsg ) const
             statusMsg = _( "Invalid Teleport Destination" );
             return Cursor::WAR_NONE;
         }
-        else if ( b_stats && b_stats->AllowApplySpell( spell, _currentUnit->GetCurrentOrArmyCommander() ) ) {
+
+        if ( b_stats && b_stats->AllowApplySpell( spell, _currentUnit->GetCurrentOrArmyCommander() ) ) {
             statusMsg = _( "Cast %{spell} on %{monster}" );
             StringReplace( statusMsg, "%{spell}", spell.GetName() );
             StringReplace( statusMsg, "%{monster}", b_stats->GetName() );
             return GetCursorFromSpell( spell() );
         }
-        else if ( !spell.isApplyToFriends() && !spell.isApplyToEnemies() && !spell.isApplyToAnyTroops() ) {
+
+        if ( !spell.isApplyToFriends() && !spell.isApplyToEnemies() && !spell.isApplyToAnyTroops() ) {
             statusMsg = _( "Cast %{spell}" );
             StringReplace( statusMsg, "%{spell}", spell.GetName() );
             return GetCursorFromSpell( spell() );
@@ -2465,13 +2465,11 @@ int Battle::GetIndexIndicator( const Unit & b )
     // yellow
     if ( b.Modes( IS_GREEN_STATUS ) && b.Modes( IS_RED_STATUS ) )
         return 13;
-    else
-        // green
-        if ( b.Modes( IS_GREEN_STATUS ) )
+    // green
+    if ( b.Modes( IS_GREEN_STATUS ) )
         return 12;
-    else
-        // red
-        if ( b.Modes( IS_RED_STATUS ) )
+    // red
+    if ( b.Modes( IS_RED_STATUS ) )
         return 14;
 
     return 10;

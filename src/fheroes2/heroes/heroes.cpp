@@ -623,15 +623,15 @@ int Heroes::GetMoraleWithModificators( std::string * strs ) const
     // result
     if ( result < Morale::AWFUL )
         return Morale::TREASON;
-    else if ( result < Morale::POOR )
+    if ( result < Morale::POOR )
         return Morale::AWFUL;
-    else if ( result < Morale::NORMAL )
+    if ( result < Morale::NORMAL )
         return Morale::POOR;
-    else if ( result < Morale::GOOD )
+    if ( result < Morale::GOOD )
         return Morale::NORMAL;
-    else if ( result < Morale::GREAT )
+    if ( result < Morale::GREAT )
         return Morale::GOOD;
-    else if ( result < Morale::BLOOD )
+    if ( result < Morale::BLOOD )
         return Morale::GREAT;
 
     return Morale::BLOOD;
@@ -658,15 +658,15 @@ int Heroes::GetLuckWithModificators( std::string * strs ) const
 
     if ( result < Luck::AWFUL )
         return Luck::CURSED;
-    else if ( result < Luck::BAD )
+    if ( result < Luck::BAD )
         return Luck::AWFUL;
-    else if ( result < Luck::NORMAL )
+    if ( result < Luck::NORMAL )
         return Luck::BAD;
-    else if ( result < Luck::GOOD )
+    if ( result < Luck::GOOD )
         return Luck::NORMAL;
-    else if ( result < Luck::GREAT )
+    if ( result < Luck::GREAT )
         return Luck::GOOD;
-    else if ( result < Luck::IRISH )
+    if ( result < Luck::IRISH )
         return Luck::GREAT;
 
     return Luck::IRISH;
@@ -1300,7 +1300,7 @@ uint32_t Heroes::UpdateMovementPoints( const uint32_t movePoints, const int skil
     if ( skillValue == 33 ) {
         return movePoints * 4 / 3;
     }
-    else if ( skillValue == 66 ) {
+    if ( skillValue == 66 ) {
         return movePoints * 5 / 3;
     }
 
@@ -1357,9 +1357,8 @@ int Heroes::GetRangeRouteDays( s32 dst ) const
 
         return 8;
     }
-    else {
-        DEBUG_LOG( DBG_GAME, DBG_TRACE, "unreachable point: " << dst );
-    }
+
+    DEBUG_LOG( DBG_GAME, DBG_TRACE, "unreachable point: " << dst );
 
     return 0;
 }

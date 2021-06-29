@@ -84,10 +84,12 @@ size_t TextAscii::Size( void ) const
 
 int TextAscii::CharWidth( const uint8_t character, const int ft )
 {
-    if ( 0x21 <= character && character <= fheroes2::AGG::ASCIILastSupportedCharacter( ft ) )
+    if ( character < 0x21 || character > fheroes2::AGG::ASCIILastSupportedCharacter( ft ) ) {
+        return getFontWidth( ft );
+    }
+    else {
         return fheroes2::AGG::GetLetter( character, ft ).width();
-
-    return getFontWidth( ft );
+    }
 }
 
 int TextAscii::FontHeight( const int f )
@@ -258,10 +260,12 @@ size_t TextUnicode::Size( void ) const
 
 int TextUnicode::CharWidth( int c, int f )
 {
-    if ( c >= 0x0021 )
+    if ( c < 0x0021 ) {
+        return getFontWidth( f );
+    }
+    else {
         return fheroes2::AGG::GetUnicodeLetter( c, f ).width();
-
-    return getFontWidth( f );
+    }
 }
 
 int TextUnicode::CharHeight( int f )

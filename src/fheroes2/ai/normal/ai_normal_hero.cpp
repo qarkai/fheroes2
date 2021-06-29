@@ -141,22 +141,22 @@ namespace AI
             if ( !castle )
                 return valueToIgnore;
 
+            double value;
             if ( hero.GetColor() == castle->GetColor() ) {
-                double value = castle->getVisitValue( hero );
+                value = castle->getVisitValue( hero );
                 if ( value < 500 )
-                    return valueToIgnore;
-
-                return value;
+                    value = valueToIgnore;
             }
             else {
-                double value = castle->getBuildingValue() * 150.0 + 3000;
+                value = castle->getBuildingValue() * 150.0 + 3000;
                 // If the castle is defenseless
                 if ( !castle->GetActualArmy().isValid() )
                     value *= 1.25;
-                return value;
             }
+            return value;
         }
-        else if ( objectID == MP2::OBJ_HEROES ) {
+
+        if ( objectID == MP2::OBJ_HEROES ) {
             const Heroes * otherHero = tile.GetHeroes();
             assert( otherHero );
             if ( !otherHero ) {
@@ -173,44 +173,45 @@ namespace AI
             }
             return 5000.0;
         }
-        else if ( objectID == MP2::OBJ_MONSTER ) {
+
+        if ( objectID == MP2::OBJ_MONSTER ) {
             return 1000.0;
         }
-        else if ( objectID == MP2::OBJ_MINES || objectID == MP2::OBJ_SAWMILL || objectID == MP2::OBJ_ALCHEMYLAB ) {
+        if ( objectID == MP2::OBJ_MINES || objectID == MP2::OBJ_SAWMILL || objectID == MP2::OBJ_ALCHEMYLAB ) {
             if ( tile.QuantityColor() == hero.GetColor() ) {
                 return -dangerousTaskPenalty; // don't even attempt to go here
             }
             return ( tile.QuantityResourceCount().first == Resource::GOLD ) ? 4000.0 : 2000.0;
         }
-        else if ( MP2::isArtifactObject( objectID ) && tile.QuantityArtifact().isValid() ) {
+        if ( MP2::isArtifactObject( objectID ) && tile.QuantityArtifact().isValid() ) {
             return 1000.0 * tile.QuantityArtifact().getArtifactValue();
         }
-        else if ( MP2::isPickupObject( objectID ) ) {
+        if ( MP2::isPickupObject( objectID ) ) {
             return 850.0;
         }
-        else if ( MP2::isCaptureObject( objectID ) && MP2::isQuantityObject( objectID ) ) {
+        if ( MP2::isCaptureObject( objectID ) && MP2::isQuantityObject( objectID ) ) {
             // Objects like WATERWHEEL, WINDMILL and MAGICGARDEN if capture setting is enabled
             return 500.0;
         }
-        else if ( objectID == MP2::OBJ_XANADU ) {
+        if ( objectID == MP2::OBJ_XANADU ) {
             return 3000.0;
         }
-        else if ( objectID == MP2::OBJ_SHRINE1 ) {
+        if ( objectID == MP2::OBJ_SHRINE1 ) {
             return 100;
         }
-        else if ( objectID == MP2::OBJ_SHRINE2 ) {
+        if ( objectID == MP2::OBJ_SHRINE2 ) {
             return 250;
         }
-        else if ( objectID == MP2::OBJ_SHRINE3 ) {
+        if ( objectID == MP2::OBJ_SHRINE3 ) {
             return 500;
         }
-        else if ( MP2::isHeroUpgradeObject( objectID ) ) {
+        if ( MP2::isHeroUpgradeObject( objectID ) ) {
             return 500.0;
         }
-        else if ( MP2::isMonsterDwelling( objectID ) ) {
+        if ( MP2::isMonsterDwelling( objectID ) ) {
             return tile.QuantityTroop().GetStrength();
         }
-        else if ( objectID == MP2::OBJ_STONELITHS ) {
+        if ( objectID == MP2::OBJ_STONELITHS ) {
             const MapsIndexes & list = world.GetTeleportEndPoints( index );
             for ( const int teleportIndex : list ) {
                 if ( world.GetTiles( teleportIndex ).isFog( hero.GetColor() ) )
@@ -218,7 +219,7 @@ namespace AI
             }
             return valueToIgnore;
         }
-        else if ( objectID == MP2::OBJ_OBSERVATIONTOWER ) {
+        if ( objectID == MP2::OBJ_OBSERVATIONTOWER ) {
             const int fogCountToUncover = Maps::getFogTileCountToBeRevealed( index, Game::GetViewDistance( Game::VIEW_OBSERVATION_TOWER ), hero.GetColor() );
             if ( fogCountToUncover <= 0 ) {
                 // Nothing to uncover.
@@ -226,11 +227,11 @@ namespace AI
             }
             return fogCountToUncover;
         }
-        else if ( objectID == MP2::OBJ_MAGELLANMAPS ) {
+        if ( objectID == MP2::OBJ_MAGELLANMAPS ) {
             // Very valuable object.
             return 5000;
         }
-        else if ( objectID == MP2::OBJ_COAST ) {
+        if ( objectID == MP2::OBJ_COAST ) {
             const RegionStats & regionStats = _regions[tile.GetRegion()];
             const size_t objectCount = regionStats.validObjects.size();
             if ( objectCount < 1 )
@@ -241,7 +242,7 @@ namespace AI
                 value -= suboptimalTaskPenalty;
             return value;
         }
-        else if ( objectID == MP2::OBJ_WHIRLPOOL ) {
+        if ( objectID == MP2::OBJ_WHIRLPOOL ) {
             const MapsIndexes & list = world.GetWhirlpoolEndPoints( index );
             for ( const int whirlpoolIndex : list ) {
                 if ( world.GetTiles( whirlpoolIndex ).isFog( hero.GetColor() ) )
@@ -249,11 +250,11 @@ namespace AI
             }
             return -dangerousTaskPenalty; // no point to even loose the army for this
         }
-        else if ( objectID == MP2::OBJ_BOAT ) {
+        if ( objectID == MP2::OBJ_BOAT ) {
             // de-prioritize the water movement even harder
             return -5000.0;
         }
-        else if ( objectID == MP2::OBJ_MAGICWELL ) {
+        if ( objectID == MP2::OBJ_MAGICWELL ) {
             if ( !hero.HaveSpellBook() ) {
                 return -dangerousTaskPenalty;
             }
@@ -262,7 +263,8 @@ namespace AI
             }
             return 0;
         }
-        else if ( objectID == MP2::OBJ_TEMPLE ) {
+
+        if ( objectID == MP2::OBJ_TEMPLE ) {
             if ( hero.GetArmy().AllTroopsAreUndead() ) {
                 // All troops are undead, no use of Morale.
                 return 0;
@@ -272,20 +274,19 @@ namespace AI
             if ( moral >= 3 ) {
                 return -dangerousTaskPenalty; // no reason to visit with a maximum moral
             }
-            else if ( moral == 2 ) {
+            if ( moral == 2 ) {
                 return -4000; // moral is good enough to avoid visting this object
             }
-            else if ( moral == 1 ) {
+            if ( moral == 1 ) {
                 return -2000; // is it worth to visit this object with little better than neutral moral?
             }
-            else if ( moral == 0 ) {
+            if ( moral == 0 ) {
                 return 0;
             }
-            else {
-                return 100;
-            }
+            return 100;
         }
-        else if ( objectID == MP2::OBJ_STABLES ) {
+
+        if ( objectID == MP2::OBJ_STABLES ) {
             const int daysActive = DAYOFWEEK - world.GetDay() + 1;
             double movementBonus = daysActive * 400.0 - 2.0 * distanceToObject;
             if ( movementBonus < 0 ) {
@@ -296,35 +297,35 @@ namespace AI
             const double upgradeValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::CHAMPION );
             return movementBonus + freeMonsterUpgradeModifier * upgradeValue;
         }
-        else if ( objectID == MP2::OBJ_FREEMANFOUNDRY ) {
+        if ( objectID == MP2::OBJ_FREEMANFOUNDRY ) {
             const double upgradePikemanValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::PIKEMAN );
             const double upgradeSwordsmanValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::SWORDSMAN );
             const double upgradeGolemValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::IRON_GOLEM );
 
             return freeMonsterUpgradeModifier * ( upgradePikemanValue + upgradeSwordsmanValue + upgradeGolemValue );
         }
-        else if ( objectID == MP2::OBJ_HILLFORT ) {
+        if ( objectID == MP2::OBJ_HILLFORT ) {
             const double upgradeDwarfValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::DWARF );
             const double upgradeOrcValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::ORC );
             const double upgradeOgreValue = getMonsterUpgradeValue( hero.GetArmy(), Monster::OGRE );
 
             return freeMonsterUpgradeModifier * ( upgradeDwarfValue + upgradeOrcValue + upgradeOgreValue );
         }
-        else if ( objectID == MP2::OBJ_TRAVELLERTENT ) {
+        if ( objectID == MP2::OBJ_TRAVELLERTENT ) {
             // Most likely it'll lead to opening more land.
             return 1000;
         }
-        else if ( objectID == MP2::OBJ_OASIS ) {
+        if ( objectID == MP2::OBJ_OASIS ) {
             return std::max( 800.0 - 2.0 * distanceToObject, 0.0 );
         }
-        else if ( objectID == MP2::OBJ_WATERINGHOLE ) {
+        if ( objectID == MP2::OBJ_WATERINGHOLE ) {
             return std::max( 400.0 - 2.0 * distanceToObject, 0.0 );
         }
-        else if ( objectID == MP2::OBJ_JAIL ) {
+        if ( objectID == MP2::OBJ_JAIL ) {
             // A free hero is always good and it could be very powerful.
             return 3000;
         }
-        else if ( objectID == MP2::OBJ_HUTMAGI ) {
+        if ( objectID == MP2::OBJ_HUTMAGI ) {
             const MapsIndexes eyeMagiIndexes = Maps::GetObjectPositions( MP2::OBJ_EYEMAGI, true );
             int fogCountToUncover = 0;
             const int heroColor = hero.GetColor();

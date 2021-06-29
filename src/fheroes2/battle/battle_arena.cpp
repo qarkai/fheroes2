@@ -818,7 +818,7 @@ bool Battle::Arena::isDisableCastSpell( const Spell & spell, std::string * msg )
             *msg = _( "That spell will affect no one!" );
             return true;
         }
-        else if ( spell.isSummon() ) {
+        if ( spell.isSummon() ) {
             const Unit * elem = GetCurrentForce().FindMode( CAP_SUMMONELEM );
             bool affect = true;
 
@@ -1171,11 +1171,11 @@ bool Battle::Arena::IsShootingPenalty( const Unit & attacker, const Unit & defen
     for ( std::vector<fheroes2::Point>::const_iterator it = points.begin(); it != points.end(); ++it ) {
         if ( 0 == board[8].GetObject() && ( board[8].GetPos() & *it ) )
             return false;
-        else if ( 0 == board[29].GetObject() && ( board[29].GetPos() & *it ) )
+        if ( 0 == board[29].GetObject() && ( board[29].GetPos() & *it ) )
             return false;
-        else if ( 0 == board[73].GetObject() && ( board[73].GetPos() & *it ) )
+        if ( 0 == board[73].GetObject() && ( board[73].GetPos() & *it ) )
             return false;
-        else if ( 0 == board[96].GetObject() && ( board[96].GetPos() & *it ) )
+        if ( 0 == board[96].GetObject() && ( board[96].GetPos() & *it ) )
             return false;
     }
 

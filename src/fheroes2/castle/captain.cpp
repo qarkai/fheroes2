@@ -117,15 +117,15 @@ int Captain::GetMorale( void ) const
     // result
     if ( result < Morale::AWFUL )
         return Morale::TREASON;
-    else if ( result < Morale::POOR )
+    if ( result < Morale::POOR )
         return Morale::AWFUL;
-    else if ( result < Morale::NORMAL )
+    if ( result < Morale::NORMAL )
         return Morale::POOR;
-    else if ( result < Morale::GOOD )
+    if ( result < Morale::GOOD )
         return Morale::NORMAL;
-    else if ( result < Morale::GREAT )
+    if ( result < Morale::GREAT )
         return Morale::GOOD;
-    else if ( result < Morale::BLOOD )
+    if ( result < Morale::BLOOD )
         return Morale::GREAT;
 
     return Morale::BLOOD;
@@ -138,21 +138,7 @@ int Captain::GetLuck( void ) const
     // global modificator
     result += GetLuckModificator( nullptr );
 
-    // result
-    if ( result < Luck::AWFUL )
-        return Luck::CURSED;
-    else if ( result < Luck::BAD )
-        return Luck::AWFUL;
-    else if ( result < Luck::NORMAL )
-        return Luck::BAD;
-    else if ( result < Luck::GOOD )
-        return Luck::NORMAL;
-    else if ( result < Luck::GREAT )
-        return Luck::GOOD;
-    else if ( result < Luck::IRISH )
-        return Luck::GREAT;
-
-    return Luck::IRISH;
+    return Luck::Normalize( result );
 }
 
 int Captain::GetRace( void ) const

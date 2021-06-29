@@ -47,7 +47,7 @@ namespace
             if ( saveLastTroop )
                 return;
             // join the two stacks if the troop types are same and the source stack is just 1 unit
-            else if ( isSameTroopType ) {
+            if ( isSameTroopType ) {
                 troopTarget.SetCount( troopTarget.GetCount() + troopFrom.GetCount() );
                 troopFrom.Reset();
             }
@@ -134,11 +134,11 @@ namespace
             RedistributeTroopByOne( troopFrom, armyTarget );
             return true;
         }
-        else if ( Game::HotKeyHoldEvent( Game::EVENT_JOINSTACKS ) ) {
+        if ( Game::HotKeyHoldEvent( Game::EVENT_JOINSTACKS ) ) {
             armyTarget->JoinAllTroopsOfType( troopFrom );
             return true;
         }
-        else if ( Game::HotKeyHoldEvent( Game::EVENT_STACKSPLIT_SHIFT ) ) {
+        if ( Game::HotKeyHoldEvent( Game::EVENT_STACKSPLIT_SHIFT ) ) {
             RedistributeTroopEvenly( troopFrom, armyTarget );
             return true;
         }
@@ -374,10 +374,9 @@ bool ArmyBar::ActionBarLeftMouseSingleClick( ArmyTroop & troop )
             if ( IsSplitHotkeyUsed( troop, _army ) ) {
                 return false;
             }
-            else { // combine
-                troop.SetCount( troop.GetCount() + selectedTroop->GetCount() );
-                selectedTroop->Reset();
-            }
+            // combine
+            troop.SetCount( troop.GetCount() + selectedTroop->GetCount() );
+            selectedTroop->Reset();
         }
         // exchange
         else if ( selectedTroop ) {
@@ -392,7 +391,8 @@ bool ArmyBar::ActionBarLeftMouseSingleClick( ArmyTroop & troop )
 
         return false; // reset cursor
     }
-    else if ( troop.isValid() ) {
+
+    if ( troop.isValid() ) {
         if ( !read_only ) // select
         {
             if ( IsSplitHotkeyUsed( troop, _army ) )

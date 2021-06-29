@@ -66,19 +66,19 @@ armysize_t ArmyGetSize( u32 count )
 {
     if ( ARMY_LEGION <= count )
         return ARMY_LEGION;
-    else if ( ARMY_ZOUNDS <= count )
+    if ( ARMY_ZOUNDS <= count )
         return ARMY_ZOUNDS;
-    else if ( ARMY_SWARM <= count )
+    if ( ARMY_SWARM <= count )
         return ARMY_SWARM;
-    else if ( ARMY_THRONG <= count )
+    if ( ARMY_THRONG <= count )
         return ARMY_THRONG;
-    else if ( ARMY_HORDE <= count )
+    if ( ARMY_HORDE <= count )
         return ARMY_HORDE;
-    else if ( ARMY_LOTS <= count )
+    if ( ARMY_LOTS <= count )
         return ARMY_LOTS;
-    else if ( ARMY_PACK <= count )
+    if ( ARMY_PACK <= count )
         return ARMY_PACK;
-    else if ( ARMY_SEVERAL <= count )
+    if ( ARMY_SEVERAL <= count )
         return ARMY_SEVERAL;
 
     return ARMY_FEW;
@@ -1404,7 +1404,7 @@ JoinCount Army::GetJoinSolution( const Heroes & hero, const Maps::Tiles & tile, 
     if ( !join_skip && ( ( check_extra_condition && ratios >= 2 ) || join_force ) ) {
         if ( join_free || join_force )
             return JoinCount( JOIN_FREE, troop.GetCount() );
-        else if ( hero.HasSecondarySkill( Skill::Secondary::DIPLOMACY ) ) {
+        if ( hero.HasSecondarySkill( Skill::Secondary::DIPLOMACY ) ) {
             // skill diplomacy
             const u32 to_join = Monster::GetCountFromHitPoints( troop, troop.GetHitPoints() * hero.GetSecondaryValues( Skill::Secondary::DIPLOMACY ) / 100 );
 

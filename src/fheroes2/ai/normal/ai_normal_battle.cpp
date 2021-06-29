@@ -651,23 +651,22 @@ namespace AI
                     actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
                     break;
                 }
-                else {
-                    int targetCell = -1;
-                    const Indexes & around = Board::GetAroundIndexes( *nearestUnits[i] );
-                    for ( const int cell : around ) {
-                        if ( arena.hexIsPassable( cell ) ) {
-                            targetCell = cell;
-                            break;
-                        }
-                    }
 
-                    if ( targetCell != -1 ) {
-                        if ( currentUnit.GetHeadIndex() != targetCell )
-                            actions.emplace_back( MSG_BATTLE_MOVE, currentUnitUID, targetCell );
-
-                        actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
+                int targetCell = -1;
+                const Indexes & around = Board::GetAroundIndexes( *nearestUnits[i] );
+                for ( const int cell : around ) {
+                    if ( arena.hexIsPassable( cell ) ) {
+                        targetCell = cell;
                         break;
                     }
+                }
+
+                if ( targetCell != -1 ) {
+                    if ( currentUnit.GetHeadIndex() != targetCell )
+                        actions.emplace_back( MSG_BATTLE_MOVE, currentUnitUID, targetCell );
+
+                    actions.emplace_back( MSG_BATTLE_ATTACK, currentUnitUID, targetUnitUID, targetUnitHead, 0 );
+                    break;
                 }
             }
         }

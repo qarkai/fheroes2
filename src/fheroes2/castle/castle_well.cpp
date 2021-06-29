@@ -129,7 +129,7 @@ void Castle::OpenWell( void )
         if ( le.MouseClickLeft( buttonExit.area() ) || HotKeyCloseWindow ) {
             break;
         }
-        else if ( le.MouseClickLeft( buttonMax.area() ) ) {
+        if ( le.MouseClickLeft( buttonMax.area() ) ) {
             std::vector<Troop> results;
             Funds cur;
             Funds total;

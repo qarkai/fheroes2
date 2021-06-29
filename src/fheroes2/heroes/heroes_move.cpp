@@ -326,24 +326,23 @@ const fheroes2::Sprite & SpriteShad( const Heroes & hero, int index )
 
         return fheroes2::AGG::GetICN( ICN::BOATSHAD, indexSprite + ( index % 9 ) );
     }
-    else {
-        int indexSprite = index;
 
-        if ( indexSprite == 51 )
-            indexSprite = 56;
-        else if ( indexSprite == 50 )
-            indexSprite = 57;
-        else if ( indexSprite == 49 )
-            indexSprite = 58;
-        else if ( indexSprite == 47 )
-            indexSprite = 55;
-        else if ( indexSprite == 46 )
-            indexSprite = 55;
+    int indexSprite = index;
 
-        const int indexOffset = ( indexSprite < 9 || indexSprite >= 36 ) ? 0 : 50;
+    if ( indexSprite == 51 )
+        indexSprite = 56;
+    else if ( indexSprite == 50 )
+        indexSprite = 57;
+    else if ( indexSprite == 49 )
+        indexSprite = 58;
+    else if ( indexSprite == 47 )
+        indexSprite = 55;
+    else if ( indexSprite == 46 )
+        indexSprite = 55;
 
-        return fheroes2::AGG::GetICN( ICN::SHADOW32, indexSprite + indexOffset );
-    }
+    const int indexOffset = ( indexSprite < 9 || indexSprite >= 36 ) ? 0 : 50;
+
+    return fheroes2::AGG::GetICN( ICN::SHADOW32, indexSprite + indexOffset );
 }
 
 const fheroes2::Sprite & SpriteFroth( const Heroes & hero, int index )
@@ -391,9 +390,9 @@ bool isNeedStayFrontObject( const Heroes & hero, const Maps::Tiles & next )
 
         return castle && !hero.isFriends( castle->GetColor() ) && castle->GetActualArmy().isValid();
     }
-    else
-        // to coast action
-        if ( hero.isShipMaster() && next.GetObject() == MP2::OBJ_COAST )
+
+    // to coast action
+    if ( hero.isShipMaster() && next.GetObject() == MP2::OBJ_COAST )
         return true;
 
     return MP2::isNeedStayFront( next.GetObject() );
@@ -758,17 +757,17 @@ bool Heroes::MoveStep( bool fast )
 
         return true;
     }
-    else if ( 0 == sprite_index % 9 ) {
+
+    if ( 0 == sprite_index % 9 ) {
         if ( indexTo == indexDest && isNeedStayFrontObject( *this, world.GetTiles( indexTo ) ) ) {
             MoveStep( *this, indexTo, false );
 
             return true;
         }
-        else {
-            // play sound
-            if ( GetKingdom().isControlHuman() )
-                PlayWalkSound( world.GetTiles( mp.x, mp.y ).GetGround() );
-        }
+
+        // play sound
+        if ( GetKingdom().isControlHuman() )
+            PlayWalkSound( world.GetTiles( mp.x, mp.y ).GetGround() );
     }
     else if ( sprite_index % 9 == 1 ) {
         // This is a start of hero's movement. We should clear fog around him.
@@ -1032,20 +1031,16 @@ bool Heroes::Move( bool fast )
 
             return true;
         }
+
+        // if need change through the circle
+        if ( GetDirection() != path.GetFrontDirection() ) {
+            AngleStep( path.GetFrontDirection() );
+        }
         else {
-            // if need change through the circle
-            if ( GetDirection() != path.GetFrontDirection() ) {
-                AngleStep( path.GetFrontDirection() );
-            }
-            else {
-                SetValidDirectionSprite(); // in case of AI hero
+            SetValidDirectionSprite(); // in case of AI hero
 
-                if ( MoveStep() ) { // move
-                    if ( isFreeman() )
-                        return false;
-
-                    return true;
-                }
+            if ( MoveStep() ) { // move
+                return !isFreeman();
             }
         }
     }

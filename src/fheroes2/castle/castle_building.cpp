@@ -370,7 +370,7 @@ bool CastleDialog::RoadConnectionNeeded( const Castle & castle, const uint32_t b
                 return buildId == ( BUILD_MAGEGUILD1 << ( mageGuildLevel - 1 ) );
             }
         }
-        else if ( buildId == BUILD_THIEVESGUILD ) {
+        if ( buildId == BUILD_THIEVESGUILD ) {
             return true;
         }
     }
