@@ -65,6 +65,12 @@ namespace
         rects.emplace_back( pt.x + 37, pt.y + 74, 34, 34 ); // gold
         return rects;
     }
+
+    void AddResourceHeader( const fheroes2::Point & pt, const std::string & header )
+    {
+        Text text( header, Font::SMALL );
+        text.Blit( pt.x + ( 108 - text.w() ) / 2, pt.y - 15 );
+    }
 }
 
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
@@ -295,21 +301,14 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
 
     TradeWindowGUI gui( pos_rt );
 
-    const std::string & header_from = _( "Your Resources" );
-
     Funds fundsFrom = kingdom.GetFunds();
     int resourceFrom = 0;
     const fheroes2::Point pt1( pos_rt.x, pos_rt.y + 190 );
     std::vector<fheroes2::Rect> rectsFrom = GetResourceRects( pt1 );
 
     fheroes2::MovableSprite cursorFrom( fheroes2::AGG::GetICN( tradpost, 14 ) );
-    text.Set( header_from, Font::SMALL );
-    dst_pt.x = pt1.x + ( 108 - text.w() ) / 2;
-    dst_pt.y = pt1.y - 15;
-    text.Blit( dst_pt.x, dst_pt.y );
+    AddResourceHeader( pt1, _( "Your Resources" ) );
     RedrawFromResource( pt1, fundsFrom );
-
-    const std::string & header_to = _( "Available Trades" );
 
     Funds fundsTo;
     int resourceTo = 0;
@@ -317,10 +316,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
     std::vector<fheroes2::Rect> rectsTo = GetResourceRects( pt2 );
 
     fheroes2::MovableSprite cursorTo( fheroes2::AGG::GetICN( tradpost, 14 ) );
-    text.Set( header_to, Font::SMALL );
-    dst_pt.x = pt2.x + ( 108 - text.w() ) / 2;
-    dst_pt.y = pt2.y - 15;
-    text.Blit( dst_pt.x, dst_pt.y );
+    AddResourceHeader( pt2, _( "Available Trades" ) );
     RedrawToResource( pt2 );
 
     uint32_t count_sell = 0;
