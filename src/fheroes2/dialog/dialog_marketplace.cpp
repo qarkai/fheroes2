@@ -105,6 +105,20 @@ namespace
         // gold
         RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, getValue( Resource::GOLD ) );
     }
+
+    std::pair<uint32_t, uint32_t> GetTradeCosts( const uint32_t markets, int resourceFrom, int resourceTo )
+    {
+        const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
+        uint32_t buy = 1;
+        uint32_t sell = 1;
+        if ( resourceTo == Resource::GOLD ) {
+            buy = tradeCost;
+        }
+        else {
+            sell = tradeCost;
+        }
+        return { buy, sell };
+    }
 }
 
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
@@ -490,9 +504,9 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
             scrollbar.moveToPos( mousePos );
             const int32_t seek = scrollbar.currentIndex();
 
-            const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
-            count_buy = seek * ( Resource::GOLD == resourceTo ? tradeCost : 1 );
-            count_sell = seek * ( Resource::GOLD == resourceTo ? 1 : tradeCost );
+            const auto [buy, sell] = GetTradeCosts( markets, resourceFrom, resourceTo );
+            count_buy = seek * buy;
+            count_sell = seek * sell;
 
             gui.RedrawInfoBuySell( count_sell, count_buy, max_sell, fundsFrom.Get( resourceTo ) );
             display.render();
@@ -505,9 +519,9 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
         if ( buttonMax.width && max_buy && le.MouseClickLeft( buttonMax ) ) {
             const int32_t max = scrollbar.maxIndex();
 
-            const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
-            count_buy = max * ( Resource::GOLD == resourceTo ? tradeCost : 1 );
-            count_sell = max * ( Resource::GOLD == resourceTo ? 1 : tradeCost );
+            const auto [buy, sell] = GetTradeCosts( markets, resourceFrom, resourceTo );
+            count_buy = max * buy;
+            count_sell = max * sell;
 
             scrollbar.moveToIndex( max );
             gui.RedrawInfoBuySell( count_sell, count_buy, max_sell, fundsFrom.Get( resourceTo ) );
@@ -518,9 +532,9 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
         if ( buttonMin.width && max_buy && le.MouseClickLeft( buttonMin ) ) {
             const int32_t min = 1;
 
-            const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
-            count_buy = min * ( Resource::GOLD == resourceTo ? tradeCost : 1 );
-            count_sell = min * ( Resource::GOLD == resourceTo ? 1 : tradeCost );
+            const auto [buy, sell] = GetTradeCosts( markets, resourceFrom, resourceTo );
+            count_buy = min * buy;
+            count_sell = min * sell;
 
             scrollbar.moveToIndex( min );
             gui.RedrawInfoBuySell( count_sell, count_buy, max_sell, fundsFrom.Get( resourceTo ) );
@@ -550,9 +564,9 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
         if ( count_buy
              && ( ( buttonLeft.isEnabled() && ( le.MouseClickLeft( gui.buttonLeft.area() ) || timedButtonLeft.isDelayPassed() ) )
                   || le.MouseWheelDn( scrollbar.getArea() ) ) ) {
-            const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
-            count_buy -= Resource::GOLD == resourceTo ? tradeCost : 1;
-            count_sell -= Resource::GOLD == resourceTo ? 1 : tradeCost;
+            const auto [buy, sell] = GetTradeCosts( markets, resourceFrom, resourceTo );
+            count_buy -= buy;
+            count_sell -= sell;
 
             scrollbar.backward();
             gui.RedrawInfoBuySell( count_sell, count_buy, max_sell, fundsFrom.Get( resourceTo ) );
@@ -563,9 +577,9 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
         if ( count_buy < max_buy
              && ( ( buttonRight.isEnabled() && ( le.MouseClickLeft( buttonRight.area() ) || timedButtonRight.isDelayPassed() ) )
                   || le.MouseWheelUp( scrollbar.getArea() ) ) ) {
-            const uint32_t tradeCost = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
-            count_buy += Resource::GOLD == resourceTo ? tradeCost : 1;
-            count_sell += Resource::GOLD == resourceTo ? 1 : tradeCost;
+            const auto [buy, sell] = GetTradeCosts( markets, resourceFrom, resourceTo );
+            count_buy += buy;
+            count_sell += sell;
 
             scrollbar.forward();
             gui.RedrawInfoBuySell( count_sell, count_buy, max_sell, fundsFrom.Get( resourceTo ) );
