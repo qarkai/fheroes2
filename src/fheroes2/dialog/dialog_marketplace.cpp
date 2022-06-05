@@ -558,44 +558,34 @@ void RedrawResourceSprite( const fheroes2::Image & sf, int32_t px, int32_t py, c
     }
 }
 
-void RedrawFromResource( const fheroes2::Point & pt, const Funds & rs )
+void RedrawResource( const fheroes2::Point & pt, const std::function<std::string( int )> & getValue )
 {
     const int tradpost = Settings::Get().isEvilInterfaceEnabled() ? ICN::TRADPOSE : ICN::TRADPOST;
 
     // wood
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 7 ), pt.x, pt.y, std::to_string( rs.wood ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 7 ), pt.x, pt.y, getValue( Resource::WOOD ) );
     // mercury
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 8 ), pt.x + 37, pt.y, std::to_string( rs.mercury ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 8 ), pt.x + 37, pt.y, getValue( Resource::MERCURY ) );
     // ore
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 9 ), pt.x + 74, pt.y, std::to_string( rs.ore ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 9 ), pt.x + 74, pt.y, getValue( Resource::ORE ) );
     // sulfur
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 10 ), pt.x, pt.y + 37, std::to_string( rs.sulfur ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 10 ), pt.x, pt.y + 37, getValue( Resource::SULFUR ) );
     // crystal
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 11 ), pt.x + 37, pt.y + 37, std::to_string( rs.crystal ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 11 ), pt.x + 37, pt.y + 37, getValue( Resource::CRYSTAL ) );
     // gems
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 12 ), pt.x + 74, pt.y + 37, std::to_string( rs.gems ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 12 ), pt.x + 74, pt.y + 37, getValue( Resource::GEMS ) );
     // gold
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, std::to_string( rs.gold ) );
+    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, getValue( Resource::GOLD ) );
+}
+
+void RedrawFromResource( const fheroes2::Point & pt, const Funds & rs )
+{
+    RedrawResource( pt, [&rs]( int rsType ) { return std::to_string( rs.Get( rsType ) ); } );
 }
 
 void RedrawToResource( const fheroes2::Point & pt, bool showcost, const uint32_t markets, int from_resource )
 {
-    const int tradpost = Settings::Get().isEvilInterfaceEnabled() ? ICN::TRADPOSE : ICN::TRADPOST;
-
-    // wood
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 7 ), pt.x, pt.y, showcost ? GetStringTradeCosts( markets, from_resource, Resource::WOOD ) : "" );
-    // mercury
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 8 ), pt.x + 37, pt.y, showcost ? GetStringTradeCosts( markets, from_resource, Resource::MERCURY ) : "" );
-    // ore
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 9 ), pt.x + 74, pt.y, showcost ? GetStringTradeCosts( markets, from_resource, Resource::ORE ) : "" );
-    // sulfur
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 10 ), pt.x, pt.y + 37, showcost ? GetStringTradeCosts( markets, from_resource, Resource::SULFUR ) : "" );
-    // crystal
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 11 ), pt.x + 37, pt.y + 37, showcost ? GetStringTradeCosts( markets, from_resource, Resource::CRYSTAL ) : "" );
-    // gems
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 12 ), pt.x + 74, pt.y + 37, showcost ? GetStringTradeCosts( markets, from_resource, Resource::GEMS ) : "" );
-    // gold
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, showcost ? GetStringTradeCosts( markets, from_resource, Resource::GOLD ) : "" );
+    RedrawResource( pt, [showcost, markets, from_resource]( int rsType ) { return showcost ? GetStringTradeCosts( markets, from_resource, rsType ) : ""; } );
 }
 
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to )
