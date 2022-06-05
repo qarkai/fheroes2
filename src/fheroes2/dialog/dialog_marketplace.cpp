@@ -74,15 +74,11 @@ namespace
 
     void RedrawResourceSprite( const fheroes2::Image & sf, int32_t px, int32_t py, const std::string & value )
     {
-        fheroes2::Point dst_pt( px, py );
-
-        fheroes2::Blit( sf, fheroes2::Display::instance(), dst_pt.x, dst_pt.y );
+        fheroes2::Blit( sf, fheroes2::Display::instance(), px, py );
 
         if ( !value.empty() ) {
             Text text( value, Font::SMALL );
-            dst_pt.x += ( 34 - text.w() ) / 2;
-            dst_pt.y += 21;
-            text.Blit( dst_pt.x, dst_pt.y );
+            text.Blit( px + ( 34 - text.w() ) / 2, py + 21 );
         }
     }
 
