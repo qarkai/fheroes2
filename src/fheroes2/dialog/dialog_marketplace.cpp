@@ -50,6 +50,23 @@
 #include "ui_tool.h"
 #include "world.h"
 
+namespace
+{
+    std::vector<fheroes2::Rect> GetResourceRects( const fheroes2::Point & pt )
+    {
+        std::vector<fheroes2::Rect> rects;
+        rects.reserve( 7 );
+        rects.emplace_back( pt.x, pt.y, 34, 34 ); // wood
+        rects.emplace_back( pt.x + 37, pt.y, 34, 34 ); // mercury
+        rects.emplace_back( pt.x + 74, pt.y, 34, 34 ); // ore
+        rects.emplace_back( pt.x, pt.y + 37, 34, 34 ); // sulfur
+        rects.emplace_back( pt.x + 37, pt.y + 37, 34, 34 ); // crystal
+        rects.emplace_back( pt.x + 74, pt.y + 37, 34, 34 ); // gems
+        rects.emplace_back( pt.x + 37, pt.y + 74, 34, 34 ); // gold
+        return rects;
+    }
+}
+
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
 void RedrawToResource( const fheroes2::Point & pt );
 void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int rs_from );
@@ -283,15 +300,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
     Funds fundsFrom = kingdom.GetFunds();
     int resourceFrom = 0;
     const fheroes2::Point pt1( pos_rt.x, pos_rt.y + 190 );
-    std::vector<fheroes2::Rect> rectsFrom;
-    rectsFrom.reserve( 7 );
-    rectsFrom.emplace_back( pt1.x, pt1.y, 34, 34 ); // wood
-    rectsFrom.emplace_back( pt1.x + 37, pt1.y, 34, 34 ); // mercury
-    rectsFrom.emplace_back( pt1.x + 74, pt1.y, 34, 34 ); // ore
-    rectsFrom.emplace_back( pt1.x, pt1.y + 37, 34, 34 ); // sulfur
-    rectsFrom.emplace_back( pt1.x + 37, pt1.y + 37, 34, 34 ); // crystal
-    rectsFrom.emplace_back( pt1.x + 74, pt1.y + 37, 34, 34 ); // gems
-    rectsFrom.emplace_back( pt1.x + 37, pt1.y + 74, 34, 34 ); // gold
+    std::vector<fheroes2::Rect> rectsFrom = GetResourceRects( pt1 );
 
     fheroes2::MovableSprite cursorFrom( fheroes2::AGG::GetICN( tradpost, 14 ) );
     text.Set( header_from, Font::SMALL );
@@ -305,15 +314,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
     Funds fundsTo;
     int resourceTo = 0;
     const fheroes2::Point pt2( 136 + pos_rt.x, pos_rt.y + 190 );
-    std::vector<fheroes2::Rect> rectsTo;
-    rectsTo.reserve( 7 );
-    rectsTo.emplace_back( pt2.x, pt2.y, 34, 34 ); // wood
-    rectsTo.emplace_back( pt2.x + 37, pt2.y, 34, 34 ); // mercury
-    rectsTo.emplace_back( pt2.x + 74, pt2.y, 34, 34 ); // ore
-    rectsTo.emplace_back( pt2.x, pt2.y + 37, 34, 34 ); // sulfur
-    rectsTo.emplace_back( pt2.x + 37, pt2.y + 37, 34, 34 ); // crystal
-    rectsTo.emplace_back( pt2.x + 74, pt2.y + 37, 34, 34 ); // gems
-    rectsTo.emplace_back( pt2.x + 37, pt2.y + 74, 34, 34 ); // gold
+    std::vector<fheroes2::Rect> rectsTo = GetResourceRects( pt2 );
 
     fheroes2::MovableSprite cursorTo( fheroes2::AGG::GetICN( tradpost, 14 ) );
     text.Set( header_to, Font::SMALL );
