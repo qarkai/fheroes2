@@ -229,20 +229,18 @@ void TradeWindowGUI::ShowTradeArea( const Kingdom & kingdom, const uint32_t mark
 
         _scrollbar.setRange( 0, maximumValue );
 
-        const uint32_t exchange_rate = fheroes2::getTradeCost( markets, resourceFrom, resourceTo );
         std::string message;
         if ( Resource::GOLD == resourceTo ) {
             message = _( "I can offer you %{count} for 1 unit of %{resfrom}." );
-            StringReplace( message, "%{count}", exchange_rate );
-            StringReplace( message, "%{resfrom}", Resource::String( resourceFrom ) );
         }
         else {
             message = _( "I can offer you 1 unit of %{resto} for %{count} units of %{resfrom}." );
             StringReplace( message, "%{resto}", Resource::String( resourceTo ) );
-            StringReplace( message, "%{resfrom}", Resource::String( resourceFrom ) );
-            StringReplace( message, "%{count}", exchange_rate );
         }
+        StringReplace( message, "%{count}", fheroes2::getTradeCost( markets, resourceFrom, resourceTo ) );
+        StringReplace( message, "%{resfrom}", Resource::String( resourceFrom ) );
         const TextBox displayMessage( message, Font::BIG, { pos_rt.x, pos_rt.y + 30, pos_rt.width, 100 } );
+
         const fheroes2::Sprite & sprite_from = fheroes2::AGG::GetICN( ICN::RESOURCE, Resource::getIconIcnIndex( resourceFrom ) );
         dst_pt.x = pos_rt.x + ( pos_rt.width - sprite_from.width() + 1 ) / 2 - 70;
         dst_pt.y = pos_rt.y + 115 - sprite_from.height();
