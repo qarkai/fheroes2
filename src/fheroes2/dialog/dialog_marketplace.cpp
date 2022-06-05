@@ -52,7 +52,7 @@
 
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
 void RedrawToResource( const fheroes2::Point & pt );
-void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int from_resource );
+void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int rs_from );
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to );
 
 class TradeWindowGUI
@@ -589,9 +589,9 @@ void RedrawToResource( const fheroes2::Point & pt )
     RedrawResource( pt, []( int ) { return ""; } );
 }
 
-void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int from_resource )
+void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int rs_from )
 {
-    RedrawResource( pt, [markets, from_resource]( int rsType ) { return GetStringTradeCosts( markets, from_resource, rsType ); } );
+    RedrawResource( pt, [markets, rs_from]( int rsType ) { return GetStringTradeCosts( markets, rs_from, rsType ); } );
 }
 
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to )
