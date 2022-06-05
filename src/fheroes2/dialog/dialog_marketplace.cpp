@@ -51,7 +51,8 @@
 #include "world.h"
 
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
-void RedrawToResource( const fheroes2::Point & pt, bool showcost, const uint32_t markets, int from_resource = 0 );
+void RedrawToResource( const fheroes2::Point & pt );
+void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int from_resource );
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to );
 
 class TradeWindowGUI
@@ -319,7 +320,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
     dst_pt.x = pt2.x + ( 108 - text.w() ) / 2;
     dst_pt.y = pt2.y - 15;
     text.Blit( dst_pt.x, dst_pt.y );
-    RedrawToResource( pt2, false, markets );
+    RedrawToResource( pt2 );
 
     uint32_t count_sell = 0;
     uint32_t count_buy = 0;
@@ -413,7 +414,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
                 if ( resourceTo ) {
                     cursorTo.hide();
                 }
-                RedrawToResource( pt2, true, markets, resourceFrom );
+                RedrawToResource( pt2, markets, resourceFrom );
                 if ( resourceTo ) {
                     cursorTo.show();
                     gui.ShowTradeArea( kingdom, markets, resourceFrom, resourceTo, max_buy, max_sell, count_buy, count_sell, firstExchange );
@@ -446,7 +447,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
 
                 if ( resourceFrom ) {
                     cursorTo.hide();
-                    RedrawToResource( pt2, true, markets, resourceFrom );
+                    RedrawToResource( pt2, markets, resourceFrom );
                     cursorTo.show();
                     gui.ShowTradeArea( kingdom, markets, resourceFrom, resourceTo, max_buy, max_sell, count_buy, count_sell, firstExchange );
                 }
@@ -512,7 +513,7 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
             cursorTo.hide();
             cursorFrom.hide();
             RedrawFromResource( pt1, fundsFrom );
-            RedrawToResource( pt2, false, markets, resourceFrom );
+            RedrawToResource( pt2 );
             display.render();
         }
 
@@ -583,9 +584,14 @@ void RedrawFromResource( const fheroes2::Point & pt, const Funds & rs )
     RedrawResource( pt, [&rs]( int rsType ) { return std::to_string( rs.Get( rsType ) ); } );
 }
 
-void RedrawToResource( const fheroes2::Point & pt, bool showcost, const uint32_t markets, int from_resource )
+void RedrawToResource( const fheroes2::Point & pt )
 {
-    RedrawResource( pt, [showcost, markets, from_resource]( int rsType ) { return showcost ? GetStringTradeCosts( markets, from_resource, rsType ) : ""; } );
+    RedrawResource( pt, []( int ) { return ""; } );
+}
+
+void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int from_resource )
+{
+    RedrawResource( pt, [markets, from_resource]( int rsType ) { return GetStringTradeCosts( markets, from_resource, rsType ); } );
 }
 
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to )
