@@ -596,15 +596,14 @@ void RedrawToResource( const fheroes2::Point & pt, const uint32_t markets, int r
 
 std::string GetStringTradeCosts( const uint32_t markets, int rs_from, int rs_to )
 {
-    std::string res;
+    const uint32_t tradeCost = fheroes2::getTradeCost( markets, rs_from, rs_to );
 
-    if ( rs_from == rs_to ) {
-        res = _( "n/a" );
+    if ( tradeCost == 0 ) {
+        return _( "n/a" );
     }
-    else {
-        res = "1/";
-        res.append( std::to_string( fheroes2::getTradeCost( markets, rs_from, rs_to ) ) );
-    }
+
+    std::string res = "1/";
+    res.append( std::to_string( tradeCost ) );
 
     return res;
 }
