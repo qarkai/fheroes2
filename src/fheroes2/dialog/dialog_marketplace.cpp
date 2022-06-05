@@ -71,6 +71,40 @@ namespace
         Text text( header, Font::SMALL );
         text.Blit( pt.x + ( 108 - text.w() ) / 2, pt.y - 15 );
     }
+
+    void RedrawResourceSprite( const fheroes2::Image & sf, int32_t px, int32_t py, const std::string & value )
+    {
+        fheroes2::Point dst_pt( px, py );
+
+        fheroes2::Blit( sf, fheroes2::Display::instance(), dst_pt.x, dst_pt.y );
+
+        if ( !value.empty() ) {
+            Text text( value, Font::SMALL );
+            dst_pt.x += ( 34 - text.w() ) / 2;
+            dst_pt.y += 21;
+            text.Blit( dst_pt.x, dst_pt.y );
+        }
+    }
+
+    void RedrawResource( const fheroes2::Point & pt, const std::function<std::string( int )> & getValue )
+    {
+        const int tradpost = Settings::Get().isEvilInterfaceEnabled() ? ICN::TRADPOSE : ICN::TRADPOST;
+
+        // wood
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 7 ), pt.x, pt.y, getValue( Resource::WOOD ) );
+        // mercury
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 8 ), pt.x + 37, pt.y, getValue( Resource::MERCURY ) );
+        // ore
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 9 ), pt.x + 74, pt.y, getValue( Resource::ORE ) );
+        // sulfur
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 10 ), pt.x, pt.y + 37, getValue( Resource::SULFUR ) );
+        // crystal
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 11 ), pt.x + 37, pt.y + 37, getValue( Resource::CRYSTAL ) );
+        // gems
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 12 ), pt.x + 74, pt.y + 37, getValue( Resource::GEMS ) );
+        // gold
+        RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, getValue( Resource::GOLD ) );
+    }
 }
 
 void RedrawFromResource( const fheroes2::Point &, const Funds & );
@@ -540,40 +574,6 @@ void Dialog::Marketplace( Kingdom & kingdom, bool fromTradingPost )
             display.render();
         }
     }
-}
-
-void RedrawResourceSprite( const fheroes2::Image & sf, int32_t px, int32_t py, const std::string & value )
-{
-    fheroes2::Point dst_pt( px, py );
-
-    fheroes2::Blit( sf, fheroes2::Display::instance(), dst_pt.x, dst_pt.y );
-
-    if ( !value.empty() ) {
-        Text text( value, Font::SMALL );
-        dst_pt.x += ( 34 - text.w() ) / 2;
-        dst_pt.y += 21;
-        text.Blit( dst_pt.x, dst_pt.y );
-    }
-}
-
-void RedrawResource( const fheroes2::Point & pt, const std::function<std::string( int )> & getValue )
-{
-    const int tradpost = Settings::Get().isEvilInterfaceEnabled() ? ICN::TRADPOSE : ICN::TRADPOST;
-
-    // wood
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 7 ), pt.x, pt.y, getValue( Resource::WOOD ) );
-    // mercury
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 8 ), pt.x + 37, pt.y, getValue( Resource::MERCURY ) );
-    // ore
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 9 ), pt.x + 74, pt.y, getValue( Resource::ORE ) );
-    // sulfur
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 10 ), pt.x, pt.y + 37, getValue( Resource::SULFUR ) );
-    // crystal
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 11 ), pt.x + 37, pt.y + 37, getValue( Resource::CRYSTAL ) );
-    // gems
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 12 ), pt.x + 74, pt.y + 37, getValue( Resource::GEMS ) );
-    // gold
-    RedrawResourceSprite( fheroes2::AGG::GetICN( tradpost, 13 ), pt.x + 37, pt.y + 74, getValue( Resource::GOLD ) );
 }
 
 void RedrawFromResource( const fheroes2::Point & pt, const Funds & rs )
