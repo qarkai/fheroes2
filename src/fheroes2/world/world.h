@@ -40,7 +40,6 @@
 #include "maps_tiles.h"
 #include "math_base.h"
 #include "monster.h"
-#include "mp2.h"
 #include "pairs.h"
 #include "resource.h"
 #include "world_pathfinding.h"
@@ -51,6 +50,11 @@ class StreamBase;
 
 struct MapEvent;
 struct Week;
+
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
+}
 
 namespace Route
 {

@@ -26,7 +26,6 @@
 #include <functional>
 #include <list>
 #include <map>
-#include <memory>
 #include <ostream>
 #include <set>
 #include <string>
@@ -58,7 +57,6 @@
 #include "maps_fileinfo.h"
 #include "maps_tiles.h"
 #include "maps_tiles_helper.h"
-#include "math_base.h"
 #include "monster.h"
 #include "morale.h"
 #include "mp2.h"

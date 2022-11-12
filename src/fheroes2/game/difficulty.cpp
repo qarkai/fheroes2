@@ -25,6 +25,7 @@
 
 #include <cassert>
 
+#include "castle.h"
 #include "translations.h"
 
 std::string Difficulty::String( int difficulty )

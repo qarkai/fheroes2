@@ -18,10 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "world_regions.h"
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -32,7 +33,6 @@
 #include "math_base.h"
 #include "mp2.h"
 #include "world.h"
-#include "world_regions.h"
 
 namespace
 {

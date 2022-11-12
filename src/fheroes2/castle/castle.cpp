@@ -28,7 +28,7 @@
 #include <cassert>
 #include <cmath>
 #include <iterator>
-#include <ostream>
+#include <sstream>
 
 #include "agg_image.h"
 #include "ai.h"

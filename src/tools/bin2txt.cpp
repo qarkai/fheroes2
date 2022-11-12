@@ -25,7 +25,6 @@
 #include <fstream> // IWYU pragma: keep
 #include <iostream>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <vector>

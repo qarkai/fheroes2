@@ -26,7 +26,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <ostream>
+#include <sstream>
 
 #include "ai.h"
 #include "castle.h"

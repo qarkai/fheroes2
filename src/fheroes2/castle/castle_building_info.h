@@ -20,11 +20,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
-#include "castle.h"
 #include "math_base.h"
 
+enum building_t : uint32_t;
 enum class GameVersion : int;
 
 namespace fheroes2

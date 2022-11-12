@@ -26,7 +26,10 @@
 
 #include <cstdint>
 
-#include "mp2.h"
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
+}
 
 namespace Skill
 {

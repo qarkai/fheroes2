@@ -25,7 +25,6 @@
 #include <cassert>
 #include <cstddef>
 #include <initializer_list>
-#include <memory>
 #include <utility>
 
 #include "artifact.h"

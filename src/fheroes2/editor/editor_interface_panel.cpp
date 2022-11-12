@@ -35,6 +35,7 @@
 #include "dialog_system_options.h"
 #include "editor_interface.h"
 #include "gamedefs.h"
+#include "game_mode.h"
 #include "ground.h"
 #include "icn.h"
 #include "image.h"

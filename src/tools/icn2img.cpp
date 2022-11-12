@@ -28,7 +28,6 @@
 #include <fstream> // IWYU pragma: keep
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <system_error>

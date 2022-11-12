@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <optional>
 #include <utility>
@@ -42,6 +43,7 @@
 #include "game_credits.h"
 #include "game_hotkeys.h"
 #include "game_interface.h"
+#include "game_mode.h"
 #include "game_static.h"
 #include "heroes.h"
 #include "localevent.h"

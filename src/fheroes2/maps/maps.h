@@ -28,7 +28,11 @@
 #include <vector>
 
 #include "math_base.h"
-#include "mp2.h"
+
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
+}
 
 #define TILEWIDTH 32
 

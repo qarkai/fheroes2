@@ -31,7 +31,6 @@
 #include <cstring>
 #include <fstream> // IWYU pragma: keep
 #include <limits>
-#include <memory>
 #include <system_error>
 
 #include <zconf.h>

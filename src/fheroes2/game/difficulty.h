@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <string>
 
-#include "castle.h"
+enum building_t : uint32_t;
 
 namespace Difficulty
 {

@@ -31,7 +31,6 @@
 #include <utility>
 #include <vector>
 
-#include "battle.h"
 #include "battle_animation.h"
 #include "battle_board.h"
 #include "battle_troop.h"
@@ -63,6 +62,9 @@ namespace Battle
     class StatusListBox;
     class Tower;
     class Units;
+    enum class CastleDefenseElement : int;
+    struct TargetInfo;
+    struct TargetsInfo;
 
     void DialogBattleSettings();
     bool DialogBattleSurrender( const HeroBase & hero, uint32_t cost, Kingdom & kingdom );

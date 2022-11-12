@@ -34,6 +34,7 @@
 #include "campaign_scenariodata.h"
 #include "dialog.h"
 #include "game.h"
+#include "game_mode.h"
 #include "game_over.h"
 #include "logging.h"
 #include "maps_fileinfo.h"

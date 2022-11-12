@@ -24,7 +24,7 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
-#include <memory>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -40,6 +40,7 @@
 #include "game_delays.h"
 #include "game_hotkeys.h"
 #include "game_static.h"
+#include "game_mode.h"
 #include "gamedefs.h"
 #include "ground.h"
 #include "history_manager.h"

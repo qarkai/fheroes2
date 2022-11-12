@@ -24,7 +24,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <memory>
 #include <set>
 #include <tuple>
 #include <utility>
@@ -44,6 +43,7 @@
 #include "maps_tiles.h"
 #include "maps_tiles_helper.h"
 #include "math_base.h"
+#include "mp2.h"
 #include "pairs.h"
 #include "players.h"
 #include "rand.h"

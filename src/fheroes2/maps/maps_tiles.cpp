@@ -28,9 +28,9 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <limits>
 #include <set>
+#include <sstream>
 #include <type_traits>
 #include <utility>
 

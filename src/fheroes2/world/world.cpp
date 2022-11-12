@@ -27,7 +27,6 @@
 #include <array>
 #include <cassert>
 #include <limits>
-#include <memory>
 #include <ostream>
 #include <set>
 #include <tuple>

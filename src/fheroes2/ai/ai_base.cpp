@@ -23,12 +23,16 @@
 
 #include "ai.h"
 #include "heroes_base.h"
-#include "mp2.h"
 #include "serialize.h"
 #include "translations.h"
 
 class Castle;
 class Heroes;
+
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
+}
 
 namespace AI
 {

@@ -24,7 +24,6 @@
 #include <cassert>
 #include <cstddef>
 #include <deque>
-#include <memory>
 #include <utility>
 
 #include "agg_image.h"

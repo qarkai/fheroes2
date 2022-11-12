@@ -20,13 +20,13 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
-
-#include "ui_language.h"
 
 namespace fheroes2
 {
     class Sprite;
+    enum class SupportedLanguage : uint8_t;
 
     void generateAlphabet( const SupportedLanguage language, std::vector<std::vector<Sprite>> & icnVsSprite );
 

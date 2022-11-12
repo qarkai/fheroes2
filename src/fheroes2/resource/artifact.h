@@ -33,8 +33,12 @@
 #include "image.h"
 #include "interface_itemsbar.h"
 #include "math_base.h"
-#include "mp2.h"
 #include "ui_tool.h"
+
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
+}
 
 class Heroes;
 class StatusBar;

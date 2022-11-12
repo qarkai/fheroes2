@@ -35,7 +35,6 @@
 #include "heroes.h"
 #include "heroes_recruits.h"
 #include "monster.h"
-#include "mp2.h"
 #include "pairs.h"
 #include "players.h"
 #include "puzzle.h"
@@ -48,6 +47,11 @@ struct EventDate;
 namespace Maps
 {
     class Tiles;
+}
+
+namespace MP2
+{
+    enum MapObjectType : uint8_t;
 }
 
 class Kingdom : public BitModes, public Control
