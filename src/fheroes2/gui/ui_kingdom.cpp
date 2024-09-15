@@ -20,7 +20,6 @@
 
 #include "ui_kingdom.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>

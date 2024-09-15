@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <utility>
 #include <vector>
 

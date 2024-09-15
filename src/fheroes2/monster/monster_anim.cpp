@@ -20,8 +20,6 @@
 
 #include "monster_anim.h"
 
-#include <algorithm>
-
 #include "monster.h"
 #include "monster_info.h"
 #include "rand.h"

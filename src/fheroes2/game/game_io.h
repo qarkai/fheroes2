@@ -26,7 +26,10 @@
 #include <cstdint>
 #include <string>
 
-#include "game_mode.h"
+namespace fheroes2
+{
+    enum class GameMode : int;
+}
 
 namespace Maps
 {

@@ -23,6 +23,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <iterator>
 #include <unordered_map>
 #include <utility>
 

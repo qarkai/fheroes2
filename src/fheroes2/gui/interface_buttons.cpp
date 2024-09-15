@@ -28,6 +28,7 @@
 
 #include "dialog.h"
 #include "game_interface.h"
+#include "game_mode.h"
 #include "heroes.h"
 #include "icn.h"
 #include "interface_base.h"

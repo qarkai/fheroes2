@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <iterator>
 #include <limits>
 #include <optional>
 #include <ostream>
@@ -56,7 +57,6 @@
 #include "race.h"
 #include "rand.h"
 #include "resource.h"
-#include "route.h"
 #include "save_format_version.h"
 #include "serialize.h"
 #include "settings.h"

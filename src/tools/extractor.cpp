@@ -21,7 +21,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -33,7 +32,6 @@
 #include <string>
 #include <system_error>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 #include "agg_file.h"

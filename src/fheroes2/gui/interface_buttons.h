@@ -25,10 +25,14 @@
 
 #include <cstdint>
 
-#include "game_mode.h"
 #include "interface_border.h"
 #include "math_base.h"
 #include "ui_button.h"
+
+namespace fheroes2
+{
+    enum class GameMode : int;
+}
 
 namespace Interface
 {

@@ -20,11 +20,11 @@
 
 #include "maps_tiles_render.h"
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <list>
 #include <map>
 #include <ostream>

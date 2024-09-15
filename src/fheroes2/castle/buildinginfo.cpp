@@ -23,7 +23,6 @@
 
 #include "buildinginfo.h"
 
-#include <algorithm>
 #include <cassert>
 #include <utility>
 

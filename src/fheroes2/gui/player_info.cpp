@@ -20,7 +20,6 @@
 
 #include "player_info.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <optional>

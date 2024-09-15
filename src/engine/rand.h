@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <iterator>
 #include <random>
 #include <type_traits>
 #include <utility>

@@ -20,7 +20,6 @@
 
 #include "dialog_audio.h"
 
-#include <algorithm>
 #include <cassert>
 #include <string>
 #include <vector>

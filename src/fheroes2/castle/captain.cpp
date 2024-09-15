@@ -37,8 +37,6 @@
 #include "race.h"
 #include "spell_book.h"
 
-class Army;
-
 namespace
 {
     int GetPortraitIcnId( int race )

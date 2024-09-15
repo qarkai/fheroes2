@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstdint>
 #include <ostream>
+#include <type_traits>
 #include <vector>
 
 #include "ai_battle.h" // IWYU pragma: associated

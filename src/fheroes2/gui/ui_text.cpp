@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <utility>
 
 #include "agg_image.h"
 #include "icn.h"

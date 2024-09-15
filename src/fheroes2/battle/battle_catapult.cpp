@@ -23,7 +23,6 @@
 
 #include "battle_catapult.h"
 
-#include <algorithm>
 #include <cassert>
 #include <ostream>
 #include <utility>

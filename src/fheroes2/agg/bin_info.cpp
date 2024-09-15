@@ -20,7 +20,6 @@
 
 #include "bin_info.h"
 
-#include <algorithm>
 #include <cstdlib>
 #include <initializer_list>
 #include <map>

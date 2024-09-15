@@ -37,6 +37,7 @@
 #include "color.h"
 #include "dialog.h"
 #include "game.h"
+#include "game_mode.h"
 #include "game_video.h"
 #include "game_video_type.h"
 #include "heroes.h"

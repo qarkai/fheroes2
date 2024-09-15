@@ -25,7 +25,6 @@
 
 #include <cstdint>
 
-#include "game_mode.h"
 #include "interface_base.h"
 #include "interface_buttons.h"
 #include "interface_cpanel.h"
@@ -35,6 +34,11 @@
 
 class Castle;
 class Heroes;
+
+namespace fheroes2
+{
+    enum class GameMode : int;
+}
 
 namespace Maps
 {

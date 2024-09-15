@@ -26,11 +26,11 @@
 #include <cstdint>
 #include <memory>
 
-#include "game_mode.h"
 #include "math_base.h"
 
 namespace fheroes2
 {
+    enum class GameMode : int;
     class Sprite;
 }
 

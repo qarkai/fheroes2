@@ -21,8 +21,8 @@
 #pragma once
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "math_base.h"

@@ -23,7 +23,6 @@
 
 #include "monster.h"
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 

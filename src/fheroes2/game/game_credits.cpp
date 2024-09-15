@@ -20,7 +20,6 @@
 
 #include "game_credits.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <memory>

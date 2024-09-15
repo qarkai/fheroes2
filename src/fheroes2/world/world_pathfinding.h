@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <list>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
