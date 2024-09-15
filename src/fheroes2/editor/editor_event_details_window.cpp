@@ -20,7 +20,6 @@
 
 #include "editor_event_details_window.h"
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>

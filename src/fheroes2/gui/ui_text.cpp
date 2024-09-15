@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cassert>
 #include <deque>
+#include <utility>
 
 #include "agg_image.h"
 

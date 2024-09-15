@@ -20,10 +20,10 @@
 
 #include "castle_building_info.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 
+#include "castle.h"
 #include "maps_fileinfo.h"
 #include "race.h"
 #include "translations.h"

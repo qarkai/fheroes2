@@ -27,6 +27,7 @@
 
 #include "agg_image.h"
 #include "game_interface.h"
+#include "game_mode.h"
 #include "icn.h"
 #include "image.h"
 #include "localevent.h"

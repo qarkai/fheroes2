@@ -22,12 +22,16 @@
 
 #include <cstdint>
 
-#include "game_mode.h"
 #include "gamedefs.h"
 #include "interface_gamearea.h"
 #include "interface_radar.h"
 #include "math_base.h"
 #include "screen.h"
+
+namespace fheroes2
+{
+    enum class GameMode : int;
+}
 
 namespace Interface
 {

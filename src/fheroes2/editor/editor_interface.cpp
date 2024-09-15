@@ -47,6 +47,7 @@
 #include "game.h"
 #include "game_delays.h"
 #include "game_hotkeys.h"
+#include "game_mode.h"
 #include "game_static.h"
 #include "gamedefs.h"
 #include "ground.h"

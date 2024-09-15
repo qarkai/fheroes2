@@ -28,7 +28,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "army.h"

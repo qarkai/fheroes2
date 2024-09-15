@@ -55,7 +55,6 @@
 #include "race.h"
 #include "rand.h"
 #include "resource.h"
-#include "route.h"
 #include "save_format_version.h"
 #include "serialize.h"
 #include "settings.h"

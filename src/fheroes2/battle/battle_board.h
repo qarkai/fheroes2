@@ -24,7 +24,6 @@
 #ifndef H2BATTLE_BOARD_H
 #define H2BATTLE_BOARD_H
 
-#include <algorithm>
 #include <cstdint>
 #include <random>
 #include <string>

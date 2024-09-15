@@ -24,7 +24,6 @@
 #ifndef H2INTERFACE_GAMEAREA_H
 #define H2INTERFACE_GAMEAREA_H
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>

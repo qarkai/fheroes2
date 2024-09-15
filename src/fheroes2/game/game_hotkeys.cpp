@@ -23,7 +23,6 @@
 
 #include "game_hotkeys.h"
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstring>

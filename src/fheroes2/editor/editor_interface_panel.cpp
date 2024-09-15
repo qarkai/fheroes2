@@ -34,6 +34,7 @@
 #include "editor_interface.h"
 #include "editor_options.h"
 #include "gamedefs.h"
+#include "game_mode.h"
 #include "ground.h"
 #include "icn.h"
 #include "image.h"

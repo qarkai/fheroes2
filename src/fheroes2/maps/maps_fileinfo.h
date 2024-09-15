@@ -23,7 +23,6 @@
 #ifndef H2MAPSFILEINFO_H
 #define H2MAPSFILEINFO_H
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <string>

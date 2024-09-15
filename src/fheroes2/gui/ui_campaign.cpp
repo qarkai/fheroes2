@@ -20,7 +20,6 @@
 
 #include "ui_campaign.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <memory>

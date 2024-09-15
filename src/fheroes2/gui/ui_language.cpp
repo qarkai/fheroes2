@@ -20,7 +20,6 @@
 
 #include "ui_language.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>

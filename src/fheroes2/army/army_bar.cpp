@@ -23,7 +23,6 @@
 
 #include "army_bar.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <memory>

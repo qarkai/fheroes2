@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <deque>
